@@ -1,45 +1,37 @@
--- ------------------------------------------------------------------
--- Corrige as políticas RLS da tabela family_invites
--- ------------------------------------------------------------------
+-- Fix RLS policies for family_invites table
+DROP POLICY IF EXISTS "Users can view family invites" ON family_invites;
+DROP POLICY IF EXISTS "Users can insert family invites" ON family_invites;
+DROP POLICY IF EXISTS "Users can update family invites" ON family_invites;
+DROP POLICY IF EXISTS "Users can delete family invites" ON family_invites;
 
--- Verificar se a tabela existe e tem RLS habilitado
-ALTER TABLE public.family_invites ENABLE ROW LEVEL SECURITY;
-
--- Remover políticas existentes se houver
-DROP POLICY IF EXISTS "Family invites: select" ON public.family_invites;
-DROP POLICY IF EXISTS "Family invites: insert" ON public.family_invites;
-DROP POLICY IF EXISTS "Family invites: update" ON public.family_invites;
-DROP POLICY IF EXISTS "Family invites: delete" ON public.family_invites;
-
--- Política para SELECT - permite ver convites da família
-CREATE POLICY "Family invites: select"
-  ON public.family_invites
-  FOR SELECT
-  USING (
-    family_id IN (SELECT family_id FROM public.profiles WHERE id = auth.uid())
+-- Create proper RLS policies for family_invites
+CREATE POLICY "Users can view family invites" ON family_invites
+  FOR SELECT USING (
+    family_id IN (
+      SELECT family_id FROM profiles WHERE id = auth.uid()
+    ) OR email = auth.email()
   );
 
--- Política para INSERT - permite inserir convites para a família
-CREATE POLICY "Family invites: insert"
-  ON public.family_invites
-  FOR INSERT
-  WITH CHECK (
-    family_id IN (SELECT family_id FROM public.profiles WHERE id = auth.uid())
-    AND invited_by = auth.uid()
+CREATE POLICY "Users can insert family invites" ON family_invites
+  FOR INSERT WITH CHECK (
+    family_id IN (
+      SELECT family_id FROM profiles WHERE id = auth.uid()
+    )
   );
 
--- Política para UPDATE - permite atualizar convites da família
-CREATE POLICY "Family invites: update"
-  ON public.family_invites
-  FOR UPDATE
-  USING (
-    family_id IN (SELECT family_id FROM public.profiles WHERE id = auth.uid())
+CREATE POLICY "Users can update family invites" ON family_invites
+  FOR UPDATE USING (
+    family_id IN (
+      SELECT family_id FROM profiles WHERE id = auth.uid()
+    ) OR email = auth.email()
   );
 
--- Política para DELETE - permite deletar convites da família
-CREATE POLICY "Family invites: delete"
-  ON public.family_invites
-  FOR DELETE
-  USING (
-    family_id IN (SELECT family_id FROM public.profiles WHERE id = auth.uid())
+CREATE POLICY "Users can delete family invites" ON family_invites
+  FOR DELETE USING (
+    family_id IN (
+      SELECT family_id FROM profiles WHERE id = auth.uid()
+    )
   );
+
+-- Ensure RLS is enabled
+ALTER TABLE family_invites ENABLE ROW LEVEL SECURITY;

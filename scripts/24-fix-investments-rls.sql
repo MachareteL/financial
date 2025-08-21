@@ -1,44 +1,37 @@
--- ------------------------------------------------------------------
--- Corrige as políticas RLS da tabela investments
--- ------------------------------------------------------------------
+-- Fix RLS policies for investments table
+DROP POLICY IF EXISTS "Users can view family investments" ON investments;
+DROP POLICY IF EXISTS "Users can insert family investments" ON investments;
+DROP POLICY IF EXISTS "Users can update family investments" ON investments;
+DROP POLICY IF EXISTS "Users can delete family investments" ON investments;
 
--- Verificar se a tabela existe e tem RLS habilitado
-ALTER TABLE public.investments ENABLE ROW LEVEL SECURITY;
-
--- Remover políticas existentes se houver
-DROP POLICY IF EXISTS "Investments: select" ON public.investments;
-DROP POLICY IF EXISTS "Investments: insert" ON public.investments;
-DROP POLICY IF EXISTS "Investments: update" ON public.investments;
-DROP POLICY IF EXISTS "Investments: delete" ON public.investments;
-
--- Política para SELECT - permite ver investimentos da família
-CREATE POLICY "Investments: select"
-  ON public.investments
-  FOR SELECT
-  USING (
-    family_id IN (SELECT family_id FROM public.profiles WHERE id = auth.uid())
+-- Create proper RLS policies for investments
+CREATE POLICY "Users can view family investments" ON investments
+  FOR SELECT USING (
+    family_id IN (
+      SELECT family_id FROM profiles WHERE id = auth.uid()
+    )
   );
 
--- Política para INSERT - permite inserir investimentos para a família
-CREATE POLICY "Investments: insert"
-  ON public.investments
-  FOR INSERT
-  WITH CHECK (
-    family_id IN (SELECT family_id FROM public.profiles WHERE id = auth.uid())
+CREATE POLICY "Users can insert family investments" ON investments
+  FOR INSERT WITH CHECK (
+    family_id IN (
+      SELECT family_id FROM profiles WHERE id = auth.uid()
+    )
   );
 
--- Política para UPDATE - permite atualizar investimentos da família
-CREATE POLICY "Investments: update"
-  ON public.investments
-  FOR UPDATE
-  USING (
-    family_id IN (SELECT family_id FROM public.profiles WHERE id = auth.uid())
+CREATE POLICY "Users can update family investments" ON investments
+  FOR UPDATE USING (
+    family_id IN (
+      SELECT family_id FROM profiles WHERE id = auth.uid()
+    )
   );
 
--- Política para DELETE - permite deletar investimentos da família
-CREATE POLICY "Investments: delete"
-  ON public.investments
-  FOR DELETE
-  USING (
-    family_id IN (SELECT family_id FROM public.profiles WHERE id = auth.uid())
+CREATE POLICY "Users can delete family investments" ON investments
+  FOR DELETE USING (
+    family_id IN (
+      SELECT family_id FROM profiles WHERE id = auth.uid()
+    )
   );
+
+-- Ensure RLS is enabled
+ALTER TABLE investments ENABLE ROW LEVEL SECURITY;

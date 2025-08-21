@@ -1,44 +1,37 @@
--- ------------------------------------------------------------------
--- Corrige as políticas RLS da tabela budgets
--- ------------------------------------------------------------------
+-- Fix RLS policies for budgets table
+DROP POLICY IF EXISTS "Users can view family budgets" ON budgets;
+DROP POLICY IF EXISTS "Users can insert family budgets" ON budgets;
+DROP POLICY IF EXISTS "Users can update family budgets" ON budgets;
+DROP POLICY IF EXISTS "Users can delete family budgets" ON budgets;
 
--- Verificar se a tabela existe e tem RLS habilitado
-ALTER TABLE public.budgets ENABLE ROW LEVEL SECURITY;
-
--- Remover políticas existentes se houver
-DROP POLICY IF EXISTS "Budgets: select" ON public.budgets;
-DROP POLICY IF EXISTS "Budgets: insert" ON public.budgets;
-DROP POLICY IF EXISTS "Budgets: update" ON public.budgets;
-DROP POLICY IF EXISTS "Budgets: delete" ON public.budgets;
-
--- Política para SELECT - permite ver orçamentos da família
-CREATE POLICY "Budgets: select"
-  ON public.budgets
-  FOR SELECT
-  USING (
-    family_id IN (SELECT family_id FROM public.profiles WHERE id = auth.uid())
+-- Create proper RLS policies for budgets
+CREATE POLICY "Users can view family budgets" ON budgets
+  FOR SELECT USING (
+    family_id IN (
+      SELECT family_id FROM profiles WHERE id = auth.uid()
+    )
   );
 
--- Política para INSERT - permite inserir orçamentos para a família
-CREATE POLICY "Budgets: insert"
-  ON public.budgets
-  FOR INSERT
-  WITH CHECK (
-    family_id IN (SELECT family_id FROM public.profiles WHERE id = auth.uid())
+CREATE POLICY "Users can insert family budgets" ON budgets
+  FOR INSERT WITH CHECK (
+    family_id IN (
+      SELECT family_id FROM profiles WHERE id = auth.uid()
+    )
   );
 
--- Política para UPDATE - permite atualizar orçamentos da família
-CREATE POLICY "Budgets: update"
-  ON public.budgets
-  FOR UPDATE
-  USING (
-    family_id IN (SELECT family_id FROM public.profiles WHERE id = auth.uid())
+CREATE POLICY "Users can update family budgets" ON budgets
+  FOR UPDATE USING (
+    family_id IN (
+      SELECT family_id FROM profiles WHERE id = auth.uid()
+    )
   );
 
--- Política para DELETE - permite deletar orçamentos da família
-CREATE POLICY "Budgets: delete"
-  ON public.budgets
-  FOR DELETE
-  USING (
-    family_id IN (SELECT family_id FROM public.profiles WHERE id = auth.uid())
+CREATE POLICY "Users can delete family budgets" ON budgets
+  FOR DELETE USING (
+    family_id IN (
+      SELECT family_id FROM profiles WHERE id = auth.uid()
+    )
   );
+
+-- Ensure RLS is enabled
+ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;

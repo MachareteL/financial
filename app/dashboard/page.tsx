@@ -44,6 +44,7 @@ export default function DashboardPage() {
   })
   const [profile, setProfile] = useState<any>(null)
   const [profileLoading, setProfileLoading] = useState(false)
+  const [monthlyIncome, setMonthlyIncome] = useState(0)
   const router = useRouter()
 
   // Handle authentication redirect
@@ -112,6 +113,18 @@ export default function DashboardPage() {
     }
   }
 
+  const calculateMonthlyIncome = (incomes: any[]) => {
+    return incomes
+      .filter((income) => {
+        if (income.type === "one_time") {
+          const incomeDate = new Date(income.date)
+          return incomeDate.getMonth() + 1 === selectedMonth && incomeDate.getFullYear() === selectedYear
+        }
+        return income.type === "recurring" && income.frequency === "monthly"
+      })
+      .reduce((total, income) => total + Number.parseFloat(income.amount), 0)
+  }
+
   const loadExpenseData = async () => {
     if (!profile?.family_id) {
       router.push("/onboarding")
@@ -122,7 +135,8 @@ export default function DashboardPage() {
       const startDate = new Date(selectedYear, selectedMonth - 1, 1)
       const endDate = new Date(selectedYear, selectedMonth, 0)
 
-      const { data: expenses, error } = await supabase
+      // Load expenses
+      const { data: expenses, error: expensesError } = await supabase
         .from("expenses")
         .select(`
           amount,
@@ -132,9 +146,21 @@ export default function DashboardPage() {
         .gte("date", startDate.toISOString().split("T")[0])
         .lte("date", endDate.toISOString().split("T")[0])
 
-      if (error) throw error
+      if (expensesError) throw expensesError
 
-      // Process data for charts
+      // Load incomes for the family (all incomes, we'll filter by date in JS)
+      const { data: incomes, error: incomesError } = await supabase
+        .from("incomes")
+        .select("amount, type, frequency, date")
+        .eq("family_id", profile.family_id)
+
+      if (incomesError) throw incomesError
+
+      // Calculate total income for the month using the same logic as budget page
+      const totalIncome = calculateMonthlyIncome(incomes || [])
+      setMonthlyIncome(totalIncome)
+
+      // Process expense data for charts
       const categoryTotals: { [key: string]: { amount: number; classification: string } } = {}
       const classificationTotals = { necessidades: 0, desejos: 0, poupanca: 0, total: 0 }
 
@@ -169,31 +195,36 @@ export default function DashboardPage() {
   }
 
   const getClassificationPercentage = (classification: keyof MonthlyData) => {
-    if (monthlyData.total === 0) return 0
-    return (monthlyData[classification] / monthlyData.total) * 100
+    if (monthlyIncome === 0) return 0
+    return (monthlyData[classification] / monthlyIncome) * 100
   }
 
   const getAlert = () => {
+    if (monthlyIncome === 0) return null
+
     const necessidadesPercent = getClassificationPercentage("necessidades")
     const desejosPercent = getClassificationPercentage("desejos")
-    const poupancaPercent = getClassificationPercentage("poupanca")
 
-    if (desejosPercent > 30) {
-      return {
-        type: "warning",
-        message: `Gastos com Desejos estão em ${desejosPercent.toFixed(1)}% (meta: 30%)`,
-      }
-    }
+    // Calcular quanto deveria ser poupado (receita - gastos)
+    const actualSavings = monthlyIncome - monthlyData.total
+    const actualSavingsPercent = (actualSavings / monthlyIncome) * 100
+
     if (necessidadesPercent > 50) {
       return {
         type: "warning",
-        message: `Gastos com Necessidades estão em ${necessidadesPercent.toFixed(1)}% (meta: 50%)`,
+        message: `Gastos com Necessidades estão em ${necessidadesPercent.toFixed(1)}% da receita (meta: 50%)`,
       }
     }
-    if (poupancaPercent < 20 && monthlyData.total > 0) {
+    if (desejosPercent > 30) {
+      return {
+        type: "warning",
+        message: `Gastos com Desejos estão em ${desejosPercent.toFixed(1)}% da receita (meta: 30%)`,
+      }
+    }
+    if (actualSavingsPercent < 20) {
       return {
         type: "info",
-        message: `Poupança está em ${poupancaPercent.toFixed(1)}% (meta: 20%)`,
+        message: `Poupança está em ${actualSavingsPercent.toFixed(1)}% da receita (meta: 20%)`,
       }
     }
     return null
@@ -332,7 +363,19 @@ export default function DashboardPage() {
         )}
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
+              <DollarSign className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                R$ {monthlyIncome.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Gasto</CardTitle>
@@ -342,6 +385,9 @@ export default function DashboardPage() {
               <div className="text-2xl font-bold">
                 R$ {monthlyData.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
               </div>
+              <p className="text-xs text-muted-foreground">
+                {monthlyIncome > 0 ? `${((monthlyData.total / monthlyIncome) * 100).toFixed(1)}% da receita` : ""}
+              </p>
             </CardContent>
           </Card>
 
@@ -377,15 +423,15 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Poupança</CardTitle>
+              <CardTitle className="text-sm font-medium">Poupança Real</CardTitle>
               <div className="text-xs text-muted-foreground">20% meta</div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">
-                {getClassificationPercentage("poupanca").toFixed(1)}%
+                {monthlyIncome > 0 ? (((monthlyIncome - monthlyData.total) / monthlyIncome) * 100).toFixed(1) : "0.0"}%
               </div>
               <p className="text-xs text-muted-foreground">
-                R$ {monthlyData.poupanca.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                R$ {(monthlyIncome - monthlyData.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
               </p>
             </CardContent>
           </Card>
