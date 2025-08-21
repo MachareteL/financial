@@ -10,7 +10,9 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Upload, X, ArrowLeft } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge"
+import { Upload, X, ArrowLeft, Repeat, CreditCard, AlertTriangle } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { getUserProfile } from "@/lib/auth"
 import { toast } from "@/hooks/use-toast"
@@ -29,6 +31,13 @@ interface Expense {
   date: string
   category_id: string
   receipt_url: string | null
+  is_recurring: boolean
+  recurrence_type: string | null
+  is_installment: boolean
+  installment_number: number | null
+  total_installments: number | null
+  installment_value: number | null
+  parent_expense_id: string | null
   categories: {
     name: string
     classification: string
@@ -44,6 +53,14 @@ export default function EditExpensePage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [shouldRemoveCurrentImage, setShouldRemoveCurrentImage] = useState(false)
+
+  // Estados para gastos recorrentes e parcelados
+  const [isRecurring, setIsRecurring] = useState(false)
+  const [recurrenceType, setRecurrenceType] = useState<string>("")
+  const [isInstallment, setIsInstallment] = useState(false)
+  const [totalInstallments, setTotalInstallments] = useState<number>(1)
+  const [installmentValue, setInstallmentValue] = useState<number>(0)
+
   const router = useRouter()
   const params = useParams()
   const expenseId = params.id as string
@@ -106,6 +123,11 @@ export default function EditExpensePage() {
       }
 
       setExpense(data)
+      setIsRecurring(data.is_recurring || false)
+      setRecurrenceType(data.recurrence_type || "")
+      setIsInstallment(data.is_installment || false)
+      setTotalInstallments(data.total_installments || 1)
+      setInstallmentValue(data.installment_value || 0)
     } catch (error: any) {
       toast({
         title: "Erro ao carregar gasto",
@@ -185,9 +207,7 @@ export default function EditExpensePage() {
 
   const deleteOldReceipt = async (receiptUrl: string) => {
     try {
-      // A url pública termina em .../bucket/path
       const parts = receiptUrl.split("/")
-      // pega tudo depois do nome do bucket
       const bucketIndex = parts.findIndex((p) => p === "receipts")
       const pathInsideBucket = parts.slice(bucketIndex + 1).join("/")
       await supabase.storage.from("receipts").remove([pathInsideBucket])
@@ -211,14 +231,11 @@ export default function EditExpensePage() {
 
       // Handle receipt changes
       if (shouldRemoveCurrentImage && expense?.receipt_url) {
-        // Remove current image
         await deleteOldReceipt(expense.receipt_url)
         receiptUrl = null
       } else if (selectedFile) {
-        // Upload new image
         const newReceiptUrl = await uploadReceipt(selectedFile)
         if (newReceiptUrl) {
-          // Delete old image if exists
           if (expense?.receipt_url) {
             await deleteOldReceipt(expense.receipt_url)
           }
@@ -226,14 +243,30 @@ export default function EditExpensePage() {
         }
       }
 
+      // Calcular o valor correto baseado no tipo de gasto
+      let finalAmount = amount
+      let finalDescription = description
+
+      if (isInstallment && expense?.installment_number) {
+        finalAmount = installmentValue
+        if (expense.installment_number === 1) {
+          finalDescription = `${description} (${expense.installment_number}/${totalInstallments})`
+        }
+      }
+
       const { error } = await supabase
         .from("expenses")
         .update({
-          amount,
-          description,
+          amount: finalAmount,
+          description: finalDescription,
           date,
           category_id: categoryId,
           receipt_url: receiptUrl,
+          is_recurring: isRecurring,
+          recurrence_type: isRecurring ? recurrenceType : null,
+          is_installment: isInstallment,
+          total_installments: isInstallment ? totalInstallments : null,
+          installment_value: isInstallment ? installmentValue : null,
         })
         .eq("id", expenseId)
 
@@ -253,6 +286,25 @@ export default function EditExpensePage() {
       })
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleAmountChange = (value: string) => {
+    const amount = Number.parseFloat(value) || 0
+    if (isInstallment && totalInstallments > 0) {
+      setInstallmentValue(amount / totalInstallments)
+    }
+  }
+
+  const handleInstallmentsChange = (value: string) => {
+    const installments = Number.parseInt(value) || 1
+    setTotalInstallments(installments)
+
+    const amountInput = document.querySelector('input[name="amount"]') as HTMLInputElement
+    const totalAmount = Number.parseFloat(amountInput?.value) || 0
+
+    if (totalAmount > 0) {
+      setInstallmentValue(totalAmount / installments)
     }
   }
 
@@ -281,6 +333,34 @@ export default function EditExpensePage() {
           </div>
         </div>
 
+        {/* Informações do gasto atual */}
+        {(expense.is_recurring || expense.is_installment) && (
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-2 mb-2">
+                {expense.is_recurring && (
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                    <Repeat className="w-3 h-3 mr-1" />
+                    Recorrente ({expense.recurrence_type})
+                  </Badge>
+                )}
+                {expense.is_installment && (
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    <CreditCard className="w-3 h-3 mr-1" />
+                    Parcela {expense.installment_number}/{expense.total_installments}
+                  </Badge>
+                )}
+              </div>
+              {expense.is_installment && expense.parent_expense_id && (
+                <div className="flex items-center gap-2 text-sm text-blue-700">
+                  <AlertTriangle className="w-4 h-4" />
+                  <span>Esta é uma parcela de um gasto parcelado. Alterações afetarão apenas esta parcela.</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle>Informações do Gasto</CardTitle>
@@ -290,7 +370,7 @@ export default function EditExpensePage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="amount">Valor (R$)</Label>
+                  <Label htmlFor="amount">{isInstallment ? "Valor Total (R$)" : "Valor (R$)"}</Label>
                   <Input
                     id="amount"
                     name="amount"
@@ -298,9 +378,17 @@ export default function EditExpensePage() {
                     step="0.01"
                     min="0"
                     placeholder="0,00"
-                    defaultValue={expense.amount}
+                    defaultValue={
+                      isInstallment && expense.total_installments
+                        ? (expense.installment_value! * expense.total_installments).toString()
+                        : expense.amount.toString()
+                    }
+                    onChange={(e) => handleAmountChange(e.target.value)}
                     required
                   />
+                  {isInstallment && installmentValue > 0 && (
+                    <p className="text-sm text-gray-600">Valor por parcela: R$ {installmentValue.toFixed(2)}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -334,6 +422,106 @@ export default function EditExpensePage() {
                   rows={3}
                   defaultValue={expense.description || ""}
                 />
+              </div>
+
+              {/* Opções de Recorrência e Parcelamento */}
+              <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-medium text-gray-900">Opções Avançadas</h3>
+
+                {/* Gasto Recorrente */}
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="recurring"
+                    checked={isRecurring}
+                    onCheckedChange={(checked) => {
+                      setIsRecurring(checked as boolean)
+                      if (checked) {
+                        setIsInstallment(false)
+                      }
+                    }}
+                  />
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-center space-x-2">
+                      <Repeat className="w-4 h-4 text-blue-600" />
+                      <Label htmlFor="recurring" className="text-sm font-medium">
+                        Gasto Recorrente
+                      </Label>
+                    </div>
+
+                    {isRecurring && (
+                      <Select value={recurrenceType} onValueChange={setRecurrenceType} required>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Frequência da recorrência" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="monthly">Mensal</SelectItem>
+                          <SelectItem value="weekly">Semanal</SelectItem>
+                          <SelectItem value="yearly">Anual</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                </div>
+
+                {/* Gasto Parcelado */}
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="installment"
+                    checked={isInstallment}
+                    onCheckedChange={(checked) => {
+                      setIsInstallment(checked as boolean)
+                      if (checked) {
+                        setIsRecurring(false)
+                        setRecurrenceType("")
+                      }
+                    }}
+                  />
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-center space-x-2">
+                      <CreditCard className="w-4 h-4 text-green-600" />
+                      <Label htmlFor="installment" className="text-sm font-medium">
+                        Gasto Parcelado
+                      </Label>
+                    </div>
+
+                    {isInstallment && (
+                      <div className="grid grid-cols-1 gap-3">
+                        <div>
+                          <Label htmlFor="installments" className="text-sm">
+                            Número de Parcelas
+                          </Label>
+                          <Select
+                            value={totalInstallments.toString()}
+                            onValueChange={handleInstallmentsChange}
+                            required
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
+                                <SelectItem key={num} value={num.toString()}>
+                                  {num}x
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {installmentValue > 0 && (
+                          <div className="p-3 bg-blue-50 rounded-lg">
+                            <p className="text-sm text-blue-800">
+                              <strong>Resumo do Parcelamento:</strong>
+                            </p>
+                            <p className="text-sm text-blue-700">
+                              {totalInstallments}x de R$ {installmentValue.toFixed(2)}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* File Upload */}
