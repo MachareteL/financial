@@ -7,11 +7,10 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Upload, X, ArrowLeft, Repeat, CreditCard } from "lucide-react"
+import { ArrowLeft, Plus, Repeat, CreditCard } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { getUserProfile } from "@/lib/auth"
 import { toast } from "@/hooks/use-toast"
@@ -25,20 +24,22 @@ interface Category {
 
 export default function NewExpensePage() {
   const { user, loading } = useAuth()
-  const [categories, setCategories] = useState<Category[]>([])
-  const [profile, setProfile] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-
-  // Estados para gastos recorrentes e parcelados
-  const [isRecurring, setIsRecurring] = useState(false)
-  const [recurrenceType, setRecurrenceType] = useState<string>("")
-  const [isInstallment, setIsInstallment] = useState(false)
-  const [totalInstallments, setTotalInstallments] = useState<number>(1)
-  const [installmentValue, setInstallmentValue] = useState<number>(0)
-
   const router = useRouter()
+  const [profile, setProfile] = useState<any>(null)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [isRecurring, setIsRecurring] = useState(false)
+  const [isInstallment, setIsInstallment] = useState(false)
+  const [totalAmount, setTotalAmount] = useState("")
+  const [installments, setInstallments] = useState("1")
+
+  const [formData, setFormData] = useState({
+    description: "",
+    amount: "",
+    category_id: "",
+    date: new Date().toISOString().split("T")[0],
+    recurrence_type: "monthly",
+  })
 
   useEffect(() => {
     if (!loading && !user) {
@@ -46,7 +47,7 @@ export default function NewExpensePage() {
       return
     }
 
-    if (user && !profile) {
+    if (user) {
       loadProfile()
     }
   }, [user, loading, router])
@@ -60,8 +61,8 @@ export default function NewExpensePage() {
   const loadProfile = async () => {
     try {
       const userProfile = await getUserProfile()
-      if (!userProfile) {
-        router.push("/auth")
+      if (!userProfile?.family_id) {
+        router.push("/onboarding")
         return
       }
       setProfile(userProfile)
@@ -77,7 +78,7 @@ export default function NewExpensePage() {
     try {
       const { data, error } = await supabase
         .from("categories")
-        .select("*")
+        .select("id, name, classification")
         .eq("family_id", profile.family_id)
         .order("name")
 
@@ -92,139 +93,80 @@ export default function NewExpensePage() {
     }
   }
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setSelectedFile(file)
-      const url = URL.createObjectURL(file)
-      setPreviewUrl(url)
-    }
+  const calculateInstallmentAmount = () => {
+    if (!totalAmount || !installments) return 0
+    return Number.parseFloat(totalAmount) / Number.parseInt(installments)
   }
 
-  const removeFile = () => {
-    setSelectedFile(null)
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl)
-      setPreviewUrl(null)
-    }
-  }
-
-  const uploadReceipt = async (file: File): Promise<string | null> => {
-    try {
-      const fileExt = file.name.split(".").pop()
-      const fileName = `${Date.now()}.${fileExt}`
-      const filePath = `${profile.id}/${fileName}`
-
-      const { error: uploadError } = await supabase.storage.from("receipts").upload(filePath, file)
-
-      if (uploadError) throw uploadError
-
-      const { data } = supabase.storage.from("receipts").getPublicUrl(filePath)
-
-      return data.publicUrl
-    } catch (error) {
-      console.error("Error uploading file:", error)
-      return null
-    }
-  }
-
-  const createInstallments = async (parentExpenseId: string, formData: any) => {
-    const installments = []
-    const baseDate = new Date(formData.date)
-
-    for (let i = 2; i <= totalInstallments; i++) {
-      const installmentDate = new Date(baseDate)
-      installmentDate.setMonth(installmentDate.getMonth() + (i - 1))
-
-      installments.push({
-        amount: installmentValue,
-        description: `${formData.description} (${i}/${totalInstallments})`,
-        date: installmentDate.toISOString().split("T")[0],
-        category_id: formData.categoryId,
-        family_id: profile.family_id,
-        user_id: profile.id,
-        receipt_url: null,
-        is_installment: true,
-        installment_number: i,
-        total_installments: totalInstallments,
-        installment_value: installmentValue,
-        parent_expense_id: parentExpenseId,
-      })
-    }
-
-    if (installments.length > 0) {
-      const { error } = await supabase.from("expenses").insert(installments)
-      if (error) throw error
-    }
-  }
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!profile?.family_id) return
+
     setIsLoading(true)
 
-    const formData = new FormData(e.currentTarget)
-    const amount = Number.parseFloat(formData.get("amount") as string)
-    const description = formData.get("description") as string
-    const date = formData.get("date") as string
-    const categoryId = formData.get("category") as string
-
     try {
-      let receiptUrl: string | null = null
+      let expenseAmount = Number.parseFloat(formData.amount)
 
-      if (selectedFile) {
-        receiptUrl = await uploadReceipt(selectedFile)
+      // For installments, use the calculated installment amount
+      if (isInstallment && totalAmount) {
+        expenseAmount = calculateInstallmentAmount()
       }
 
-      // Calcular o valor correto baseado no tipo de gasto
-      let finalAmount = amount
-      let finalDescription = description
-
-      if (isInstallment) {
-        finalAmount = installmentValue
-        finalDescription = `${description} (1/${totalInstallments})`
-      }
-
-      // Criar o gasto principal
       const expenseData = {
-        amount: finalAmount,
-        description: finalDescription,
-        date,
-        category_id: categoryId,
+        description: formData.description,
+        amount: expenseAmount,
+        category_id: formData.category_id,
+        date: formData.date,
         family_id: profile.family_id,
-        user_id: profile.id,
-        receipt_url: receiptUrl,
+        user_id: user?.id,
         is_recurring: isRecurring,
-        recurrence_type: isRecurring ? recurrenceType : null,
+        recurrence_type: isRecurring ? formData.recurrence_type : null,
         is_installment: isInstallment,
         installment_number: isInstallment ? 1 : null,
-        total_installments: isInstallment ? totalInstallments : null,
-        installment_value: isInstallment ? installmentValue : null,
-        parent_expense_id: null,
+        total_installments: isInstallment ? Number.parseInt(installments) : null,
       }
 
-      const { data: expense, error } = await supabase.from("expenses").insert(expenseData).select().single()
+      // Create the first expense
+      const { data: firstExpense, error: firstError } = await supabase
+        .from("expenses")
+        .insert([expenseData])
+        .select()
+        .single()
 
-      if (error) throw error
+      if (firstError) throw firstError
 
-      // Se for parcelado, criar as parcelas futuras
-      if (isInstallment && totalInstallments > 1) {
-        await createInstallments(expense.id, {
-          description,
-          date,
-          categoryId,
-        })
+      // If it's an installment, create the remaining installments
+      if (isInstallment && Number.parseInt(installments) > 1) {
+        const remainingInstallments = []
+        const baseDate = new Date(formData.date)
+
+        for (let i = 2; i <= Number.parseInt(installments); i++) {
+          const installmentDate = new Date(baseDate)
+          installmentDate.setMonth(installmentDate.getMonth() + (i - 1))
+
+          remainingInstallments.push({
+            ...expenseData,
+            date: installmentDate.toISOString().split("T")[0],
+            installment_number: i,
+            parent_expense_id: firstExpense.id,
+          })
+        }
+
+        const { error: installmentsError } = await supabase.from("expenses").insert(remainingInstallments)
+
+        if (installmentsError) throw installmentsError
       }
 
       toast({
         title: "Gasto adicionado com sucesso!",
         description: isInstallment
-          ? `Gasto parcelado criado com ${totalInstallments} parcelas de R$ ${installmentValue.toFixed(2)}`
+          ? `Criadas ${installments} parcelas de R$ ${expenseAmount.toFixed(2)}`
           : isRecurring
             ? "Gasto recorrente configurado"
-            : "O gasto foi registrado na sua conta familiar.",
+            : "Gasto registrado",
       })
 
-      router.push("/dashboard")
+      router.push("/expenses")
     } catch (error: any) {
       toast({
         title: "Erro ao adicionar gasto",
@@ -236,124 +178,177 @@ export default function NewExpensePage() {
     }
   }
 
-  const handleAmountChange = (value: string) => {
-    const amount = Number.parseFloat(value) || 0
-    if (isInstallment && totalInstallments > 0) {
-      setInstallmentValue(amount / totalInstallments)
-    }
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    )
   }
 
-  const handleInstallmentsChange = (value: string) => {
-    const installments = Number.parseInt(value) || 1
-    setTotalInstallments(installments)
-
-    const amountInput = document.querySelector('input[name="amount"]') as HTMLInputElement
-    const totalAmount = Number.parseFloat(amountInput?.value) || 0
-
-    if (totalAmount > 0) {
-      setInstallmentValue(totalAmount / installments)
-    }
+  if (!user || !profile) {
+    return null
   }
-
-  const today = new Date().toISOString().split("T")[0]
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => router.back()}>
-            <ArrowLeft className="w-4 h-4" />
+          <Button variant="outline" size="icon" onClick={() => router.back()}>
+            <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Novo Gasto</h1>
-            <p className="text-gray-600">Registre um novo gasto familiar</p>
+            <h1 className="text-2xl font-bold text-gray-900">Novo Gasto</h1>
+            <p className="text-gray-600">Adicione um novo gasto à sua família</p>
           </div>
         </div>
 
+        {/* Form */}
         <Card>
           <CardHeader>
-            <CardTitle>Informações do Gasto</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5" />
+              Informações do Gasto
+            </CardTitle>
             <CardDescription>Preencha os dados do gasto que deseja registrar</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="amount">{isInstallment ? "Valor Total (R$)" : "Valor (R$)"}</Label>
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="description">Descrição</Label>
                   <Input
-                    id="amount"
-                    name="amount"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0,00"
-                    onChange={(e) => handleAmountChange(e.target.value)}
+                    id="description"
+                    placeholder="Ex: Supermercado, Gasolina, Netflix..."
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     required
                   />
-                  {isInstallment && installmentValue > 0 && (
-                    <p className="text-sm text-gray-600">Valor por parcela: R$ {installmentValue.toFixed(2)}</p>
-                  )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="date">Data</Label>
-                  <Input id="date" name="date" type="date" defaultValue={today} required />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="category">Categoria</Label>
+                    <Select
+                      value={formData.category_id}
+                      onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma categoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name} ({category.classification})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="date">Data</Label>
+                    <Input
+                      id="date"
+                      type="date"
+                      value={formData.date}
+                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                      required
+                    />
+                  </div>
                 </div>
+
+                {/* Amount Section */}
+                {!isInstallment ? (
+                  <div>
+                    <Label htmlFor="amount">Valor (R$)</Label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      step="0.01"
+                      placeholder="0,00"
+                      value={formData.amount}
+                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                      required
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="totalAmount">Valor Total (R$)</Label>
+                      <Input
+                        id="totalAmount"
+                        type="number"
+                        step="0.01"
+                        placeholder="0,00"
+                        value={totalAmount}
+                        onChange={(e) => setTotalAmount(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="installments">Número de Parcelas</Label>
+                      <Select value={installments} onValueChange={setInstallments}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
+                            <SelectItem key={num} value={num.toString()}>
+                              {num}x
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {totalAmount && installments && (
+                      <div className="p-3 bg-blue-50 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                          <strong>Valor por parcela:</strong> R$ {calculateInstallmentAmount().toFixed(2)}
+                        </p>
+                        <p className="text-xs text-blue-600 mt-1">
+                          Apenas este valor será contabilizado no orçamento mensal
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="category">Categoria</Label>
-                <Select name="category" required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name} ({category.classification})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Advanced Options */}
+              <div className="space-y-4 border-t pt-6">
+                <h3 className="text-lg font-medium text-gray-900">Opções Avançadas</h3>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
-                <Textarea id="description" name="description" placeholder="Descreva o gasto (opcional)" rows={3} />
-              </div>
-
-              {/* Opções de Recorrência e Parcelamento */}
-              <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-medium text-gray-900">Opções Avançadas</h3>
-
-                {/* Gasto Recorrente */}
+                {/* Recurring Option */}
                 <div className="flex items-start space-x-3">
                   <Checkbox
                     id="recurring"
                     checked={isRecurring}
                     onCheckedChange={(checked) => {
                       setIsRecurring(checked as boolean)
-                      if (checked) {
-                        setIsInstallment(false)
-                      }
+                      if (checked) setIsInstallment(false)
                     }}
                   />
                   <div className="space-y-2 flex-1">
-                    <div className="flex items-center space-x-2">
-                      <Repeat className="w-4 h-4 text-blue-600" />
-                      <Label htmlFor="recurring" className="text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="recurring" className="flex items-center gap-2 cursor-pointer">
+                        <Repeat className="h-4 w-4 text-green-600" />
                         Gasto Recorrente
                       </Label>
                     </div>
                     <p className="text-sm text-gray-600">
-                      Para assinaturas, mensalidades e outros gastos que se repetem
+                      Para gastos que se repetem regularmente (ex: assinaturas, mensalidades)
                     </p>
-
                     {isRecurring && (
-                      <Select value={recurrenceType} onValueChange={setRecurrenceType} required>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Frequência da recorrência" />
+                      <Select
+                        value={formData.recurrence_type}
+                        onValueChange={(value) => setFormData({ ...formData, recurrence_type: value })}
+                      >
+                        <SelectTrigger className="w-48">
+                          <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="monthly">Mensal</SelectItem>
@@ -365,7 +360,7 @@ export default function NewExpensePage() {
                   </div>
                 </div>
 
-                {/* Gasto Parcelado */}
+                {/* Installment Option */}
                 <div className="flex items-start space-x-3">
                   <Checkbox
                     id="installment"
@@ -374,114 +369,29 @@ export default function NewExpensePage() {
                       setIsInstallment(checked as boolean)
                       if (checked) {
                         setIsRecurring(false)
-                        setRecurrenceType("")
+                        setFormData({ ...formData, amount: "" })
+                      } else {
+                        setTotalAmount("")
+                        setInstallments("1")
                       }
                     }}
                   />
                   <div className="space-y-2 flex-1">
-                    <div className="flex items-center space-x-2">
-                      <CreditCard className="w-4 h-4 text-green-600" />
-                      <Label htmlFor="installment" className="text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="installment" className="flex items-center gap-2 cursor-pointer">
+                        <CreditCard className="h-4 w-4 text-blue-600" />
                         Gasto Parcelado
                       </Label>
                     </div>
                     <p className="text-sm text-gray-600">
                       Para compras parceladas no cartão de crédito ou financiamentos
                     </p>
-
-                    {isInstallment && (
-                      <div className="grid grid-cols-1 gap-3">
-                        <div>
-                          <Label htmlFor="installments" className="text-sm">
-                            Número de Parcelas
-                          </Label>
-                          <Select
-                            value={totalInstallments.toString()}
-                            onValueChange={handleInstallmentsChange}
-                            required
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
-                                <SelectItem key={num} value={num.toString()}>
-                                  {num}x
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        {installmentValue > 0 && (
-                          <div className="p-3 bg-blue-50 rounded-lg">
-                            <p className="text-sm text-blue-800">
-                              <strong>Resumo do Parcelamento:</strong>
-                            </p>
-                            <p className="text-sm text-blue-700">
-                              {totalInstallments}x de R$ {installmentValue.toFixed(2)}
-                            </p>
-                            <p className="text-xs text-blue-600 mt-1">
-                              Apenas o valor da parcela (R$ {installmentValue.toFixed(2)}) será contabilizado no
-                              orçamento de cada mês
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
 
-              {/* File Upload */}
-              <div className="space-y-2">
-                <Label>Nota Fiscal (opcional)</Label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-                  {previewUrl ? (
-                    <div className="space-y-4">
-                      <div className="relative">
-                        <img
-                          src={previewUrl || "/placeholder.svg"}
-                          alt="Preview da nota fiscal"
-                          className="max-w-full h-48 object-contain mx-auto rounded"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          className="absolute top-2 right-2"
-                          onClick={removeFile}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <p className="text-sm text-gray-600 text-center">{selectedFile?.name}</p>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                      <div className="mt-4">
-                        <label htmlFor="receipt" className="cursor-pointer">
-                          <span className="mt-2 block text-sm font-medium text-gray-900">
-                            Clique para fazer upload da nota fiscal
-                          </span>
-                          <span className="mt-1 block text-sm text-gray-500">PNG, JPG, GIF até 10MB</span>
-                        </label>
-                        <input
-                          id="receipt"
-                          name="receipt"
-                          type="file"
-                          className="sr-only"
-                          accept="image/*"
-                          onChange={handleFileSelect}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex gap-4">
+              {/* Submit Button */}
+              <div className="flex gap-4 pt-6">
                 <Button type="button" variant="outline" onClick={() => router.back()} className="flex-1">
                   Cancelar
                 </Button>
