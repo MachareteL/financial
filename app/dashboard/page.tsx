@@ -6,11 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button"
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { Plus, TrendingUp, AlertTriangle, LogOut, Users, Tag, Target, DollarSign } from "lucide-react"
-import { supabase } from "@/lib/supabase"
 import { getUserProfile, signOut } from "@/lib/auth"
 import { useRouter } from "next/navigation"
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/components/auth-provider"
+import { getDashboardDataUseCase } from "@/application/services/dependency-injection"
 
 interface ExpenseData {
   category: string
@@ -47,21 +47,18 @@ export default function DashboardPage() {
   const [monthlyIncome, setMonthlyIncome] = useState(0)
   const router = useRouter()
 
-  // Handle authentication redirect
   useEffect(() => {
     if (!loading && !user) {
       router.push("/auth")
     }
   }, [user, loading, router])
 
-  // Load profile when user is available
   useEffect(() => {
     if (user && !profile && !profileLoading) {
       loadProfile()
     }
   }, [user])
 
-  // Load expense data when profile changes
   useEffect(() => {
     if (profile) {
       loadExpenseData()
@@ -73,18 +70,18 @@ export default function DashboardPage() {
 
     setProfileLoading(true)
     try {
-      console.log("Loading profile for user:", user.email)
+      console.log("[v0] Loading profile for user:", user.email)
       const userProfile = await getUserProfile()
-      console.log("Profile loaded:", userProfile)
+      console.log("[v0] Profile loaded:", userProfile)
 
       if (!userProfile) {
-        console.log("No profile found, redirecting to auth")
+        console.log("[v0] No profile found, redirecting to auth")
         router.push("/auth")
         return
       }
 
-      if (!userProfile.family_id) {
-        console.log("No family ID found, redirecting to onboarding")
+      if (!userProfile.familyId) {
+        console.log("[v0] No family ID found, redirecting to onboarding")
         router.push("/onboarding")
         return
       }
@@ -113,79 +110,21 @@ export default function DashboardPage() {
     }
   }
 
-  const calculateMonthlyIncome = (incomes: any[]) => {
-    return incomes
-      .filter((income) => {
-        if (income.type === "one_time") {
-          const incomeDate = new Date(income.date)
-          return incomeDate.getMonth() + 1 === selectedMonth && incomeDate.getFullYear() === selectedYear
-        }
-        return income.type === "recurring" && income.frequency === "monthly"
-      })
-      .reduce((total, income) => total + Number.parseFloat(income.amount), 0)
-  }
-
   const loadExpenseData = async () => {
-    if (!profile?.family_id) {
+    if (!profile?.familyId) {
+      console.log("[v0] No familyId in profile, redirecting to onboarding")
       router.push("/onboarding")
       return
     }
 
     try {
-      const startDate = new Date(selectedYear, selectedMonth - 1, 1)
-      const endDate = new Date(selectedYear, selectedMonth, 0)
+      const dashboardData = await getDashboardDataUseCase.execute(profile.familyId, selectedMonth, selectedYear)
 
-      // Load expenses
-      const { data: expenses, error: expensesError } = await supabase
-        .from("expenses")
-        .select(`
-          amount,
-          categories (name, classification)
-        `)
-        .eq("family_id", profile.family_id)
-        .gte("date", startDate.toISOString().split("T")[0])
-        .lte("date", endDate.toISOString().split("T")[0])
-
-      if (expensesError) throw expensesError
-
-      // Load incomes for the family (all incomes, we'll filter by date in JS)
-      const { data: incomes, error: incomesError } = await supabase
-        .from("incomes")
-        .select("amount, type, frequency, date")
-        .eq("family_id", profile.family_id)
-
-      if (incomesError) throw incomesError
-
-      // Calculate total income for the month using the same logic as budget page
-      const totalIncome = calculateMonthlyIncome(incomes || [])
-      setMonthlyIncome(totalIncome)
-
-      // Process expense data for charts
-      const categoryTotals: { [key: string]: { amount: number; classification: string } } = {}
-      const classificationTotals = { necessidades: 0, desejos: 0, poupanca: 0, total: 0 }
-
-      expenses?.forEach((expense: any) => {
-        const categoryName = expense.categories.name
-        const classification = expense.categories.classification
-        const amount = Number.parseFloat(expense.amount)
-
-        if (!categoryTotals[categoryName]) {
-          categoryTotals[categoryName] = { amount: 0, classification }
-        }
-        categoryTotals[categoryName].amount += amount
-        classificationTotals[classification as keyof typeof classificationTotals] += amount
-        classificationTotals.total += amount
-      })
-
-      const chartData = Object.entries(categoryTotals).map(([category, data]) => ({
-        category,
-        amount: data.amount,
-        classification: data.classification,
-      }))
-
-      setExpenseData(chartData)
-      setMonthlyData(classificationTotals)
+      setExpenseData(dashboardData.expenses)
+      setMonthlyData(dashboardData.monthlyData)
+      setMonthlyIncome(dashboardData.monthlyIncome)
     } catch (error: any) {
+      console.error("[v0] Error loading dashboard data:", error)
       toast({
         title: "Erro ao carregar dados",
         description: error.message,
@@ -205,7 +144,6 @@ export default function DashboardPage() {
     const necessidadesPercent = getClassificationPercentage("necessidades")
     const desejosPercent = getClassificationPercentage("desejos")
 
-    // Calcular quanto deveria ser poupado (receita - gastos)
     const actualSavings = monthlyIncome - monthlyData.total
     const actualSavingsPercent = (actualSavings / monthlyIncome) * 100
 
@@ -230,7 +168,6 @@ export default function DashboardPage() {
     return null
   }
 
-  // Show loading while auth is loading
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -242,7 +179,6 @@ export default function DashboardPage() {
     )
   }
 
-  // Show loading while profile is loading
   if (profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -254,7 +190,6 @@ export default function DashboardPage() {
     )
   }
 
-  // Show loading if no profile yet but user exists
   if (user && !profile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -266,7 +201,6 @@ export default function DashboardPage() {
     )
   }
 
-  // If no user, the redirect useEffect will handle it
   if (!user) {
     return null
   }
@@ -297,7 +231,6 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
@@ -344,7 +277,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Alert */}
         {alert && (
           <Card
             className={`border-l-4 ${alert.type === "warning" ? "border-l-orange-500 bg-orange-50" : "border-l-blue-500 bg-blue-50"}`}
@@ -362,7 +294,6 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -437,9 +368,7 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Pie Chart - 50/30/20 Distribution */}
           <Card>
             <CardHeader>
               <CardTitle>Distribuição 50/30/20</CardTitle>
@@ -481,7 +410,6 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Bar Chart - Categories */}
           <Card>
             <CardHeader>
               <CardTitle>Gastos por Categoria</CardTitle>
@@ -517,7 +445,6 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Quick Actions */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <Button onClick={() => router.push("/expenses/new")} className="h-16">
             <Plus className="w-5 h-5 mr-2" />

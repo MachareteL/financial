@@ -32,6 +32,7 @@ import { DeleteIncomeUseCase } from "../use-cases/budget/delete-income.use-case"
 import { GetBudgetUseCase } from "../use-cases/budget/get-budget.use-case"
 import { SaveBudgetUseCase } from "../use-cases/budget/save-budget.use-case"
 import { GetMonthlyExpensesUseCase } from "../use-cases/budget/get-monthly-expenses.use-case"
+import { GetDashboardDataUseCase } from "../use-cases/dashboard/get-dashboard-data.use-case"
 
 // Repositories (Singleton instances)
 const authRepository = new AuthRepository()
@@ -74,6 +75,7 @@ export const deleteIncomeUseCase = new DeleteIncomeUseCase(incomeRepository)
 export const getBudgetUseCase = new GetBudgetUseCase(supabaseBudgetRepository)
 export const saveBudgetUseCase = new SaveBudgetUseCase(supabaseBudgetRepository)
 export const getMonthlyExpensesUseCase = new GetMonthlyExpensesUseCase(expenseRepository)
+export const getDashboardDataUseCase = new GetDashboardDataUseCase(expenseRepository, incomeRepository)
 
 // Export repositories for direct access when needed
 export {
