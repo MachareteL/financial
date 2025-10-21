@@ -23,7 +23,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Edit, Trash2, ArrowLeft, DollarSign, TrendingUp, Target, Calendar } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/components/auth-provider"
-import { DependencyInjection } from "@/application/services/dependency-injection"
+import {
+  getCurrentUserUseCase,
+  getIncomesUseCase,
+  createIncomeUseCase,
+  updateIncomeUseCase,
+  deleteIncomeUseCase,
+  getBudgetUseCase,
+  saveBudgetUseCase,
+  getMonthlyExpensesUseCase,
+} from "@/application/services/dependency-injection"
 
 interface Income {
   id: string
@@ -93,8 +102,6 @@ export default function BudgetPage() {
 
   const loadProfile = async () => {
     try {
-      const di = DependencyInjection.getInstance()
-      const getCurrentUserUseCase = di.getCurrentUserUseCase()
       const userProfile = await getCurrentUserUseCase.execute()
 
       if (!userProfile) {
@@ -115,8 +122,6 @@ export default function BudgetPage() {
     }
 
     try {
-      const di = DependencyInjection.getInstance()
-      const getIncomesUseCase = di.getIncomesUseCase()
       const incomesData = await getIncomesUseCase.execute({ familyId: profile.familyId })
 
       const incomesWithStringDates = incomesData.map((income) => ({
@@ -140,8 +145,6 @@ export default function BudgetPage() {
     if (!profile?.familyId) return
 
     try {
-      const di = DependencyInjection.getInstance()
-      const getBudgetUseCase = di.getBudgetUseCase()
       const budgetData = await getBudgetUseCase.execute({
         familyId: profile.familyId,
         month: selectedMonth,
@@ -164,8 +167,6 @@ export default function BudgetPage() {
     if (!profile?.familyId) return
 
     try {
-      const di = DependencyInjection.getInstance()
-      const getMonthlyExpensesUseCase = di.getMonthlyExpensesUseCase()
       const expenses = await getMonthlyExpensesUseCase.execute({
         familyId: profile.familyId,
         month: selectedMonth,
@@ -196,10 +197,7 @@ export default function BudgetPage() {
     const date = formData.get("date") as string
 
     try {
-      const di = DependencyInjection.getInstance()
-
       if (editingIncome) {
-        const updateIncomeUseCase = di.updateIncomeUseCase()
         await updateIncomeUseCase.execute({
           id: editingIncome.id,
           amount,
@@ -210,7 +208,6 @@ export default function BudgetPage() {
         })
         toast({ title: "Receita atualizada com sucesso!" })
       } else {
-        const createIncomeUseCase = di.createIncomeUseCase()
         await createIncomeUseCase.execute({
           amount,
           description,
@@ -248,9 +245,6 @@ export default function BudgetPage() {
     const poupancaBudget = totalIncome * 0.2
 
     try {
-      const di = DependencyInjection.getInstance()
-      const saveBudgetUseCase = di.saveBudgetUseCase()
-
       await saveBudgetUseCase.execute({
         familyId: profile.familyId,
         month: selectedMonth,
@@ -278,8 +272,6 @@ export default function BudgetPage() {
 
   const deleteIncome = async (id: string) => {
     try {
-      const di = DependencyInjection.getInstance()
-      const deleteIncomeUseCase = di.deleteIncomeUseCase()
       await deleteIncomeUseCase.execute({ id })
 
       toast({ title: "Receita excluída com sucesso!" })
