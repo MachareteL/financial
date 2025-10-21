@@ -29,8 +29,7 @@ export class GetDashboardDataUseCase {
     // Get expenses for the month
     const expenses = await this.expenseRepository.getExpensesByDateRange(familyId, startDate, endDate)
 
-    // Get all incomes for the family
-    const allIncomes = await this.incomeRepository.getIncomes(familyId)
+    const allIncomes = await this.incomeRepository.findByFamilyId(familyId)
 
     // Calculate monthly income
     const monthlyIncome = this.calculateMonthlyIncome(allIncomes, month, year)
