@@ -11,38 +11,21 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Edit, Trash2, Plus, Receipt, Eye, Search, Filter, Calendar, Tag } from "lucide-react"
-import { supabase } from "@/lib/supabase"
+import {
+  getExpensesUseCase,
+  getCategoriesUseCase,
+  deleteExpenseUseCase,
+} from "@/application/services/dependency-injection"
 import { getUserProfile } from "@/lib/auth"
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/components/auth-provider"
-
-interface Expense {
-  id: string
-  amount: number
-  description: string
-  date: string
-  receipt_url?: string
-  created_at: string
-  categories: {
-    id: string
-    name: string
-    classification: string
-  }
-  profiles: {
-    name: string
-  }
-}
-
-interface Category {
-  id: string
-  name: string
-  classification: string
-}
+import type { ExpenseWithDetails } from "@/domain/entities/expense.entity"
+import type { Category } from "@/domain/entities/expense.entity"
 
 export default function ExpensesPage() {
   const { user, loading } = useAuth()
-  const [expenses, setExpenses] = useState<Expense[]>([])
-  const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>([])
+  const [expenses, setExpenses] = useState<ExpenseWithDetails[]>([])
+  const [filteredExpenses, setFilteredExpenses] = useState<ExpenseWithDetails[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [profile, setProfile] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -95,28 +78,12 @@ export default function ExpensesPage() {
   }
 
   const loadExpenses = async () => {
-    if (!profile?.family_id) return
+    if (!profile?.familyId) return
 
     setIsLoading(true)
     try {
-      const { data, error } = await supabase
-        .from("expenses")
-        .select(`
-          id,
-          amount,
-          description,
-          date,
-          receipt_url,
-          created_at,
-          categories (id, name, classification),
-          profiles (name)
-        `)
-        .eq("family_id", profile.family_id)
-        .order("date", { ascending: false })
-
-      if (error) throw error
-
-      setExpenses(data || [])
+      const data = await getExpensesUseCase.execute({ familyId: profile.familyId })
+      setExpenses(data)
     } catch (error: any) {
       toast({
         title: "Erro ao carregar gastos",
@@ -129,17 +96,11 @@ export default function ExpensesPage() {
   }
 
   const loadCategories = async () => {
-    if (!profile?.family_id) return
+    if (!profile?.familyId) return
 
     try {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("id, name, classification")
-        .eq("family_id", profile.family_id)
-        .order("name")
-
-      if (error) throw error
-      setCategories(data || [])
+      const data = await getCategoriesUseCase.execute({ familyId: profile.familyId })
+      setCategories(data)
     } catch (error: any) {
       console.error("Error loading categories:", error)
     }
@@ -153,14 +114,14 @@ export default function ExpensesPage() {
       filtered = filtered.filter(
         (expense) =>
           expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          expense.categories.name.toLowerCase().includes(searchTerm.toLowerCase()),
+          expense.category.name.toLowerCase().includes(searchTerm.toLowerCase()),
       )
     }
 
     // Filtro por mês
     if (selectedMonth !== "all") {
       filtered = filtered.filter((expense) => {
-        const expenseMonth = new Date(expense.date).getMonth() + 1
+        const expenseMonth = expense.date.getMonth() + 1
         return expenseMonth.toString() === selectedMonth
       })
     }
@@ -168,28 +129,28 @@ export default function ExpensesPage() {
     // Filtro por ano
     if (selectedYear !== "all") {
       filtered = filtered.filter((expense) => {
-        const expenseYear = new Date(expense.date).getFullYear()
+        const expenseYear = expense.date.getFullYear()
         return expenseYear.toString() === selectedYear
       })
     }
 
     // Filtro por categoria
     if (selectedCategory !== "all") {
-      filtered = filtered.filter((expense) => expense.categories.id === selectedCategory)
+      filtered = filtered.filter((expense) => expense.category.id === selectedCategory)
     }
 
     // Filtro por classificação
     if (selectedClassification !== "all") {
-      filtered = filtered.filter((expense) => expense.categories.classification === selectedClassification)
+      filtered = filtered.filter((expense) => expense.category.classification === selectedClassification)
     }
 
     // Ordenação
     switch (sortBy) {
       case "date-desc":
-        filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        filtered.sort((a, b) => b.date.getTime() - a.date.getTime())
         break
       case "date-asc":
-        filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        filtered.sort((a, b) => a.date.getTime() - b.date.getTime())
         break
       case "amount-desc":
         filtered.sort((a, b) => b.amount - a.amount)
@@ -198,7 +159,7 @@ export default function ExpensesPage() {
         filtered.sort((a, b) => a.amount - b.amount)
         break
       case "category":
-        filtered.sort((a, b) => a.categories.name.localeCompare(b.categories.name))
+        filtered.sort((a, b) => a.category.name.localeCompare(b.category.name))
         break
     }
 
@@ -209,10 +170,7 @@ export default function ExpensesPage() {
     if (!confirm("Tem certeza que deseja excluir este gasto?")) return
 
     try {
-      const { error } = await supabase.from("expenses").delete().eq("id", id)
-
-      if (error) throw error
-
+      await deleteExpenseUseCase.execute({ expenseId: id, familyId: profile.familyId })
       setExpenses(expenses.filter((expense) => expense.id !== id))
       toast({
         title: "Gasto excluído",
@@ -249,8 +207,8 @@ export default function ExpensesPage() {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR")
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString("pt-BR")
   }
 
   const getMonths = () => {
@@ -484,26 +442,26 @@ export default function ExpensesPage() {
                         <CardTitle className="text-lg">
                           R$ {expense.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                         </CardTitle>
-                        <Badge className={getClassificationColor(expense.categories.classification)}>
-                          {expense.categories.classification}
+                        <Badge className={getClassificationColor(expense.category.classification)}>
+                          {expense.category.classification}
                         </Badge>
                       </div>
                       <CardDescription>{expense.description}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="flex items-center justify-between text-sm text-gray-600">
-                        <span>Categoria: {expense.categories.name}</span>
+                        <span>Categoria: {expense.category.name}</span>
                         <span>{formatDate(expense.date)}</span>
                       </div>
-                      <div className="text-sm text-gray-600">Adicionado por: {expense.profiles.name}</div>
-                      {expense.receipt_url && (
+                      <div className="text-sm text-gray-600">Adicionado por: {expense.user.name}</div>
+                      {expense.receiptUrl && (
                         <div className="flex items-center gap-2">
                           <Dialog>
                             <DialogTrigger asChild>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setSelectedReceipt(expense.receipt_url!)}
+                                onClick={() => setSelectedReceipt(expense.receiptUrl!)}
                               >
                                 <Eye className="w-4 h-4 mr-1" />
                                 Ver Nota
@@ -515,7 +473,7 @@ export default function ExpensesPage() {
                               </DialogHeader>
                               <div className="flex justify-center">
                                 <img
-                                  src={expense.receipt_url || "/placeholder.svg"}
+                                  src={expense.receiptUrl || "/placeholder.svg"}
                                   alt="Nota fiscal"
                                   className="max-w-full max-h-96 object-contain"
                                 />
@@ -602,18 +560,18 @@ export default function ExpensesPage() {
                             </td>
                             <td className="p-3">
                               <div className="flex flex-col gap-1">
-                                <span className="font-medium">{expense.categories.name}</span>
+                                <span className="font-medium">{expense.category.name}</span>
                                 <Badge
-                                  className={`${getClassificationColor(expense.categories.classification)} text-xs w-fit`}
+                                  className={`${getClassificationColor(expense.category.classification)} text-xs w-fit`}
                                 >
-                                  {expense.categories.classification}
+                                  {expense.category.classification}
                                 </Badge>
                               </div>
                             </td>
                             <td className="p-3 max-w-xs truncate">{expense.description}</td>
-                            <td className="p-3">{expense.profiles.name}</td>
+                            <td className="p-3">{expense.user.name}</td>
                             <td className="p-3">
-                              {expense.receipt_url ? (
+                              {expense.receiptUrl ? (
                                 <Dialog>
                                   <DialogTrigger asChild>
                                     <Button variant="outline" size="sm">
@@ -626,7 +584,7 @@ export default function ExpensesPage() {
                                     </DialogHeader>
                                     <div className="flex justify-center">
                                       <img
-                                        src={expense.receipt_url || "/placeholder.svg"}
+                                        src={expense.receiptUrl || "/placeholder.svg"}
                                         alt="Nota fiscal"
                                         className="max-w-full max-h-96 object-contain"
                                       />
@@ -667,10 +625,10 @@ export default function ExpensesPage() {
               {/* Total por classificação */}
               {["necessidades", "desejos", "poupanca"].map((classification) => {
                 const total = filteredExpenses
-                  .filter((expense) => expense.categories.classification === classification)
+                  .filter((expense) => expense.category.classification === classification)
                   .reduce((sum, expense) => sum + expense.amount, 0)
                 const count = filteredExpenses.filter(
-                  (expense) => expense.categories.classification === classification,
+                  (expense) => expense.category.classification === classification,
                 ).length
 
                 return (
@@ -710,7 +668,7 @@ export default function ExpensesPage() {
               <CardContent>
                 <div className="space-y-4">
                   {categories.map((category) => {
-                    const categoryExpenses = filteredExpenses.filter((expense) => expense.categories.id === category.id)
+                    const categoryExpenses = filteredExpenses.filter((expense) => expense.category.id === category.id)
                     const total = categoryExpenses.reduce((sum, expense) => sum + expense.amount, 0)
                     const percentage = getTotalAmount() > 0 ? (total / getTotalAmount()) * 100 : 0
 

@@ -11,16 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Plus, Repeat, CreditCard } from "lucide-react"
-import { supabase } from "@/lib/supabase"
+import { createExpenseUseCase, getCategoriesUseCase } from "@/application/services/dependency-injection"
 import { getUserProfile } from "@/lib/auth"
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/components/auth-provider"
-
-interface Category {
-  id: string
-  name: string
-  classification: string
-}
+import type { Category } from "@/domain/entities/expense.entity"
 
 export default function NewExpensePage() {
   const { user, loading } = useAuth()
@@ -61,7 +56,7 @@ export default function NewExpensePage() {
   const loadProfile = async () => {
     try {
       const userProfile = await getUserProfile()
-      if (!userProfile?.family_id) {
+      if (!userProfile?.familyId) {
         router.push("/onboarding")
         return
       }
@@ -73,17 +68,11 @@ export default function NewExpensePage() {
   }
 
   const loadCategories = async () => {
-    if (!profile?.family_id) return
+    if (!profile?.familyId) return
 
     try {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("id, name, classification")
-        .eq("family_id", profile.family_id)
-        .order("name")
-
-      if (error) throw error
-      setCategories(data || [])
+      const data = await getCategoriesUseCase.execute({ familyId: profile.familyId })
+      setCategories(data)
     } catch (error: any) {
       toast({
         title: "Erro ao carregar categorias",
@@ -100,61 +89,51 @@ export default function NewExpensePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!profile?.family_id) return
+    if (!profile?.familyId) return
 
     setIsLoading(true)
 
     try {
       let expenseAmount = Number.parseFloat(formData.amount)
 
-      // For installments, use the calculated installment amount
       if (isInstallment && totalAmount) {
         expenseAmount = calculateInstallmentAmount()
       }
 
-      const expenseData = {
+      await createExpenseUseCase.execute({
         description: formData.description,
         amount: expenseAmount,
-        category_id: formData.category_id,
-        date: formData.date,
-        family_id: profile.family_id,
-        user_id: user?.id,
-        is_recurring: isRecurring,
-        recurrence_type: isRecurring ? formData.recurrence_type : null,
-        is_installment: isInstallment,
-        installment_number: isInstallment ? 1 : null,
-        total_installments: isInstallment ? Number.parseInt(installments) : null,
-      }
+        categoryId: formData.category_id,
+        date: new Date(formData.date),
+        familyId: profile.familyId,
+        userId: user?.id!,
+        isRecurring,
+        recurrenceType: isRecurring ? (formData.recurrence_type as any) : undefined,
+        isInstallment,
+        installmentNumber: isInstallment ? 1 : undefined,
+        totalInstallments: isInstallment ? Number.parseInt(installments) : undefined,
+      })
 
-      // Create the first expense
-      const { data: firstExpense, error: firstError } = await supabase
-        .from("expenses")
-        .insert([expenseData])
-        .select()
-        .single()
-
-      if (firstError) throw firstError
-
-      // If it's an installment, create the remaining installments
       if (isInstallment && Number.parseInt(installments) > 1) {
-        const remainingInstallments = []
         const baseDate = new Date(formData.date)
 
         for (let i = 2; i <= Number.parseInt(installments); i++) {
           const installmentDate = new Date(baseDate)
           installmentDate.setMonth(installmentDate.getMonth() + (i - 1))
 
-          remainingInstallments.push({
-            ...expenseData,
-            date: installmentDate.toISOString().split("T")[0],
-            installment_number: i,
-            parent_expense_id: firstExpense.id,
+          await createExpenseUseCase.execute({
+            description: formData.description,
+            amount: expenseAmount,
+            categoryId: formData.category_id,
+            date: installmentDate,
+            familyId: profile.familyId,
+            userId: user?.id!,
+            isRecurring: false,
+            isInstallment: true,
+            installmentNumber: i,
+            totalInstallments: Number.parseInt(installments),
           })
         }
-
-        const { error: installmentsError } = await supabase.from("expenses").insert(remainingInstallments)
-
-        if (installmentsError) throw installmentsError
       }
 
       toast({
@@ -193,7 +172,6 @@ export default function NewExpensePage() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4" />
@@ -204,7 +182,6 @@ export default function NewExpensePage() {
           </div>
         </div>
 
-        {/* Form */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -215,7 +192,6 @@ export default function NewExpensePage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Basic Information */}
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="description">Descrição</Label>
@@ -261,7 +237,6 @@ export default function NewExpensePage() {
                   </div>
                 </div>
 
-                {/* Amount Section */}
                 {!isInstallment ? (
                   <div>
                     <Label htmlFor="amount">Valor (R$)</Label>
@@ -318,11 +293,9 @@ export default function NewExpensePage() {
                 )}
               </div>
 
-              {/* Advanced Options */}
               <div className="space-y-4 border-t pt-6">
                 <h3 className="text-lg font-medium text-gray-900">Opções Avançadas</h3>
 
-                {/* Recurring Option */}
                 <div className="flex items-start space-x-3">
                   <Checkbox
                     id="recurring"
@@ -360,7 +333,6 @@ export default function NewExpensePage() {
                   </div>
                 </div>
 
-                {/* Installment Option */}
                 <div className="flex items-start space-x-3">
                   <Checkbox
                     id="installment"
@@ -390,7 +362,6 @@ export default function NewExpensePage() {
                 </div>
               </div>
 
-              {/* Submit Button */}
               <div className="flex gap-4 pt-6">
                 <Button type="button" variant="outline" onClick={() => router.back()} className="flex-1">
                   Cancelar

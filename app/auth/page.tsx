@@ -52,7 +52,7 @@ export default function AuthPage() {
     const name = formData.get("name") as string
 
     try {
-      await signUp(email, password, name, "")
+      await signUp(email, password, name)
       toast({
         title: "Conta criada com sucesso!",
         description: "Verifique seu email para confirmar a conta.",
