@@ -21,10 +21,9 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Edit, Trash2, ArrowLeft, DollarSign, TrendingUp, Target, Calendar } from "lucide-react"
-import { supabase } from "@/lib/supabase"
-import { getUserProfile } from "@/lib/auth"
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/components/auth-provider"
+import { DependencyInjection } from "@/application/services/dependency-injection"
 
 interface Income {
   id: string
@@ -33,7 +32,7 @@ interface Income {
   type: "recurring" | "one_time"
   frequency?: "monthly" | "weekly" | "yearly"
   date: string
-  user_id: string
+  userId: string
   userName: string | null
 }
 
@@ -41,10 +40,10 @@ interface Budget {
   id: string
   month: number
   year: number
-  necessidades_budget: number
-  desejos_budget: number
-  poupanca_budget: number
-  total_income: number
+  necessidadesBudget: number
+  desejosBudget: number
+  poupancaBudget: number
+  totalIncome: number
 }
 
 interface MonthlyExpenses {
@@ -94,54 +93,41 @@ export default function BudgetPage() {
 
   const loadProfile = async () => {
     try {
-      const userProfile = await getUserProfile()
+      const di = DependencyInjection.getInstance()
+      const getCurrentUserUseCase = di.getCurrentUserUseCase()
+      const userProfile = await getCurrentUserUseCase.execute()
+
       if (!userProfile) {
         router.push("/auth")
         return
       }
       setProfile(userProfile)
     } catch (error) {
-      console.error("Error loading profile:", error)
+      console.error("[v0] Error loading profile:", error)
       router.push("/auth")
     }
   }
 
   const loadIncomes = async () => {
-    if (!profile?.family_id) return
+    if (!profile?.familyId) {
+      console.log("[v0] No familyId found in profile:", profile)
+      return
+    }
 
     try {
-      // 1) Buscar receitas
-      const { data: incomesData, error: incomesError } = await supabase
-        .from("incomes")
-        .select("id, amount, description, type, frequency, date, user_id")
-        .eq("family_id", profile.family_id)
-        .order("date", { ascending: false })
+      const di = DependencyInjection.getInstance()
+      const getIncomesUseCase = di.getIncomesUseCase()
+      const incomesData = await getIncomesUseCase.execute({ familyId: profile.familyId })
 
-      if (incomesError) throw incomesError
-
-      if (!incomesData || incomesData.length === 0) {
-        setIncomes([])
-        return
-      }
-
-      // 2) Buscar perfis dos usuários que criaram as receitas
-      const userIds = [...new Set(incomesData.map((income) => income.user_id))]
-      const { data: usersData, error: usersError } = await supabase
-        .from("profiles")
-        .select("id, name")
-        .in("id", userIds)
-
-      if (usersError) throw usersError
-
-      // 3) Combinar dados
-      const userNameMap = new Map(usersData.map((user) => [user.id, user.name]))
-      const incomesWithNames = incomesData.map((income) => ({
+      const incomesWithStringDates = incomesData.map((income) => ({
         ...income,
-        userName: userNameMap.get(income.user_id) || null,
+        date: income.date instanceof Date ? income.date.toISOString().split("T")[0] : income.date,
       }))
 
-      setIncomes(incomesWithNames)
+      setIncomes(incomesWithStringDates)
+      console.log("[v0] Loaded incomes:", incomesWithStringDates.length)
     } catch (error: any) {
+      console.error("[v0] Error loading incomes:", error)
       toast({
         title: "Erro ao carregar receitas",
         description: error.message,
@@ -151,20 +137,21 @@ export default function BudgetPage() {
   }
 
   const loadBudget = async () => {
-    if (!profile?.family_id) return
+    if (!profile?.familyId) return
 
     try {
-      const { data, error } = await supabase
-        .from("budgets")
-        .select("*")
-        .eq("family_id", profile.family_id)
-        .eq("month", selectedMonth)
-        .eq("year", selectedYear)
-        .maybeSingle()
+      const di = DependencyInjection.getInstance()
+      const getBudgetUseCase = di.getBudgetUseCase()
+      const budgetData = await getBudgetUseCase.execute({
+        familyId: profile.familyId,
+        month: selectedMonth,
+        year: selectedYear,
+      })
 
-      if (error) throw error
-      setCurrentBudget(data)
+      setCurrentBudget(budgetData)
+      console.log("[v0] Loaded budget:", budgetData)
     } catch (error: any) {
+      console.error("[v0] Error loading budget:", error)
       toast({
         title: "Erro ao carregar orçamento",
         description: error.message,
@@ -174,35 +161,21 @@ export default function BudgetPage() {
   }
 
   const loadMonthlyExpenses = async () => {
-    if (!profile?.family_id) return
+    if (!profile?.familyId) return
 
     try {
-      const startDate = new Date(selectedYear, selectedMonth - 1, 1)
-      const endDate = new Date(selectedYear, selectedMonth, 0)
-
-      const { data: expenses, error } = await supabase
-        .from("expenses")
-        .select(`
-          amount,
-          categories (classification)
-        `)
-        .eq("family_id", profile.family_id)
-        .gte("date", startDate.toISOString().split("T")[0])
-        .lte("date", endDate.toISOString().split("T")[0])
-
-      if (error) throw error
-
-      const totals = { necessidades: 0, desejos: 0, poupanca: 0, total: 0 }
-
-      expenses?.forEach((expense: any) => {
-        const amount = Number.parseFloat(expense.amount)
-        const classification = expense.categories.classification
-        totals[classification as keyof typeof totals] += amount
-        totals.total += amount
+      const di = DependencyInjection.getInstance()
+      const getMonthlyExpensesUseCase = di.getMonthlyExpensesUseCase()
+      const expenses = await getMonthlyExpensesUseCase.execute({
+        familyId: profile.familyId,
+        month: selectedMonth,
+        year: selectedYear,
       })
 
-      setMonthlyExpenses(totals)
+      setMonthlyExpenses(expenses)
+      console.log("[v0] Loaded monthly expenses:", expenses)
     } catch (error: any) {
+      console.error("[v0] Error loading monthly expenses:", error)
       toast({
         title: "Erro ao carregar gastos",
         description: error.message,
@@ -219,27 +192,34 @@ export default function BudgetPage() {
     const amount = Number.parseFloat(formData.get("amount") as string)
     const description = formData.get("description") as string
     const type = formData.get("type") as "recurring" | "one_time"
-    const frequency = formData.get("frequency") as string
+    const frequency = formData.get("frequency") as "monthly" | "weekly" | "yearly" | undefined
     const date = formData.get("date") as string
 
     try {
-      const incomeData = {
-        amount,
-        description,
-        type,
-        frequency: type === "recurring" ? frequency : null,
-        date,
-        family_id: profile.family_id,
-        user_id: profile.id,
-      }
+      const di = DependencyInjection.getInstance()
 
       if (editingIncome) {
-        const { error } = await supabase.from("incomes").update(incomeData).eq("id", editingIncome.id)
-        if (error) throw error
+        const updateIncomeUseCase = di.updateIncomeUseCase()
+        await updateIncomeUseCase.execute({
+          id: editingIncome.id,
+          amount,
+          description,
+          type,
+          frequency: type === "recurring" ? frequency : undefined,
+          date: new Date(date),
+        })
         toast({ title: "Receita atualizada com sucesso!" })
       } else {
-        const { error } = await supabase.from("incomes").insert(incomeData)
-        if (error) throw error
+        const createIncomeUseCase = di.createIncomeUseCase()
+        await createIncomeUseCase.execute({
+          amount,
+          description,
+          type,
+          frequency: type === "recurring" ? frequency : undefined,
+          date: new Date(date),
+          familyId: profile.familyId,
+          userId: profile.id,
+        })
         toast({ title: "Receita adicionada com sucesso!" })
       }
 
@@ -247,6 +227,7 @@ export default function BudgetPage() {
       setEditingIncome(null)
       loadIncomes()
     } catch (error: any) {
+      console.error("[v0] Error saving income:", error)
       toast({
         title: "Erro ao salvar receita",
         description: error.message,
@@ -261,37 +242,30 @@ export default function BudgetPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    // Usar a receita mensal calculada automaticamente
     const totalIncome = monthlyIncome
-
-    // Cálculo automático baseado na regra 50/30/20
     const necessidadesBudget = totalIncome * 0.5
     const desejosBudget = totalIncome * 0.3
     const poupancaBudget = totalIncome * 0.2
 
     try {
-      const budgetData = {
+      const di = DependencyInjection.getInstance()
+      const saveBudgetUseCase = di.saveBudgetUseCase()
+
+      await saveBudgetUseCase.execute({
+        familyId: profile.familyId,
         month: selectedMonth,
         year: selectedYear,
-        total_income: totalIncome,
-        necessidades_budget: necessidadesBudget,
-        desejos_budget: desejosBudget,
-        poupanca_budget: poupancaBudget,
-        family_id: profile.family_id,
-      }
-
-      if (currentBudget) {
-        const { error } = await supabase.from("budgets").update(budgetData).eq("id", currentBudget.id)
-        if (error) throw error
-      } else {
-        const { error } = await supabase.from("budgets").insert(budgetData)
-        if (error) throw error
-      }
+        totalIncome,
+        necessidadesBudget,
+        desejosBudget,
+        poupancaBudget,
+      })
 
       toast({ title: "Orçamento salvo com sucesso!" })
       setIsBudgetDialogOpen(false)
       loadBudget()
     } catch (error: any) {
+      console.error("[v0] Error saving budget:", error)
       toast({
         title: "Erro ao salvar orçamento",
         description: error.message,
@@ -304,11 +278,14 @@ export default function BudgetPage() {
 
   const deleteIncome = async (id: string) => {
     try {
-      const { error } = await supabase.from("incomes").delete().eq("id", id)
-      if (error) throw error
+      const di = DependencyInjection.getInstance()
+      const deleteIncomeUseCase = di.deleteIncomeUseCase()
+      await deleteIncomeUseCase.execute({ id })
+
       toast({ title: "Receita excluída com sucesso!" })
       loadIncomes()
     } catch (error: any) {
+      console.error("[v0] Error deleting income:", error)
       toast({
         title: "Erro ao excluir receita",
         description: error.message,
@@ -443,9 +420,9 @@ export default function BudgetPage() {
                   <div className="text-2xl font-bold">
                     R${" "}
                     {(
-                      (currentBudget?.necessidades_budget || 0) +
-                      (currentBudget?.desejos_budget || 0) +
-                      (currentBudget?.poupanca_budget || 0)
+                      (currentBudget?.necessidadesBudget || 0) +
+                      (currentBudget?.desejosBudget || 0) +
+                      (currentBudget?.poupancaBudget || 0)
                     ).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </div>
                 </CardContent>
@@ -496,24 +473,24 @@ export default function BudgetPage() {
                     <span>Orçamento:</span>
                     <span>
                       R${" "}
-                      {(currentBudget?.necessidades_budget || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      {(currentBudget?.necessidadesBudget || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                   <Progress
-                    value={getBudgetProgress("necessidades", currentBudget?.necessidades_budget || 0)}
+                    value={getBudgetProgress("necessidades", currentBudget?.necessidadesBudget || 0)}
                     className="h-2"
                   />
                   <Badge
                     variant={
-                      getBudgetStatus(monthlyExpenses.necessidades, currentBudget?.necessidades_budget || 0) === "good"
+                      getBudgetStatus(monthlyExpenses.necessidades, currentBudget?.necessidadesBudget || 0) === "good"
                         ? "default"
-                        : getBudgetStatus(monthlyExpenses.necessidades, currentBudget?.necessidades_budget || 0) ===
+                        : getBudgetStatus(monthlyExpenses.necessidades, currentBudget?.necessidadesBudget || 0) ===
                             "warning"
                           ? "secondary"
                           : "destructive"
                     }
                   >
-                    {getBudgetProgress("necessidades", currentBudget?.necessidades_budget || 0).toFixed(1)}% usado
+                    {getBudgetProgress("necessidades", currentBudget?.necessidadesBudget || 0).toFixed(1)}% usado
                   </Badge>
                 </CardContent>
               </Card>
@@ -531,20 +508,20 @@ export default function BudgetPage() {
                   <div className="flex justify-between text-sm">
                     <span>Orçamento:</span>
                     <span>
-                      R$ {(currentBudget?.desejos_budget || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      R$ {(currentBudget?.desejosBudget || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </span>
                   </div>
-                  <Progress value={getBudgetProgress("desejos", currentBudget?.desejos_budget || 0)} className="h-2" />
+                  <Progress value={getBudgetProgress("desejos", currentBudget?.desejosBudget || 0)} className="h-2" />
                   <Badge
                     variant={
-                      getBudgetStatus(monthlyExpenses.desejos, currentBudget?.desejos_budget || 0) === "good"
+                      getBudgetStatus(monthlyExpenses.desejos, currentBudget?.desejosBudget || 0) === "good"
                         ? "default"
-                        : getBudgetStatus(monthlyExpenses.desejos, currentBudget?.desejos_budget || 0) === "warning"
+                        : getBudgetStatus(monthlyExpenses.desejos, currentBudget?.desejosBudget || 0) === "warning"
                           ? "secondary"
                           : "destructive"
                     }
                   >
-                    {getBudgetProgress("desejos", currentBudget?.desejos_budget || 0).toFixed(1)}% usado
+                    {getBudgetProgress("desejos", currentBudget?.desejosBudget || 0).toFixed(1)}% usado
                   </Badge>
                 </CardContent>
               </Card>
@@ -562,23 +539,20 @@ export default function BudgetPage() {
                   <div className="flex justify-between text-sm">
                     <span>Orçamento:</span>
                     <span>
-                      R$ {(currentBudget?.poupanca_budget || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      R$ {(currentBudget?.poupancaBudget || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </span>
                   </div>
-                  <Progress
-                    value={getBudgetProgress("poupanca", currentBudget?.poupanca_budget || 0)}
-                    className="h-2"
-                  />
+                  <Progress value={getBudgetProgress("poupanca", currentBudget?.poupancaBudget || 0)} className="h-2" />
                   <Badge
                     variant={
-                      getBudgetStatus(monthlyExpenses.poupanca, currentBudget?.poupanca_budget || 0) === "good"
+                      getBudgetStatus(monthlyExpenses.poupanca, currentBudget?.poupancaBudget || 0) === "good"
                         ? "default"
-                        : getBudgetStatus(monthlyExpenses.poupanca, currentBudget?.poupanca_budget || 0) === "warning"
+                        : getBudgetStatus(monthlyExpenses.poupanca, currentBudget?.poupancaBudget || 0) === "warning"
                           ? "secondary"
                           : "destructive"
                     }
                   >
-                    {getBudgetProgress("poupanca", currentBudget?.poupanca_budget || 0).toFixed(1)}% usado
+                    {getBudgetProgress("poupanca", currentBudget?.poupancaBudget || 0).toFixed(1)}% usado
                   </Badge>
                 </CardContent>
               </Card>
