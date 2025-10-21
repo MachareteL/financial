@@ -1,4 +1,4 @@
-import type { IExpenseRepository } from "@/domain/repositories/expense.repository"
+import type { IExpenseRepository } from "@/domain/repositories/expense.repository.interface"
 
 export interface GetMonthlyExpensesInput {
   familyId: string
@@ -20,7 +20,7 @@ export class GetMonthlyExpensesUseCase {
     const startDate = new Date(input.year, input.month - 1, 1)
     const endDate = new Date(input.year, input.month, 0)
 
-    const expenses = await this.expenseRepository.findByFamilyAndDateRange(input.familyId, startDate, endDate)
+    const expenses = await this.expenseRepository.getExpensesByDateRange(input.familyId, startDate, endDate)
 
     const totals = {
       necessidades: 0,
