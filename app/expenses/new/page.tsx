@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Plus, Repeat, CreditCard } from "lucide-react"
-import { createExpenseUseCase, getCategoriesUseCase } from "@/application/services/dependency-injection"
+import { createExpenseUseCase, getCategoriesUseCase } from "@/infrastructure/dependency-injection"
 import { getUserProfile } from "@/lib/auth"
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/components/auth-provider"

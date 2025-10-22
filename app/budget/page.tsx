@@ -32,7 +32,7 @@ import {
   getBudgetUseCase,
   saveBudgetUseCase,
   getMonthlyExpensesUseCase,
-} from "@/application/services/dependency-injection"
+} from "@/infrastructure/dependency-injection"
 
 interface Income {
   id: string

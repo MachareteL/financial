@@ -5,7 +5,7 @@ import {
   signOutUseCase,
   getCurrentUserUseCase,
   createFamilyUseCase,
-} from "@/application/services/dependency-injection"
+} from "@/infrastructure/dependency-injection"
 
 export async function signUp(email: string, password: string, name: string) {
   return await signUpUseCase.execute({ email, password, name })

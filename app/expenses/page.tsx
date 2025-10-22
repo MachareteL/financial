@@ -15,7 +15,7 @@ import {
   getExpensesUseCase,
   getCategoriesUseCase,
   deleteExpenseUseCase,
-} from "@/application/services/dependency-injection"
+} from "@/infrastructure/dependency-injection"
 import { getUserProfile } from "@/lib/auth"
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/components/auth-provider"
