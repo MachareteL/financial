@@ -1,5 +1,5 @@
-import type { IExpenseRepository } from "@/domain/repositories/expense.repository.interface"
-import type { IIncomeRepository } from "@/domain/repositories/income.repository"
+import type { IExpenseRepository } from "@/domain/IRepositories/expense.repository.interface"
+import type { IIncomeRepository } from "@/domain/IRepositories/income.repository"
 
 export interface DashboardData {
   expenses: Array<{

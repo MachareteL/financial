@@ -1,5 +1,5 @@
-import type { IBudgetRepository } from "@/domain/repositories/budget.repository.interface"
-import type { BudgetSummary } from "@/domain/entities/budget.entity"
+import type { IBudgetRepository } from "@/domain/IRepositories/budget.repository.interface"
+import type { BudgetSummary } from "@/domain/Entities/budget.entity"
 
 export interface GetBudgetSummaryDTO {
   familyId: string

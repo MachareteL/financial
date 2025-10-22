@@ -1,4 +1,4 @@
-import type { Category } from "../entities/expense.entity"
+import type { Category } from "../Entities/expense.entity"
 
 export interface ICategoryRepository {
   getCategoriesByFamily(familyId: string): Promise<Category[]>

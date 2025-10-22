@@ -1,5 +1,5 @@
-import type { ICategoryRepository } from "@/domain/repositories/category.repository.interface"
-import type { Category } from "@/domain/entities/expense.entity"
+import type { ICategoryRepository } from "@/domain/IRepositories/category.repository.interface"
+import type { Category } from "@/domain/Entities/expense.entity"
 
 export interface GetCategoriesDTO {
   familyId: string

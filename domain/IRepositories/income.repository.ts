@@ -1,4 +1,4 @@
-import type { Income } from "../entities/income.entity"
+import type { Income } from "../Entities/income.entity"
 
 export interface IIncomeRepository {
   create(income: Income): Promise<void>

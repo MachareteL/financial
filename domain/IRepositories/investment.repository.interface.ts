@@ -1,4 +1,4 @@
-import type { Investment } from "../entities/investment.entity"
+import type { Investment } from "../Entities/investment.entity"
 
 export interface IInvestmentRepository {
   getInvestmentsByFamily(familyId: string): Promise<Investment[]>

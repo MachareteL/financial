@@ -1,4 +1,4 @@
-import type { IAuthRepository } from "@/domain/repositories/auth.repository.interface"
+import type { IAuthRepository } from "@/domain/IRepositories/IAuth.repository"
 
 export interface SignInDTO {
   email: string

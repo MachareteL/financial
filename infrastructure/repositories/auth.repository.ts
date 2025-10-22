@@ -1,4 +1,4 @@
-import type { IAuthRepository } from "@/domain/repositories/auth.repository.interface"
+import type { IAuthRepository } from "@/domain/IRepositories/IAuth.repository"
 import { getSupabaseClient } from "../database/supabase.client"
 
 export class AuthRepository implements IAuthRepository {

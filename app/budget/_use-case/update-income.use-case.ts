@@ -1,4 +1,4 @@
-import type { IIncomeRepository } from "@/domain/repositories/income.repository"
+import type { IIncomeRepository } from "@/domain/IRepositories/income.repository"
 
 export interface UpdateIncomeInput {
   incomeId: string

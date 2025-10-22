@@ -1,5 +1,5 @@
-import type { IFamilyRepository } from "@/domain/repositories/family.repository.interface"
-import type { FamilyMember, FamilyRole, FamilyInvite } from "@/domain/entities/family-member.entity"
+import type { IFamilyRepository } from "@/domain/IRepositories/family.repository.interface"
+import type { FamilyMember, FamilyRole, FamilyInvite } from "@/domain/Entities/family-member.entity"
 import { getSupabaseClient } from "../database/supabase.client"
 
 export class FamilyRepository implements IFamilyRepository {

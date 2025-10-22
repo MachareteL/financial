@@ -1,4 +1,4 @@
-import type { IExpenseRepository } from "@/domain/repositories/expense.repository.interface"
+import type { IExpenseRepository } from "@/domain/IRepositories/expense.repository.interface"
 
 export interface GetMonthlyExpensesInput {
   familyId: string

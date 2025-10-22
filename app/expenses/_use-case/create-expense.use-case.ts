@@ -1,5 +1,5 @@
-import type { IExpenseRepository } from "@/domain/repositories/expense.repository.interface"
-import type { Expense } from "@/domain/entities/expense.entity"
+import type { IExpenseRepository } from "@/domain/IRepositories/expense.repository.interface"
+import type { Expense } from "@/domain/Entities/expense.entity"
 
 export interface CreateExpenseDTO {
   amount: number

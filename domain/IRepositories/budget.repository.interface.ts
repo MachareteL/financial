@@ -1,4 +1,4 @@
-import type { Budget, Income, BudgetSummary } from "../entities/budget.entity"
+import type { Budget, Income, BudgetSummary } from "../Entities/budget.entity"
 
 export interface IBudgetRepository {
   getBudgetByMonthYear(familyId: string, month: number, year: number): Promise<Budget | null>

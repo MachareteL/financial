@@ -1,4 +1,4 @@
-import type { IBudgetRepository } from "@/domain/repositories/budget.repository"
+import type { IBudgetRepository } from "@/domain/IRepositories/budget.repository"
 
 export interface GetBudgetInput {
   familyId: string
