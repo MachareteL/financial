@@ -18,9 +18,9 @@ import {
 } from "@/infrastructure/dependency-injection"
 import { getUserProfile } from "@/lib/auth"
 import { toast } from "@/hooks/use-toast"
-import { useAuth } from "@/components/auth-provider"
-import type { ExpenseWithDetails } from "@/domain/Entities/expense.entity"
-import type { Category } from "@/domain/Entities/expense.entity"
+import { useAuth } from "@/app/auth/auth-provider"
+import type { ExpenseWithDetails } from "@/domain/entities/expense"
+import type { Category } from "@/domain/entities/expense"
 
 export default function ExpensesPage() {
   const { user, loading } = useAuth()

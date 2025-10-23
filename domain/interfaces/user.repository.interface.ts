@@ -1,4 +1,4 @@
-import type { User, UserProfile, Family } from "../Entities/user.entity"
+import type { User, UserProfile, Family } from "../entities/user"
 
 export interface IUserRepository {
   getCurrentUser(): Promise<User | null>

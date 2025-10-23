@@ -14,8 +14,8 @@ import { ArrowLeft, Plus, Repeat, CreditCard } from "lucide-react"
 import { createExpenseUseCase, getCategoriesUseCase } from "@/infrastructure/dependency-injection"
 import { getUserProfile } from "@/lib/auth"
 import { toast } from "@/hooks/use-toast"
-import { useAuth } from "@/components/auth-provider"
-import type { Category } from "@/domain/Entities/expense.entity"
+import { useAuth } from "@/app/auth/auth-provider"
+import type { Category } from "@/domain/entities/expense"
 
 export default function NewExpensePage() {
   const { user, loading } = useAuth()

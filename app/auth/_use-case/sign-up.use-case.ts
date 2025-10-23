@@ -1,30 +1,19 @@
-import type { IAuthRepository } from "@/domain/IRepositories/IAuth.repository"
-import type { IUserRepository } from "@/domain/IRepositories/user.repository.interface"
-
-export interface SignUpDTO {
-  email: string
-  password: string
-  name: string
-}
+import type { SignUpInputDTO } from "@/domain/dto/sign-up.dto" 
+import type { User } from "@/domain/entities/user"
+import type { IAuthRepository } from "@/domain/interfaces/auth.repository"
+import { UserSchema } from "@/domain/entities/user"
 
 export class SignUpUseCase {
-  constructor(
-    private authRepository: IAuthRepository,
-    private userRepository: IUserRepository,
-  ) {}
+  constructor(private authRepository: IAuthRepository) {}
 
-  async execute(dto: SignUpDTO): Promise<{ userId: string; email: string }> {
-    // Sign up with auth provider
-    const authUser = await this.authRepository.signUp(dto.email, dto.password)
+  async execute(input: SignUpInputDTO): Promise<User> {
+    if (!input.email || !input.password || !input.name) {
+      throw new Error("Todos os campos são obrigatórios")
+    }
+    
+    const rawUser = await this.authRepository.signUp(input.email, input.password, input.name)
 
-    // Create user profile
-    await this.userRepository.createProfile({
-      id: authUser.userId,
-      email: dto.email,
-      name: dto.name,
-      familyId: null,
-    })
-
-    return authUser
+    UserSchema.parse(rawUser)
+    return rawUser
   }
 }

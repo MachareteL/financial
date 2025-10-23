@@ -1,5 +1,5 @@
-import type { ICategoryRepository } from "@/domain/IRepositories/category.repository.interface"
-import type { Category } from "@/domain/Entities/expense.entity"
+import type { ICategoryRepository } from "@/domain/interfaces/category.repository.interface"
+import type { Category } from "@/domain/entities/expense"
 import { getSupabaseClient } from "../database/supabase.client"
 
 export class CategoryRepository implements ICategoryRepository {

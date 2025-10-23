@@ -24,7 +24,7 @@ import { ArrowLeft, Users, UserPlus, Mail, Edit, Trash2, Plus } from "lucide-rea
 import { supabase } from "@/lib/supabase"
 import { getUserProfile } from "@/lib/auth"
 import { toast } from "@/hooks/use-toast"
-import { useAuth } from "@/components/auth-provider"
+import { useAuth } from "@/app/auth/auth-provider"
 
 interface FamilyMember {
   id: string

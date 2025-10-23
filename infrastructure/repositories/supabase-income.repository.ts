@@ -1,5 +1,5 @@
-import type { IIncomeRepository } from "@/domain/IRepositories/income.repository"
-import { Income } from "@/domain/Entities/income.entity"
+import type { IIncomeRepository } from "@/domain/interfaces/income.repository"
+import { Income } from "@/domain/entities/income"
 import { supabase } from "@/lib/supabase"
 
 export class SupabaseIncomeRepository implements IIncomeRepository {

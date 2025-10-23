@@ -1,4 +1,4 @@
-export { AuthRepository } from "./auth.repository"
+export { AuthSupabaseRepository } from "./auth.repository"
 export { UserRepository } from "./user.repository"
 export { ExpenseRepository } from "./expense.repository"
 export { CategoryRepository } from "./category.repository"

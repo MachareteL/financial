@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Users, Plus, UserPlus } from "lucide-react"
 import { createFamily, getUserProfile } from "@/lib/auth"
 import { toast } from "@/hooks/use-toast"
-import { useAuth } from "@/components/auth-provider"
+import { useAuth } from "@/app/auth/auth-provider"
 
 export default function OnboardingPage() {
   const { user, loading } = useAuth()

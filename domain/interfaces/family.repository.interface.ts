@@ -1,4 +1,4 @@
-import type { FamilyMember, FamilyRole, FamilyInvite } from "../Entities/family-member.entity"
+import type { FamilyMember, FamilyRole, FamilyInvite } from "../entities/family-role"
 
 export interface IFamilyRepository {
   getFamilyMembers(familyId: string): Promise<FamilyMember[]>

@@ -1,4 +1,4 @@
-import type { Expense, ExpenseWithDetails } from "../Entities/expense.entity"
+import type { Expense, ExpenseWithDetails } from "../entities/expense"
 
 export interface IExpenseRepository {
   getExpensesByFamily(familyId: string): Promise<ExpenseWithDetails[]>

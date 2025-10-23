@@ -22,7 +22,7 @@ import { Plus, Edit, Trash2, ArrowLeft } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { getUserProfile } from "@/lib/auth"
 import { toast } from "@/hooks/use-toast"
-import { useAuth } from "@/components/auth-provider"
+import { useAuth } from "@/app/auth/auth-provider"
 
 interface Category {
   id: string

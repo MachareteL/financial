@@ -1,5 +1,5 @@
-import type { IUserRepository } from "@/domain/IRepositories/user.repository.interface"
-import type { User, UserProfile, Family } from "@/domain/Entities/user.entity"
+import type { IUserRepository } from "@/domain/interfaces/user.repository.interface"
+import type { User, UserProfile, Family } from "@/domain/entities/user"
 import { getSupabaseClient } from "../database/supabase.client"
 
 export class UserRepository implements IUserRepository {

@@ -1,4 +1,4 @@
-import type { Budget } from "../Entities/budget.entity"
+import type { Budget } from "../entities/budget"
 
 export interface IBudgetRepository {
   create(budget: Budget): Promise<void>

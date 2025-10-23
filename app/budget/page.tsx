@@ -22,7 +22,7 @@ import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Edit, Trash2, ArrowLeft, DollarSign, TrendingUp, Target, Calendar } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
-import { useAuth } from "@/components/auth-provider"
+import { useAuth } from "@/app/auth/auth-provider"
 import {
   getCurrentUserUseCase,
   getIncomesUseCase,

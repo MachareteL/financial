@@ -1,14 +1,17 @@
-import type { IAuthRepository } from "@/domain/IRepositories/IAuth.repository"
-
-export interface SignInDTO {
-  email: string
-  password: string
-}
+import type { SignInInputDTO } from "@/domain/dto/sign-in.dto" 
+import type { User } from "@/domain/entities/user"
+import type { IAuthRepository } from "@/domain/interfaces/auth.repository"
+import { UserSchema } from "@/domain/entities/user"
 
 export class SignInUseCase {
   constructor(private authRepository: IAuthRepository) {}
 
-  async execute(dto: SignInDTO): Promise<{ userId: string; email: string }> {
-    return await this.authRepository.signIn(dto.email, dto.password)
+  async execute(input: SignInInputDTO): Promise<User> {
+    if (!input.email || !input.password) throw new Error("Email e senha são obrigatórios")
+
+    const rawUser = await this.authRepository.signIn(input.email, input.password)
+    
+    // UserSchema.parse(rawUser)
+    return rawUser
   }
 }

@@ -1,13 +1,9 @@
-import { IAuthRepository } from "@/domain/IRepositories/IAuth.repository"; 
+import type { User } from "@/domain/entities/user"
+import type { IAuthRepository } from "@/domain/interfaces/auth.repository"
 
-// A Camada de Domínio já define o que é um usuário autêntico para o Use Case.
-type AuthUser = { userId: string; email: string } | null;
-
-export class GetCurrentUser {
-  // A injeção de dependência acontece aqui (recebemos o contrato)
-  constructor(private authRepo: IAuthRepository) {} 
-
-  async execute(): Promise<AuthUser> {
-    return this.authRepo.getCurrentAuthUser();
+export class GetCurrentAuthUserUseCase {
+  constructor(private authRepository: IAuthRepository) {}
+  async execute(): Promise<User | null> {
+    return await this.authRepository.getCurrentAuthUser()
   }
 }

@@ -1,5 +1,5 @@
-import type { IInvestmentRepository } from "@/domain/IRepositories/investment.repository.interface"
-import type { Investment } from "@/domain/Entities/investment.entity"
+import type { IInvestmentRepository } from "@/domain/interfaces/investment.repository.interface"
+import type { Investment } from "@/domain/entities/investment"
 
 export interface CreateInvestmentDTO {
   familyId: string

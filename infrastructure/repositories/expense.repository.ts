@@ -1,5 +1,5 @@
-import type { IExpenseRepository } from "@/domain/IRepositories/expense.repository.interface"
-import type { Expense, ExpenseWithDetails } from "@/domain/Entities/expense.entity"
+import type { IExpenseRepository } from "@/domain/interfaces/expense.repository.interface"
+import type { Expense, ExpenseWithDetails } from "@/domain/entities/expense"
 import { getSupabaseClient } from "../database/supabase.client"
 
 export class ExpenseRepository implements IExpenseRepository {

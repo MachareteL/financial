@@ -1,5 +1,5 @@
-import type { IBudgetRepository } from "@/domain/IRepositories/budget.repository.interface"
-import type { Income } from "@/domain/Entities/budget.entity"
+import type { IBudgetRepository } from "@/domain/interfaces/budget.repository.interface"
+import type { Income } from "@/domain/entities/budget"
 
 export interface CreateIncomeDTO {
   familyId: string

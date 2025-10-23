@@ -9,7 +9,7 @@ import { Plus, TrendingUp, AlertTriangle, LogOut, Users, Tag, Target, DollarSign
 import { getUserProfile, signOut } from "@/lib/auth"
 import { useRouter } from "next/navigation"
 import { toast } from "@/hooks/use-toast"
-import { useAuth } from "@/components/auth-provider"
+import { useAuth } from "@/app/auth/auth-provider"
 import { getDashboardDataUseCase } from "@/infrastructure/dependency-injection"
 
 interface ExpenseData {

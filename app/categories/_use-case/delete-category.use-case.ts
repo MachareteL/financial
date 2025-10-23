@@ -1,4 +1,4 @@
-import type { ICategoryRepository } from "@/domain/IRepositories/category.repository.interface"
+import type { ICategoryRepository } from "@/domain/interfaces/category.repository.interface"
 
 export interface DeleteCategoryDTO {
   categoryId: string

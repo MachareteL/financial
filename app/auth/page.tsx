@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -9,64 +8,54 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { signIn, signUp } from "@/lib/auth"
 import { toast } from "@/hooks/use-toast"
+import { SignUpInputDTO } from "@/domain/dto/sign-up.dto"
+import { SignInInputDTO } from "@/domain/dto/sign-in.dto"
+import { signInUseCase, signUpUseCase } from "@/infrastructure/dependency-injection"
 
 export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
-
-    const formData = new FormData(e.currentTarget)
-    const email = formData.get("email") as string
-    const password = formData.get("password") as string
-
-    try {
-      await signIn(email, password)
-      toast({
-        title: "Login realizado com sucesso!",
-        description: "Redirecionando para o dashboard...",
-      })
-      router.push("/dashboard")
-    } catch (error: any) {
-      toast({
-        title: "Erro no login",
-        description: error.message,
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
+  e.preventDefault()
+  setIsLoading(true)
+  const formData = new FormData(e.currentTarget)
+  const input: SignInInputDTO = {
+    email: formData.get("email") as string,
+    password: formData.get("password") as string,
   }
 
-  const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
-
-    const formData = new FormData(e.currentTarget)
-    const email = formData.get("email") as string
-    const password = formData.get("password") as string
-    const name = formData.get("name") as string
-
-    try {
-      await signUp(email, password, name)
-      toast({
-        title: "Conta criada com sucesso!",
-        description: "Verifique seu email para confirmar a conta.",
-      })
-    } catch (error: any) {
-      toast({
-        title: "Erro no cadastro",
-        description: error.message,
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
+  try {
+    await signInUseCase.execute(input)
+    toast({ title: "Login realizado!", description: "Redirecionando..." })
+    router.push("/dashboard")
+  } catch (err: any) {
+    toast({ title: "Erro no login", description: err.message, variant: "destructive" })
+  } finally {
+    setIsLoading(false)
   }
+}
+
+const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault()
+  setIsLoading(true)
+  const formData = new FormData(e.currentTarget)
+  const input: SignUpInputDTO = {
+    name: formData.get("name") as string,
+    email: formData.get("email") as string,
+    password: formData.get("password") as string,
+  }
+
+  try {
+    await signUpUseCase.execute(input)
+    toast({ title: "Conta criada!", description: "Verifique seu email." })
+  } catch (err: any) {
+    toast({ title: "Erro no cadastro", description: err.message, variant: "destructive" })
+  } finally {
+    setIsLoading(false)
+  }
+}
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">

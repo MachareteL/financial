@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useAuth } from "@/components/auth-provider"
+import { useAuth } from "@/app/auth/auth-provider"
 import { TrendingUp, Users, PieChart, Target, BarChart3, Wallet, Calendar, ArrowRight, CheckCircle } from "lucide-react"
 
 export default function HomePage() {

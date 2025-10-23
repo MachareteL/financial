@@ -1,6 +1,6 @@
-import type { IUserRepository } from "@/domain/IRepositories/user.repository.interface"
-import type { ICategoryRepository } from "@/domain/IRepositories/category.repository.interface"
-import type { Family } from "@/domain/Entities/user.entity"
+import type { IUserRepository } from "@/domain/interfaces/user.repository.interface"
+import type { ICategoryRepository } from "@/domain/interfaces/category.repository.interface"
+import type { Family } from "@/domain/entities/user"
 
 export interface CreateFamilyDTO {
   familyName: string

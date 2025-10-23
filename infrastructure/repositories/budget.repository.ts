@@ -1,5 +1,5 @@
-import type { IBudgetRepository } from "@/domain/IRepositories/budget.repository.interface"
-import type { Budget, Income, BudgetSummary } from "@/domain/Entities/budget.entity"
+import type { IBudgetRepository } from "@/domain/interfaces/budget.repository.interface"
+import type { Budget, Income, BudgetSummary } from "@/domain/entities/budget"
 import { getSupabaseClient } from "../database/supabase.client"
 
 export class BudgetRepository implements IBudgetRepository {
