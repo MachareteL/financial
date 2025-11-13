@@ -1,18 +1,18 @@
 import { z } from 'zod';
 
-export const FamilySchema = z.object({
+export const TeamSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(2),
   createdAt: z.date(),
 });
 
-export type FamilyProps = z.infer<typeof FamilySchema>;
+export type TeamProps = z.infer<typeof TeamSchema>;
 
-export class Family {
-  private props: FamilyProps;
+export class Team {
+  private props: TeamProps;
 
-  constructor(props: FamilyProps) {
-    FamilySchema.parse(props);
+  constructor(props: TeamProps) {
+    TeamSchema.parse(props);
     this.props = props;
   }
 

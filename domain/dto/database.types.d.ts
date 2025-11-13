@@ -118,35 +118,35 @@ export type Database = {
       }
       budgets: {
         Row: {
-          created_at: string | null
+          created_at: string
           desejos_budget: number
-          family_id: string | null
           id: string
           month: number
           necessidades_budget: number
           poupanca_budget: number
+          team_id: string | null
           total_income: number
           year: number
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           desejos_budget?: number
-          family_id?: string | null
           id?: string
           month: number
           necessidades_budget?: number
           poupanca_budget?: number
+          team_id?: string | null
           total_income?: number
           year: number
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           desejos_budget?: number
-          family_id?: string | null
           id?: string
           month?: number
           necessidades_budget?: number
           poupanca_budget?: number
+          team_id?: string | null
           total_income?: number
           year?: number
         }
@@ -155,31 +155,31 @@ export type Database = {
       categories: {
         Row: {
           classification: string
-          created_at: string | null
-          family_id: string | null
+          created_at: string
           id: string
           name: string
+          team_id: string | null
         }
         Insert: {
           classification: string
-          created_at?: string | null
-          family_id?: string | null
+          created_at?: string
           id?: string
           name: string
+          team_id?: string | null
         }
         Update: {
           classification?: string
-          created_at?: string | null
-          family_id?: string | null
+          created_at?: string
           id?: string
           name?: string
+          team_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "categories_family_id_fkey"
-            columns: ["family_id"]
+            foreignKeyName: "categories_team_id_fkey"
+            columns: ["team_id"]
             isOneToOne: false
-            referencedRelation: "families"
+            referencedRelation: "teams"
             referencedColumns: ["id"]
           },
         ]
@@ -188,10 +188,9 @@ export type Database = {
         Row: {
           amount: number
           category_id: string | null
-          created_at: string | null
+          created_at: string
           date: string
           description: string | null
-          family_id: string | null
           id: string
           installment_number: number | null
           installment_value: number | null
@@ -200,16 +199,16 @@ export type Database = {
           parent_expense_id: string | null
           receipt_url: string | null
           recurrence_type: string | null
+          team_id: string | null
           total_installments: number | null
           user_id: string | null
         }
         Insert: {
           amount: number
           category_id?: string | null
-          created_at?: string | null
+          created_at?: string
           date: string
           description?: string | null
-          family_id?: string | null
           id?: string
           installment_number?: number | null
           installment_value?: number | null
@@ -218,16 +217,16 @@ export type Database = {
           parent_expense_id?: string | null
           receipt_url?: string | null
           recurrence_type?: string | null
+          team_id?: string | null
           total_installments?: number | null
           user_id?: string | null
         }
         Update: {
           amount?: number
           category_id?: string | null
-          created_at?: string | null
+          created_at?: string
           date?: string
           description?: string | null
-          family_id?: string | null
           id?: string
           installment_number?: number | null
           installment_value?: number | null
@@ -236,6 +235,7 @@ export type Database = {
           parent_expense_id?: string | null
           receipt_url?: string | null
           recurrence_type?: string | null
+          team_id?: string | null
           total_installments?: number | null
           user_id?: string | null
         }
@@ -248,17 +248,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "expenses_family_id_fkey"
-            columns: ["family_id"]
-            isOneToOne: false
-            referencedRelation: "families"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "expenses_parent_expense_id_fkey"
             columns: ["parent_expense_id"]
             isOneToOne: false
             referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
             referencedColumns: ["id"]
           },
           {
@@ -270,134 +270,37 @@ export type Database = {
           },
         ]
       }
-      families: {
-        Row: {
-          created_at: string | null
-          id: string
-          name: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          name: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          name?: string
-        }
-        Relationships: []
-      }
-      family_invites: {
-        Row: {
-          created_at: string | null
-          email: string
-          family_id: string | null
-          id: string
-          invited_by: string | null
-          role_id: string | null
-          status: string
-        }
-        Insert: {
-          created_at?: string | null
-          email: string
-          family_id?: string | null
-          id?: string
-          invited_by?: string | null
-          role_id?: string | null
-          status?: string
-        }
-        Update: {
-          created_at?: string | null
-          email?: string
-          family_id?: string | null
-          id?: string
-          invited_by?: string | null
-          role_id?: string | null
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "family_invites_role_id_fkey"
-            columns: ["role_id"]
-            isOneToOne: false
-            referencedRelation: "family_roles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      family_roles: {
-        Row: {
-          color: string
-          created_at: string | null
-          description: string | null
-          family_id: string
-          id: string
-          name: string
-          permissions: string[]
-          updated_at: string | null
-        }
-        Insert: {
-          color?: string
-          created_at?: string | null
-          description?: string | null
-          family_id: string
-          id?: string
-          name: string
-          permissions?: string[]
-          updated_at?: string | null
-        }
-        Update: {
-          color?: string
-          created_at?: string | null
-          description?: string | null
-          family_id?: string
-          id?: string
-          name?: string
-          permissions?: string[]
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "family_roles_family_id_fkey"
-            columns: ["family_id"]
-            isOneToOne: false
-            referencedRelation: "families"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       incomes: {
         Row: {
           amount: number
-          created_at: string | null
+          created_at: string
           date: string
           description: string | null
-          family_id: string | null
           frequency: string | null
           id: string
+          team_id: string | null
           type: string
           user_id: string | null
         }
         Insert: {
           amount: number
-          created_at?: string | null
+          created_at?: string
           date: string
           description?: string | null
-          family_id?: string | null
           frequency?: string | null
           id?: string
+          team_id?: string | null
           type: string
           user_id?: string | null
         }
         Update: {
           amount?: number
-          created_at?: string | null
+          created_at?: string
           date?: string
           description?: string | null
-          family_id?: string | null
           frequency?: string | null
           id?: string
+          team_id?: string | null
           type?: string
           user_id?: string | null
         }
@@ -406,83 +309,202 @@ export type Database = {
       investments: {
         Row: {
           annual_return_rate: number
-          created_at: string | null
+          created_at: string
           current_amount: number
-          family_id: string | null
           id: string
           initial_amount: number
           monthly_contribution: number | null
           name: string
           start_date: string
+          team_id: string | null
           type: string
         }
         Insert: {
           annual_return_rate: number
-          created_at?: string | null
+          created_at?: string
           current_amount: number
-          family_id?: string | null
           id?: string
           initial_amount: number
           monthly_contribution?: number | null
           name: string
           start_date: string
+          team_id?: string | null
           type: string
         }
         Update: {
           annual_return_rate?: number
-          created_at?: string | null
+          created_at?: string
           current_amount?: number
-          family_id?: string | null
           id?: string
           initial_amount?: number
           monthly_contribution?: number | null
           name?: string
           start_date?: string
+          team_id?: string | null
           type?: string
         }
         Relationships: []
       }
       profiles: {
         Row: {
-          created_at: string | null
+          created_at: string
           email: string
-          family_id: string | null
           id: string
           name: string
-          role_id: string | null
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           email: string
-          family_id?: string | null
           id: string
           name: string
-          role_id?: string | null
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           email?: string
-          family_id?: string | null
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      team_invites: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          invited_by: string | null
+          role_id: string | null
+          status: string
+          team_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          invited_by?: string | null
           role_id?: string | null
+          status?: string
+          team_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          invited_by?: string | null
+          role_id?: string | null
+          status?: string
+          team_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "profiles_family_id_fkey"
-            columns: ["family_id"]
-            isOneToOne: false
-            referencedRelation: "families"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "profiles_role_id_fkey"
+            foreignKeyName: "team_invites_role_id_fkey"
             columns: ["role_id"]
             isOneToOne: false
-            referencedRelation: "family_roles"
+            referencedRelation: "team_roles"
             referencedColumns: ["id"]
           },
         ]
+      }
+      team_members: {
+        Row: {
+          created_at: string | null
+          profile_id: string
+          role_id: string
+          team_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          profile_id: string
+          role_id: string
+          team_id: string
+        }
+        Update: {
+          created_at?: string | null
+          profile_id?: string
+          role_id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_team_members_role_id"
+            columns: ["role_id", "team_id"]
+            isOneToOne: false
+            referencedRelation: "team_roles"
+            referencedColumns: ["id", "team_id"]
+          },
+          {
+            foreignKeyName: "team_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_roles: {
+        Row: {
+          color: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          permissions: string[]
+          team_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          permissions?: string[]
+          team_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          permissions?: string[]
+          team_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_roles_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
     }
     Views: {

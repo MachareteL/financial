@@ -1,10 +1,13 @@
-import type { User, UserProfile, Family } from "../entities/user"
-
+// domain/interfaces/user.repository.interface.ts
+import type { User, } from "../entities/user"
+import type { Team } from "../entities/team" 
 export interface IUserRepository {
   getCurrentUser(): Promise<User | null>
-  getUserProfile(userId: string): Promise<UserProfile | null>
   createProfile(user: Omit<User, "createdAt">): Promise<User>
   updateProfile(userId: string, data: Partial<User>): Promise<User>
-  createFamily(familyName: string, userId: string): Promise<Family>
-  getFamily(familyId: string): Promise<Family | null>
+
+  createTeam(teamName: string, userId: string): Promise<Team>
+  getTeam(teamId: string): Promise<Team | null>
+
+  getTeamsForUser(userId: string): Promise<{ team: Team; role: string }[]>
 }
