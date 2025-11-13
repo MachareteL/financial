@@ -1,4 +1,4 @@
-import type { IAuthRepository } from "@/domain/interfaces/auth.repository"
+import type { IAuthRepository } from "@/domain/interfaces/auth.repository.interface"
 
 export class SignOutUseCase {
   constructor(private authRepository: IAuthRepository) {}

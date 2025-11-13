@@ -1,6 +1,6 @@
 import type { SignInInputDTO } from "@/domain/dto/sign-in.dto" 
 import type { UserSession } from "@/domain/dto/user.types" 
-import type { IAuthRepository } from "@/domain/interfaces/auth.repository"
+import type { IAuthRepository } from "@/domain/interfaces/auth.repository.interface"
 
 export class SignInUseCase {
   constructor(private authRepository: IAuthRepository) {}

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { use, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,10 +12,12 @@ import { toast } from "@/hooks/use-toast"
 import { SignUpInputDTO } from "@/domain/dto/sign-up.dto"
 import { SignInInputDTO } from "@/domain/dto/sign-in.dto"
 import { signInUseCase, signUpUseCase } from "@/infrastructure/dependency-injection"
+import { useAuth } from "./auth-provider"
 
 export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const auth = useAuth();
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault()
@@ -27,7 +29,7 @@ export default function AuthPage() {
   }
 
   try {
-    await signInUseCase.execute(input)
+    auth.session = await signInUseCase.execute(input)
     toast({ title: "Login realizado!", description: "Redirecionando..." })
     router.push("/dashboard")
   } catch (err: any) {
@@ -73,6 +75,7 @@ const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
 
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
+                <button onClick={() => { console.log(auth.session)}}>Lucas</button>
                 <div className="space-y-2">
                   <Label htmlFor="signin-email">Email</Label>
                   <Input id="signin-email" name="email" type="email" placeholder="seu@email.com" required />

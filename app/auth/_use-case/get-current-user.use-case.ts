@@ -1,5 +1,5 @@
 import { UserSession } from "@/domain/dto/user.types"
-import type { IAuthRepository } from "@/domain/interfaces/auth.repository"
+import type { IAuthRepository } from "@/domain/interfaces/auth.repository.interface"
 
 export class GetCurrentAuthUserUseCase {
   constructor(private authRepository: IAuthRepository) {}

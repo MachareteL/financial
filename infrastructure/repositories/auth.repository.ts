@@ -1,7 +1,7 @@
-import type { IAuthRepository } from "@/domain/interfaces/auth.repository"
+import type { IAuthRepository } from "@/domain/interfaces/auth.repository.interface"
 import type { UserSession, TeamMembership } from "@/domain/dto/user.types.d.ts"
 import { User } from "@/domain/entities/user"
-import { Team } from "@/domain/entities/team" // Renomeie o arquivo
+import { Team } from "@/domain/entities/team"
 import { getSupabaseClient } from "../database/supabase.client"
 
 export class AuthSupabaseRepository implements IAuthRepository {
@@ -80,7 +80,7 @@ export class AuthSupabaseRepository implements IAuthRepository {
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name } } // metadata
+      options: { data: { name } }
     })
     if (authError || !authData.user) throw authError || new Error("Falha no cadastro")
 

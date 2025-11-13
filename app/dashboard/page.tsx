@@ -31,7 +31,7 @@ const COLORS = {
 }
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth()
+  const { session, loading } = useAuth()
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [expenseData, setExpenseData] = useState<ExpenseData[]>([])
@@ -47,57 +47,21 @@ export default function DashboardPage() {
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/auth")
+    if (loading) return;
+
+    if (!session) {
+      router.push("/auth");
+      return;
     }
-  }, [user, loading, router])
 
-  useEffect(() => {
-    if (user && !profile && !profileLoading) {
-      loadProfile()
+    if (!session.teams || !session.teams.length) {
+      router.push("/onboarding");
+      return;
     }
-  }, [user])
 
-  useEffect(() => {
-    if (profile) {
-      loadExpenseData()
-    }
-  }, [selectedMonth, selectedYear, profile])
+    loadDashboardData();
 
-  const loadProfile = async () => {
-    if (!user || profileLoading) return
-
-    setProfileLoading(true)
-    try {
-      console.log("[v0] Loading profile for user:", user.email)
-      const userProfile = await getUserProfile()
-      console.log("[v0] Profile loaded:", userProfile)
-
-      if (!userProfile) {
-        console.log("[v0] No profile found, redirecting to auth")
-        router.push("/auth")
-        return
-      }
-
-      if (!userProfile.familyId) {
-        console.log("[v0] No family ID found, redirecting to onboarding")
-        router.push("/onboarding")
-        return
-      }
-
-      setProfile(userProfile)
-    } catch (error) {
-      console.error("Error loading profile:", error)
-      toast({
-        title: "Erro ao carregar perfil",
-        description: "Tente fazer login novamente",
-        variant: "destructive",
-      })
-      router.push("/auth")
-    } finally {
-      setProfileLoading(false)
-    }
-  }
+  }, [session, loading, selectedMonth, selectedYear, router])
 
   const handleLogout = async () => {
     try {
@@ -189,7 +153,7 @@ export default function DashboardPage() {
     )
   }
 
-  if (user && !profile) {
+  if (session && !profile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -200,7 +164,7 @@ export default function DashboardPage() {
     )
   }
 
-  if (!user) {
+  if (!session) {
     return null
   }
 
