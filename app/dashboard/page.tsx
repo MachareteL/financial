@@ -9,20 +9,12 @@ import { Plus, TrendingUp, AlertTriangle, LogOut, Users, Tag, Target, DollarSign
 import { useRouter } from "next/navigation"
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/app/auth/auth-provider"
-import { getDashboardDataUseCase } from "@/infrastructure/dependency-injection"
+import { getDashboardDataUseCase } from "@/infrastructure/dependency-injection" 
+import type { DashboardDataDTO } from "@/domain/dto/dashboard.types" 
+import { signOutUseCase } from "@/infrastructure/dependency-injection"
 
-interface ExpenseData {
-  category: string
-  amount: number
-  classification: string
-}
-
-interface MonthlyData {
-  necessidades: number
-  desejos: number
-  poupanca: number
-  total: number
-}
+type ChartExpenseData = DashboardDataDTO['expenses'][number];
+type MonthlyData = DashboardDataDTO['monthlyData'];
 
 const COLORS = {
   necessidades: "#10b981",
@@ -31,68 +23,67 @@ const COLORS = {
 }
 
 export default function DashboardPage() {
-  const { session, loading } = useAuth()
+  const { session, loading: authLoading } = useAuth()
+  const router = useRouter()
+
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
-  const [expenseData, setExpenseData] = useState<ExpenseData[]>([])
+
+  const [expenseData, setExpenseData] = useState<ChartExpenseData[]>([])
   const [monthlyData, setMonthlyData] = useState<MonthlyData>({
     necessidades: 0,
     desejos: 0,
     poupanca: 0,
     total: 0,
   })
-  const [profile, setProfile] = useState<any>(null)
-  const [profileLoading, setProfileLoading] = useState(false)
   const [monthlyIncome, setMonthlyIncome] = useState(0)
-  const router = useRouter()
+  const [isLoadingData, setIsLoadingData] = useState(true)
 
+  const teamId = session?.teams?.[0]?.team.id
+  
   useEffect(() => {
-    if (loading) return;
+    if (authLoading) return;
 
     if (!session) {
       router.push("/auth");
       return;
     }
 
-    if (!session.teams || !session.teams.length) {
+    if (!teamId) { 
       router.push("/onboarding");
       return;
     }
 
-    loadDashboardData();
+    const loadData = async () => {
+      setIsLoadingData(true);
+      try {
+        const dashboardData = await getDashboardDataUseCase.execute(teamId, selectedMonth, selectedYear)
 
-  }, [session, loading, selectedMonth, selectedYear, router])
+        setExpenseData(dashboardData.expenses)
+        setMonthlyData(dashboardData.monthlyData)
+        setMonthlyIncome(dashboardData.monthlyIncome)
+      } catch (error: any) {
+        console.error("[Dashboard] Error loading data:", error)
+        toast({
+          title: "Erro ao carregar dados",
+          description: error.message,
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoadingData(false);
+      }
+    }
+    
+    loadData();
+
+  }, [session, authLoading, teamId, selectedMonth, selectedYear, router])
 
   const handleLogout = async () => {
     try {
-      await signOut()
-      setProfile(null)
+      await signOutUseCase.execute()
       router.push("/auth")
     } catch (error) {
       console.error("Error signing out:", error)
-    }
-  }
-
-  const loadExpenseData = async () => {
-    if (!profile?.familyId) {
-      console.log("[v0] No familyId in profile, redirecting to onboarding")
-      router.push("/onboarding")
-      return
-    }
-
-    try {
-      const dashboardData = await getDashboardDataUseCase.execute(profile.familyId, selectedMonth, selectedYear)
-
-      setExpenseData(dashboardData.expenses)
-      setMonthlyData(dashboardData.monthlyData)
-      setMonthlyIncome(dashboardData.monthlyIncome)
-    } catch (error: any) {
-      console.error("[v0] Error loading dashboard data:", error)
-      toast({
-        title: "Erro ao carregar dados",
-        description: error.message,
-        variant: "destructive",
-      })
     }
   }
 
@@ -131,7 +122,8 @@ export default function DashboardPage() {
     return null
   }
 
-  if (loading) {
+  // Loading unificado
+  if (authLoading || !session || !teamId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -142,32 +134,6 @@ export default function DashboardPage() {
     )
   }
 
-  if (profileLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Configurando perfil...</h1>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-        </div>
-      </div>
-    )
-  }
-
-  if (session && !profile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Preparando dashboard...</h1>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-        </div>
-      </div>
-    )
-  }
-
-  if (!session) {
-    return null
-  }
-
   const pieData = [
     { name: "Necessidades", value: monthlyData.necessidades, color: COLORS.necessidades },
     { name: "Desejos", value: monthlyData.desejos, color: COLORS.desejos },
@@ -175,18 +141,8 @@ export default function DashboardPage() {
   ].filter((item) => item.value > 0)
 
   const months = [
-    "Janeiro",
-    "Fevereiro",
-    "Março",
-    "Abril",
-    "Maio",
-    "Junho",
-    "Julho",
-    "Agosto",
-    "Setembro",
-    "Outubro",
-    "Novembro",
-    "Dezembro",
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
   ]
 
   const alert = getAlert()
@@ -198,7 +154,7 @@ export default function DashboardPage() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
             <p className="text-gray-600">
-              Bem-vindo, {profile?.name} - {profile?.family?.name}
+              Bem-vindo, {session.user.name} - {session.teams[0].team.name}
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -206,7 +162,9 @@ export default function DashboardPage() {
               value={selectedMonth.toString()}
               onValueChange={(value) => setSelectedMonth(Number.parseInt(value))}
             >
-              <SelectTrigger className="w-32">
+              <SelectTrigger
+                className="w-32"
+                loading={isLoadingData}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -258,6 +216,7 @@ export default function DashboardPage() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {/* Card: Receita Total */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
@@ -270,6 +229,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
+          {/* Card: Total Gasto */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Gasto</CardTitle>
@@ -285,7 +245,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card>
+           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Necessidades</CardTitle>
               <div className="text-xs text-muted-foreground">50% meta</div>
@@ -332,6 +292,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Gráfico de Pizza */}
           <Card>
             <CardHeader>
               <CardTitle>Distribuição 50/30/20</CardTitle>
@@ -347,7 +308,7 @@ export default function DashboardPage() {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent }) => `${name} ${((percent as number ?? 0) * 100).toFixed(0)}%`}
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="value"
@@ -373,6 +334,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
+          {/* Gráfico de Barras */}
           <Card>
             <CardHeader>
               <CardTitle>Gastos por Categoria</CardTitle>
@@ -394,8 +356,13 @@ export default function DashboardPage() {
                       />
                       <Bar
                         dataKey="amount"
-                        fill={(entry: any) => COLORS[entry.classification as keyof typeof COLORS] || "#8884d8"}
-                      />
+                        fill="#8884d8"
+                      >
+                        {/* Preenchimento com cor da classificação */}
+                        {expenseData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[entry.classification as keyof typeof COLORS] || "#8884d8"} />
+                        ))}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
@@ -408,6 +375,7 @@ export default function DashboardPage() {
           </Card>
         </div>
 
+        {/* Botões de Navegação */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <Button onClick={() => router.push("/expenses/new")} className="h-16">
             <Plus className="w-5 h-5 mr-2" />
@@ -421,21 +389,13 @@ export default function DashboardPage() {
             <Tag className="w-5 h-5 mr-2" />
             Gerenciar Categorias
           </Button>
-          <Button variant="outline" onClick={() => router.push("/family")} className="h-16">
+          <Button variant="outline" onClick={() => router.push("/team")} className="h-16">
             <Users className="w-5 h-5 mr-2" />
-            Gerenciar Família
+            Gerenciar Time
           </Button>
           <Button variant="outline" onClick={() => router.push("/budget")} className="h-16">
             <Target className="w-5 h-5 mr-2" />
             Orçamento
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => router.push("/investments")}
-            className="h-16 sm:col-span-2 lg:col-span-1"
-          >
-            <DollarSign className="w-5 h-5 mr-2" />
-            Investimentos
           </Button>
         </div>
       </div>

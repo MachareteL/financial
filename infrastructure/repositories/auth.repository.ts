@@ -39,7 +39,7 @@ export class AuthSupabaseRepository implements IAuthRepository {
       createdAt: new Date(profile.created_at),
     });
 
-    const teams: TeamMembership[] = profile.team_members.map((membership: any) => ({
+    const teams: TeamMembership[] = profile.team_members.map((membership) => ({
       team: new Team({
         id: membership.teams.id,
         name: membership.teams.name,

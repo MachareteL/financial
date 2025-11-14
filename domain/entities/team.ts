@@ -3,8 +3,7 @@ import { z } from 'zod';
 export const TeamSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(2),
-  createdAt: z.date(),
-  createdBy: z.string().uuid(),
+  createdAt: z.date()
 });
 
 export type TeamProps = z.infer<typeof TeamSchema>;

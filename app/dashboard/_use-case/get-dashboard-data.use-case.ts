@@ -1,20 +1,7 @@
+import type { DashboardDataDTO } from "@/domain/dto/dashboard.types"
+import type { Income } from "@/domain/entities/income"
 import type { IExpenseRepository } from "@/domain/interfaces/expense.repository.interface"
 import type { IIncomeRepository } from "@/domain/interfaces/income.repository.interface"
-
-export interface DashboardData {
-  expenses: Array<{
-    category: string
-    amount: number
-    classification: string
-  }>
-  monthlyData: {
-    necessidades: number
-    desejos: number
-    poupanca: number
-    total: number
-  }
-  monthlyIncome: number
-}
 
 export class GetDashboardDataUseCase {
   constructor(
@@ -22,12 +9,12 @@ export class GetDashboardDataUseCase {
     private incomeRepository: IIncomeRepository,
   ) {}
 
-  async execute(familyId: string, month: number, year: number): Promise<DashboardData> {
+  async execute(familyId: string, month: number, year: number): Promise<DashboardDataDTO> {
     const startDate = new Date(year, month - 1, 1)
     const endDate = new Date(year, month, 0)
 
     // Get expenses for the month
-    const expenses = await this.expenseRepository.getExpensesByDateRange(familyId, startDate, endDate)
+    const expenses = await this.expenseRepository.findByDateRange(familyId, startDate, endDate)
 
     const allIncomes = await this.incomeRepository.findByTeamId(familyId)
 
@@ -64,7 +51,7 @@ export class GetDashboardDataUseCase {
     }
   }
 
-  private calculateMonthlyIncome(incomes: any[], month: number, year: number): number {
+  private calculateMonthlyIncome(incomes: Income[], month: number, year: number): number {
     return incomes
       .filter((income) => {
         if (income.type === "one_time") {

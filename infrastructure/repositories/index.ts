@@ -1,6 +1,6 @@
 export { AuthSupabaseRepository } from "./auth.repository"
 export { UserRepository } from "./user.repository"
-export { ExpenseRepository } from "./expense.repository"
+export { ExpenseRepository } from "./supabase-expense.repository"
 export { CategoryRepository } from "./category.repository"
 export { BudgetRepository } from "./budget.repository"
 export { InvestmentRepository } from "./investment.repository"

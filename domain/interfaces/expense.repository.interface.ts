@@ -1,10 +1,10 @@
-import type { Expense, ExpenseWithDetails } from "../entities/expense"
+import type { Expense } from '../entities/expense'
 
 export interface IExpenseRepository {
-  getExpensesByFamily(familyId: string): Promise<ExpenseWithDetails[]>
-  getExpenseById(expenseId: string, familyId: string): Promise<ExpenseWithDetails | null>
-  createExpense(expense: Omit<Expense, "id" | "createdAt">): Promise<Expense>
-  updateExpense(expenseId: string, familyId: string, data: Partial<Expense>): Promise<Expense>
-  deleteExpense(expenseId: string, familyId: string): Promise<void>
-  getExpensesByDateRange(familyId: string, startDate: Date, endDate: Date): Promise<ExpenseWithDetails[]>
+  create(expense: Expense): Promise<Expense>
+  update(expense: Expense): Promise<Expense>
+  delete(id: string, teamId: string): Promise<void>
+  findById(id: string, teamId: string): Promise<Expense | null>
+  findByTeamId(teamId: string): Promise<Expense[]>
+  findByDateRange(teamId: string, startDate: Date, endDate: Date): Promise<Expense[]>
 }
