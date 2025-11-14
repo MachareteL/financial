@@ -11,6 +11,7 @@ import { CreateExpenseUseCase } from "@/app/expenses/_use-case/create-expense.us
 import { GetCategoriesUseCase } from "@/app/categories/_use-case/get-categories.use-case";
 import { GetExpensesUseCase } from "@/app/expenses/_use-case/get-expenses.use-case";
 import { DeleteExpenseUseCase } from "@/app/expenses/_use-case/delete-expense.use-case";
+import { StorageRepository } from "../repositories/supabase.storage.repository";
 
 const container = Container.getInstance();
 
@@ -20,6 +21,7 @@ const categoryRepository = container.get("categoryRepository", () => new Categor
 const teamRepository = container.get("teamRepository", () => new TeamRepository());
 const expenseRepository = container.get("expenseRepository", () => new ExpenseRepository());
 const incomeRepository = container.get("incomeRepository", () => new SupabaseIncomeRepository());
+const storageRepository = container.get("storageRepository", () => new StorageRepository());
 
 export const getCurrentAuthUserUseCase = container.get(
   "getCurrentAuthUserUseCase",
@@ -53,7 +55,7 @@ export const getDashboardDataUseCase = container.get(
 
 export const createExpenseUseCase = container.get(
   "createExpenseUseCase",
-  () => new CreateExpenseUseCase(expenseRepository)
+  () => new CreateExpenseUseCase(expenseRepository, storageRepository)
 );
 
 export const getCategoriesUseCase = container.get(

@@ -78,21 +78,11 @@ export class ExpenseRepository implements IExpenseRepository {
   }
 
   async create(expense: Expense): Promise<Expense> {
-    const row = this.mapEntityToRow(expense)
-    const { data, error } = await this.supabase
-      .from('expenses')
-      .insert({
-        ...row,
-        created_at: expense.props.createdAt.toISOString(),
-      })
-      .select(EXPENSE_SELECT_QUERY)
-      .single()
-
-    if (error) {
-      console.error("Supabase error creating expense:", error.message)
-      throw new Error(error.message)
+    const results = await this.createMany([expense]);
+    if (results.length === 0) {
+      throw new Error("Supabase error creating expense.");
     }
-    return this.mapRowToEntity(data as ExpenseRowWithRelations)
+    return results[0];
   }
 
   async createMany(expenses: Expense[]): Promise<Expense[]> {

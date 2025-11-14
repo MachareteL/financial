@@ -32,13 +32,11 @@ export type CreateExpenseDTO = {
   categoryId: string;
   teamId: string;
   userId: string;
-  receiptUrl?: string;
+  receiptFile?: File | null;
   isRecurring?: boolean;
   recurrenceType?: "monthly" | "weekly" | "yearly";
   isInstallment?: boolean;
-  installmentNumber?: number;
   totalInstallments?: number;
-  parentExpenseId?: string;
 };
 
 export type UpdateExpenseDTO = {
