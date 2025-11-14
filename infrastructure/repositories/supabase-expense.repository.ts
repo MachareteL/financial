@@ -95,13 +95,30 @@ export class ExpenseRepository implements IExpenseRepository {
     return this.mapRowToEntity(data as ExpenseRowWithRelations)
   }
 
+  async createMany(expenses: Expense[]): Promise<Expense[]> {
+    const rows = expenses.map(expense => ({
+      ...this.mapEntityToRow(expense),
+      created_at: expense.props.createdAt.toISOString(),
+    }))
+    
+    const { data, error } = await this.supabase
+      .from('expenses')
+      .insert(rows)
+      .select(EXPENSE_SELECT_QUERY)
+    if (error) {
+      console.error("Supabase error creating multiple expenses:", error.message)
+      throw new Error(error.message)
+    }
+    return (data || []).map(row => this.mapRowToEntity(row as ExpenseRowWithRelations))
+  }
+
   async update(expense: Expense): Promise<Expense> {
     const row = this.mapEntityToRow(expense)
     const { data, error } = await this.supabase
       .from('expenses')
       .update(row)
       .eq('id', expense.id)
-      .eq('team_id', expense.teamId) // Garante RLS
+      .eq('team_id', expense.teamId)
       .select(EXPENSE_SELECT_QUERY)
       .single()
 

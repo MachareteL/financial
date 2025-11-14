@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -10,163 +9,139 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ArrowLeft, Plus, Repeat, CreditCard } from "lucide-react"
-import { createExpenseUseCase, getCategoriesUseCase } from "@/infrastructure/dependency-injection"
-import { getUserProfile } from "@/lib/auth"
-import { toast } from "@/hooks/use-toast"
+import { ArrowLeft, Plus, Repeat, CreditCard, Loader2 } from "lucide-react"
 import { useAuth } from "@/app/auth/auth-provider"
-import type { Category } from "@/domain/entities/expense"
+import { toast } from "@/hooks/use-toast"
+
+// 1. Importar Casos de Uso e DTOs Corretos
+import { createExpenseUseCase, getCategoriesUseCase } from "@/infrastructure/dependency-injection"
+import type { CategoryDetailsDTO } from "@/domain/dto/category.types.d.ts"
+import type { CreateExpenseDTO } from "@/domain/dto/expense.types.d.ts"
 
 export default function NewExpensePage() {
-  const { user, loading } = useAuth()
+  const { session, loading: authLoading } = useAuth()
   const router = useRouter()
-  const [profile, setProfile] = useState<any>(null)
-  const [categories, setCategories] = useState<Category[]>([])
+
+  // --- Estados da UI ---
+  const [categories, setCategories] = useState<CategoryDetailsDTO[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true)
   const [isRecurring, setIsRecurring] = useState(false)
   const [isInstallment, setIsInstallment] = useState(false)
-  const [totalAmount, setTotalAmount] = useState("")
-  const [installments, setInstallments] = useState("1")
+  
+  // --- Estados do Formulário ---
+  const [description, setDescription] = useState("")
+  const [amount, setAmount] = useState("") // Para gasto único OU valor TOTAL da parcela
+  const [categoryId, setCategoryId] = useState("")
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0])
+  const [recurrenceType, setRecurrenceType] = useState<CreateExpenseDTO['recurrenceType']>("monthly")
+  const [installments, setInstallments] = useState("2") // Default para 2 parcelas
 
-  const [formData, setFormData] = useState({
-    description: "",
-    amount: "",
-    category_id: "",
-    date: new Date().toISOString().split("T")[0],
-    recurrence_type: "monthly",
-  })
+  const teamId = session?.teams?.[0]?.team.id
+  const userId = session?.user?.id
 
+  // Efeito de Autenticação e Carregamento de Dados
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/auth")
-      return
+    if (authLoading) return;
+
+    if (!session || !userId) {
+      router.push("/auth");
+      return;
     }
 
-    if (user) {
-      loadProfile()
+    if (!teamId) {
+      router.push("/onboarding");
+      return;
     }
-  }, [user, loading, router])
 
-  useEffect(() => {
-    if (profile) {
-      loadCategories()
-    }
-  }, [profile])
-
-  const loadProfile = async () => {
-    try {
-      const userProfile = await getUserProfile()
-      if (!userProfile?.familyId) {
-        router.push("/onboarding")
-        return
+    // Carrega as categorias
+    const loadCategories = async () => {
+      setIsLoadingCategories(true);
+      try {
+        const data = await getCategoriesUseCase.execute(teamId); // <-- Refatorado
+        setCategories(data);
+        if (data.length > 0 && !categoryId) {
+          setCategoryId(data[0].id); // Seleciona a primeira categoria por padrão
+        }
+      } catch (error: any) {
+        toast({
+          title: "Erro ao carregar categorias",
+          description: error.message,
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingCategories(false);
       }
-      setProfile(userProfile)
-    } catch (error) {
-      console.error("Error loading profile:", error)
-      router.push("/auth")
     }
-  }
 
-  const loadCategories = async () => {
-    if (!profile?.familyId) return
+    loadCategories();
+  }, [session, authLoading, userId, teamId, router, categoryId]); // Adicionado categoryId para evitar reset
 
-    try {
-      const data = await getCategoriesUseCase.execute({ familyId: profile.familyId })
-      setCategories(data)
-    } catch (error: any) {
-      toast({
-        title: "Erro ao carregar categorias",
-        description: error.message,
-        variant: "destructive",
-      })
-    }
-  }
-
+  // Lógica de cálculo (apenas para UI)
   const calculateInstallmentAmount = () => {
-    if (!totalAmount || !installments) return 0
-    return Number.parseFloat(totalAmount) / Number.parseInt(installments)
+    const total = Number.parseFloat(amount) || 0;
+    const count = Number.parseInt(installments) || 1;
+    if (total === 0 || count <= 0) return 0;
+    return total / count;
   }
 
+  // --- Envio do Formulário ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!profile?.familyId) return
+    if (!teamId || !userId) return;
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
-      let expenseAmount = Number.parseFloat(formData.amount)
-
-      if (isInstallment && totalAmount) {
-        expenseAmount = calculateInstallmentAmount()
-      }
-
-      await createExpenseUseCase.execute({
-        description: formData.description,
-        amount: expenseAmount,
-        categoryId: formData.category_id,
-        date: new Date(formData.date),
-        familyId: profile.familyId,
-        userId: user?.id!,
+      // 1. Monta o DTO de criação
+      const dto: CreateExpenseDTO = {
+        description,
+        amount: Number.parseFloat(amount), // Se for parcela, este é o VALOR TOTAL
+        categoryId,
+        date,
+        teamId,
+        userId,
+        // receiptUrl: undefined, // Adicionar se você tiver upload de imagem
         isRecurring,
-        recurrenceType: isRecurring ? (formData.recurrence_type as any) : undefined,
+        recurrenceType: isRecurring ? recurrenceType : undefined,
         isInstallment,
-        installmentNumber: isInstallment ? 1 : undefined,
         totalInstallments: isInstallment ? Number.parseInt(installments) : undefined,
-      })
-
-      if (isInstallment && Number.parseInt(installments) > 1) {
-        const baseDate = new Date(formData.date)
-
-        for (let i = 2; i <= Number.parseInt(installments); i++) {
-          const installmentDate = new Date(baseDate)
-          installmentDate.setMonth(installmentDate.getMonth() + (i - 1))
-
-          await createExpenseUseCase.execute({
-            description: formData.description,
-            amount: expenseAmount,
-            categoryId: formData.category_id,
-            date: installmentDate,
-            familyId: profile.familyId,
-            userId: user?.id!,
-            isRecurring: false,
-            isInstallment: true,
-            installmentNumber: i,
-            totalInstallments: Number.parseInt(installments),
-          })
-        }
       }
+
+      // 2. Faz UMA chamada para o Use Case
+      // O Use Case agora cuida da lógica de parcelamento
+      await createExpenseUseCase.execute(dto);
 
       toast({
         title: "Gasto adicionado com sucesso!",
         description: isInstallment
-          ? `Criadas ${installments} parcelas de R$ ${expenseAmount.toFixed(2)}`
-          : isRecurring
-            ? "Gasto recorrente configurado"
-            : "Gasto registrado",
-      })
+          ? `Criadas ${installments} parcelas de R$ ${calculateInstallmentAmount().toFixed(2)}`
+          : "Gasto registrado",
+      });
 
-      router.push("/expenses")
+      router.push("/expenses");
+
     } catch (error: any) {
       toast({
         title: "Erro ao adicionar gasto",
         description: error.message,
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
-  if (loading) {
+  // --- Renderização ---
+  if (authLoading || isLoadingCategories || !session || !teamId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Carregando...</h1>
+          <Loader2 className="animate-spin h-8 w-8 text-gray-900 mx-auto" />
+        </div>
       </div>
     )
-  }
-
-  if (!user || !profile) {
-    return null
   }
 
   return (
@@ -178,7 +153,7 @@ export default function NewExpensePage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Novo Gasto</h1>
-            <p className="text-gray-600">Adicione um novo gasto à sua família</p>
+            <p className="text-gray-600">Adicionar ao time "{session.teams[0].team.name}"</p>
           </div>
         </div>
 
@@ -198,8 +173,8 @@ export default function NewExpensePage() {
                   <Input
                     id="description"
                     placeholder="Ex: Supermercado, Gasolina, Netflix..."
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                     required
                   />
                 </div>
@@ -208,11 +183,11 @@ export default function NewExpensePage() {
                   <div>
                     <Label htmlFor="category">Categoria</Label>
                     <Select
-                      value={formData.category_id}
-                      onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+                      value={categoryId}
+                      onValueChange={setCategoryId}
                       required
                     >
-                      <SelectTrigger>
+                      <SelectTrigger loading={isLoadingCategories}>
                         <SelectValue placeholder="Selecione uma categoria" />
                       </SelectTrigger>
                       <SelectContent>
@@ -230,8 +205,8 @@ export default function NewExpensePage() {
                     <Input
                       id="date"
                       type="date"
-                      value={formData.date}
-                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
                       required
                     />
                   </div>
@@ -244,23 +219,26 @@ export default function NewExpensePage() {
                       id="amount"
                       type="number"
                       step="0.01"
+                      min="0.01"
                       placeholder="0,00"
-                      value={formData.amount}
-                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
                       required
                     />
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-4 rounded-lg border p-4">
+                    <h4 className="font-medium">Parcelamento</h4>
                     <div>
                       <Label htmlFor="totalAmount">Valor Total (R$)</Label>
                       <Input
                         id="totalAmount"
                         type="number"
                         step="0.01"
+                        min="0.01"
                         placeholder="0,00"
-                        value={totalAmount}
-                        onChange={(e) => setTotalAmount(e.target.value)}
+                        value={amount} // 'amount' agora guarda o valor total
+                        onChange={(e) => setAmount(e.target.value)}
                         required
                       />
                     </div>
@@ -271,7 +249,7 @@ export default function NewExpensePage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
+                          {Array.from({ length: 23 }, (_, i) => i + 2).map((num) => (
                             <SelectItem key={num} value={num.toString()}>
                               {num}x
                             </SelectItem>
@@ -279,13 +257,10 @@ export default function NewExpensePage() {
                         </SelectContent>
                       </Select>
                     </div>
-                    {totalAmount && installments && (
+                    {amount && installments && (
                       <div className="p-3 bg-blue-50 rounded-lg">
                         <p className="text-sm text-blue-800">
-                          <strong>Valor por parcela:</strong> R$ {calculateInstallmentAmount().toFixed(2)}
-                        </p>
-                        <p className="text-xs text-blue-600 mt-1">
-                          Apenas este valor será contabilizado no orçamento mensal
+                          <strong>{installments}x</strong> de <strong>R$ {calculateInstallmentAmount().toFixed(2)}</strong>
                         </p>
                       </div>
                     )}
@@ -294,8 +269,6 @@ export default function NewExpensePage() {
               </div>
 
               <div className="space-y-4 border-t pt-6">
-                <h3 className="text-lg font-medium text-gray-900">Opções Avançadas</h3>
-
                 <div className="flex items-start space-x-3">
                   <Checkbox
                     id="recurring"
@@ -306,19 +279,15 @@ export default function NewExpensePage() {
                     }}
                   />
                   <div className="space-y-2 flex-1">
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="recurring" className="flex items-center gap-2 cursor-pointer">
-                        <Repeat className="h-4 w-4 text-green-600" />
-                        Gasto Recorrente
-                      </Label>
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      Para gastos que se repetem regularmente (ex: assinaturas, mensalidades)
-                    </p>
+                    <Label htmlFor="recurring" className="flex items-center gap-2 cursor-pointer">
+                      <Repeat className="h-4 w-4 text-green-600" />
+                      Gasto Recorrente
+                    </Label>
+                    <p className="text-sm text-gray-600">Para assinaturas, aluguel, etc.</p>
                     {isRecurring && (
                       <Select
-                        value={formData.recurrence_type}
-                        onValueChange={(value) => setFormData({ ...formData, recurrence_type: value })}
+                        value={recurrenceType}
+                        onValueChange={(value) => setRecurrenceType(value as any)}
                       >
                         <SelectTrigger className="w-48">
                           <SelectValue />
@@ -339,25 +308,15 @@ export default function NewExpensePage() {
                     checked={isInstallment}
                     onCheckedChange={(checked) => {
                       setIsInstallment(checked as boolean)
-                      if (checked) {
-                        setIsRecurring(false)
-                        setFormData({ ...formData, amount: "" })
-                      } else {
-                        setTotalAmount("")
-                        setInstallments("1")
-                      }
+                      if (checked) setIsRecurring(false)
                     }}
                   />
                   <div className="space-y-2 flex-1">
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="installment" className="flex items-center gap-2 cursor-pointer">
-                        <CreditCard className="h-4 w-4 text-blue-600" />
-                        Gasto Parcelado
-                      </Label>
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      Para compras parceladas no cartão de crédito ou financiamentos
-                    </p>
+                    <Label htmlFor="installment" className="flex items-center gap-2 cursor-pointer">
+                      <CreditCard className="h-4 w-4 text-blue-600" />
+                      Gasto Parcelado
+                    </Label>
+                    <p className="text-sm text-gray-600">Para compras no cartão de crédito.</p>
                   </div>
                 </div>
               </div>
@@ -366,7 +325,7 @@ export default function NewExpensePage() {
                 <Button type="button" variant="outline" onClick={() => router.back()} className="flex-1">
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={isLoading} className="flex-1">
+                <Button type="submit" disabled={isLoading || isLoadingCategories} className="flex-1">
                   {isLoading ? "Salvando..." : "Salvar Gasto"}
                 </Button>
               </div>

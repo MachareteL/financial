@@ -1,10 +1,10 @@
-import type { Category } from "../entities/expense"
+import type { Category } from '../entities/category'
 
 export interface ICategoryRepository {
-  getCategoriesByFamily(familyId: string): Promise<Category[]>
-  getCategoryById(categoryId: string, familyId: string): Promise<Category | null>
-  createCategory(category: Omit<Category, "id" | "createdAt">): Promise<Category>
-  updateCategory(categoryId: string, familyId: string, data: Partial<Category>): Promise<Category>
-  deleteCategory(categoryId: string, familyId: string): Promise<void>
-  createDefaultCategories(familyId: string): Promise<Category[]>
+  findByTeamId(teamId: string): Promise<Category[]>
+  findById(categoryId: string, teamId: string): Promise<Category | null>
+  create(category: Category): Promise<Category>
+  update(category: Category): Promise<Category>
+  delete(categoryId: string, teamId: string): Promise<void>
+  createDefaultCategories(teamId: string): Promise<Category[]>
 }

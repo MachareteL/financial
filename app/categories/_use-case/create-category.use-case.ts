@@ -1,20 +1,19 @@
-import type { ICategoryRepository } from "@/domain/interfaces/category.repository.interface"
-import type { Category } from "@/domain/entities/expense"
-
-export interface CreateCategoryDTO {
-  name: string
-  classification: "necessidades" | "desejos" | "poupanca"
-  familyId: string
-}
+import type { ICategoryRepository } from "@/domain/interfaces/category.repository.interface";
+import type { CreateCategoryDTO } from "@/domain/dto/category.types.d.ts";
+import { Category } from "@/domain/entities/category";
 
 export class CreateCategoryUseCase {
   constructor(private categoryRepository: ICategoryRepository) {}
 
-  async execute(dto: CreateCategoryDTO): Promise<Category> {
-    return await this.categoryRepository.createCategory({
+  async execute(dto: CreateCategoryDTO): Promise<void> {
+    const category = new Category({
+      id: crypto.randomUUID(),
+      createdAt: new Date(),
       name: dto.name,
       classification: dto.classification,
-      familyId: dto.familyId,
-    })
+      teamId: dto.teamId,
+    });
+
+    await this.categoryRepository.create(category);
   }
 }

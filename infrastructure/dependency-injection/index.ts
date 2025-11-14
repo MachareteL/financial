@@ -7,6 +7,8 @@ import { SignOutUseCase } from "@/app/auth/_use-case/sign-out.use-case";
 import { CreateTeamUseCase } from "@/app/team/_use-case/create-team.use-case";
 import { GetDashboardDataUseCase } from "@/app/dashboard/_use-case/get-dashboard-data.use-case";
 import { SupabaseIncomeRepository } from "../repositories/supabase-income.repository";
+import { CreateExpenseUseCase } from "@/app/expenses/_use-case/create-expense.use-case";
+import { GetCategoriesUseCase } from "@/app/categories/_use-case/get-categories.use-case";
 
 const container = Container.getInstance();
 
@@ -45,4 +47,14 @@ export const createTeamUseCase = container.get(
 export const getDashboardDataUseCase = container.get(
   "getDashboardDataUseCase",
   () => new GetDashboardDataUseCase(expenseRepository, incomeRepository)
+);
+
+export const createExpenseUseCase = container.get(
+  "createExpenseUseCase",
+  () => new CreateExpenseUseCase(expenseRepository)
+);
+
+export const getCategoriesUseCase = container.get(
+  "getCategoriesUseCase",
+  () => new GetCategoriesUseCase(categoryRepository)
 );

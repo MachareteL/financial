@@ -1,96 +1,97 @@
-import type { ICategoryRepository } from "@/domain/interfaces/category.repository.interface"
-import type { Category } from "@/domain/entities/expense"
-import { getSupabaseClient } from "../database/supabase.client"
+import type { ICategoryRepository } from "@/domain/interfaces/category.repository.interface";
+import { Category, type CategoryProps } from "@/domain/entities/category";
+import { getSupabaseClient } from "../database/supabase.client";
+import type { Database } from "@/domain/dto/database.types.d.ts";
+
+type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
 
 export class CategoryRepository implements ICategoryRepository {
-  private supabase = getSupabaseClient()
+  private supabase = getSupabaseClient();
 
-  async getCategoriesByFamily(familyId: string): Promise<Category[]> {
-    const { data, error } = await this.supabase.from("categories").select("*").eq("family_id", familyId).order("name")
-
-    if (error) throw new Error(error.message)
-
-    return (data || []).map((item) => ({
-      id: item.id,
-      name: item.name,
-      classification: item.classification,
-      familyId: item.family_id,
-      createdAt: new Date(item.created_at),
-    }))
+  private mapRowToEntity(row: CategoryRow): Category {
+    return new Category({
+      id: row.id,
+      name: row.name,
+      classification: row.classification as CategoryProps["classification"],
+      teamId: row.team_id!,
+      createdAt: new Date(row.created_at),
+    });
   }
 
-  async getCategoryById(categoryId: string, familyId: string): Promise<Category | null> {
+  private mapEntityToRow(
+    entity: Category
+  ): Omit<CategoryRow, "id" | "created_at"> {
+    return {
+      name: entity.name,
+      classification: entity.classification,
+      team_id: entity.teamId,
+    };
+  }
+
+  async findByTeamId(teamId: string): Promise<Category[]> {
+    const { data, error } = await this.supabase
+      .from("categories")
+      .select("*")
+      .eq("team_id", teamId)
+      .order("name");
+
+    if (error) throw new Error(error.message);
+    return (data || []).map(this.mapRowToEntity);
+  }
+
+  async findById(categoryId: string, teamId: string): Promise<Category | null> {
     const { data, error } = await this.supabase
       .from("categories")
       .select("*")
       .eq("id", categoryId)
-      .eq("family_id", familyId)
-      .maybeSingle()
+      .eq("team_id", teamId)
+      .maybeSingle();
 
-    if (error || !data) return null
-
-    return {
-      id: data.id,
-      name: data.name,
-      classification: data.classification,
-      familyId: data.family_id,
-      createdAt: new Date(data.created_at),
-    }
+    if (error) throw new Error(error.message);
+    return data ? this.mapRowToEntity(data) : null;
   }
 
-  async createCategory(category: Omit<Category, "id" | "createdAt">): Promise<Category> {
+  async create(category: Category): Promise<Category> {
+    const row = this.mapEntityToRow(category);
     const { data, error } = await this.supabase
       .from("categories")
       .insert({
-        name: category.name,
-        classification: category.classification,
-        family_id: category.familyId,
+        ...row,
+        id: category.id,
+        created_at: category.createdAt.toISOString(),
       })
       .select()
-      .single()
+      .single();
 
-    if (error) throw new Error(error.message)
-
-    return {
-      id: data.id,
-      name: data.name,
-      classification: data.classification,
-      familyId: data.family_id,
-      createdAt: new Date(data.created_at),
-    }
+    if (error) throw new Error(error.message);
+    return this.mapRowToEntity(data);
   }
 
-  async updateCategory(categoryId: string, familyId: string, data: Partial<Category>): Promise<Category> {
-    const updateData: any = {}
-    if (data.name !== undefined) updateData.name = data.name
-    if (data.classification !== undefined) updateData.classification = data.classification
-
-    const { data: updated, error } = await this.supabase
+  async update(category: Category): Promise<Category> {
+    const row = this.mapEntityToRow(category);
+    const { data, error } = await this.supabase
       .from("categories")
-      .update(updateData)
-      .eq("id", categoryId)
-      .eq("family_id", familyId)
+      .update(row)
+      .eq("id", category.id)
+      .eq("team_id", category.teamId)
       .select()
-      .single()
+      .single();
 
-    if (error) throw new Error(error.message)
-
-    return {
-      id: updated.id,
-      name: updated.name,
-      classification: updated.classification,
-      familyId: updated.family_id,
-      createdAt: new Date(updated.created_at),
-    }
+    if (error) throw new Error(error.message);
+    return this.mapRowToEntity(data);
   }
 
-  async deleteCategory(categoryId: string, familyId: string): Promise<void> {
-    const { error } = await this.supabase.from("categories").delete().eq("id", categoryId).eq("family_id", familyId)
+  async delete(categoryId: string, teamId: string): Promise<void> {
+    const { error } = await this.supabase
+      .from("categories")
+      .delete()
+      .eq("id", categoryId)
+      .eq("team_id", teamId);
 
-    if (error) throw new Error(error.message)
+    if (error) throw new Error(error.message);
   }
 
-  async createDefaultCategories(familyId: string): Promise<Category[]> {
+  async createDefaultCategories(teamId: string): Promise<Category[]> {
     const defaultCategories = [
       { name: "Moradia", classification: "necessidades" as const },
       { name: "Transporte", classification: "necessidades" as const },
@@ -99,23 +100,19 @@ export class CategoryRepository implements ICategoryRepository {
       { name: "Saúde", classification: "necessidades" as const },
       { name: "Investimentos", classification: "poupanca" as const },
       { name: "Outros", classification: "necessidades" as const },
-    ]
+    ];
 
     const categoriesToInsert = defaultCategories.map((cat) => ({
       ...cat,
-      family_id: familyId,
-    }))
+      team_id: teamId,
+    }));
 
-    const { data, error } = await this.supabase.from("categories").insert(categoriesToInsert).select()
+    const { data, error } = await this.supabase
+      .from("categories")
+      .insert(categoriesToInsert)
+      .select();
 
-    if (error) throw new Error(error.message)
-
-    return (data || []).map((item) => ({
-      id: item.id,
-      name: item.name,
-      classification: item.classification,
-      familyId: item.family_id,
-      createdAt: new Date(item.created_at),
-    }))
+    if (error) throw new Error(error.message);
+    return (data || []).map(this.mapRowToEntity);
   }
 }
