@@ -1,5 +1,5 @@
 import type { IExpenseRepository } from "@/domain/interfaces/expense.repository.interface"
-import type { IIncomeRepository } from "@/domain/interfaces/income.repository"
+import type { IIncomeRepository } from "@/domain/interfaces/income.repository.interface"
 
 export interface DashboardData {
   expenses: Array<{
@@ -29,7 +29,7 @@ export class GetDashboardDataUseCase {
     // Get expenses for the month
     const expenses = await this.expenseRepository.getExpensesByDateRange(familyId, startDate, endDate)
 
-    const allIncomes = await this.incomeRepository.findByFamilyId(familyId)
+    const allIncomes = await this.incomeRepository.findByTeamId(familyId)
 
     // Calculate monthly income
     const monthlyIncome = this.calculateMonthlyIncome(allIncomes, month, year)

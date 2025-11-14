@@ -14,6 +14,7 @@ export const TeamInviteSchema = z.object({
   invitedBy: z.string().uuid(),
   
   createdAt: z.date(),
+  createdBy: z.string().uuid(),
 });
 
 export type TeamInviteProps = z.infer<typeof TeamInviteSchema>;

@@ -1,92 +1,113 @@
-import type { IIncomeRepository } from "@/domain/interfaces/income.repository"
-import { Income } from "@/domain/entities/income"
-import { supabase } from "@/lib/supabase"
+// infrastructure/repositories/supabase-income.repository.ts
+import type { IIncomeRepository } from '@/domain/interfaces/income.repository.interface'
+import { Income } from '@/domain/entities/income'
+import { getSupabaseClient } from '../database/supabase.client'
+import type { Database } from '@/domain/dto/database.types.d.ts'
+
+
+type IncomeRow = Database['public']['Tables']['incomes']['Row']
+type ProfileRow = Database['public']['Tables']['profiles']['Row']
+
+type IncomeRowWithProfile = IncomeRow & {
+  profiles: Pick<ProfileRow, 'name'> | null
+}
 
 export class SupabaseIncomeRepository implements IIncomeRepository {
-  async create(income: Income): Promise<void> {
-    const { error } = await supabase.from("incomes").insert({
-      id: income.id,
-      amount: income.amount,
-      description: income.description,
-      type: income.type,
-      frequency: income.frequency,
-      date: income.date.toISOString().split("T")[0],
-      family_id: income.familyId,
-      user_id: income.userId,
+  private supabase = getSupabaseClient()
+
+  private mapRowToEntity(row: IncomeRowWithProfile): Income {
+    return new Income({
+      id: row.id,
+      amount: row.amount,
+      description: row.description,
+      type: row.type as 'recurring' | 'one_time',
+      frequency: row.frequency as 'monthly' | 'weekly' | 'yearly' | null,
+      date: new Date(row.date.replace(/-/g, '/')), // Converte string 'YYYY-MM-DD'
+      teamId: row.team_id!,
+      userId: row.user_id!,
+      createdAt: new Date(row.created_at),
+      owner: row.profiles?.name || null,
     })
-
-    if (error) throw new Error(error.message)
   }
 
-  async update(income: Income): Promise<void> {
-    const { error } = await supabase
-      .from("incomes")
-      .update({
-        amount: income.amount,
-        description: income.description,
-        type: income.type,
-        frequency: income.frequency,
-        date: income.date.toISOString().split("T")[0],
+  private mapEntityToRow(entity: Income): Omit<IncomeRow, 'created_at'> {
+    return {
+      id: entity.id,
+      amount: entity.amount,
+      description: entity.description || null,
+      type: entity.type,
+      frequency: entity.frequency || null,
+      date: entity.date.toISOString().split('T')[0], // Formata 'YYYY-MM-DD'
+      team_id: entity.teamId,
+      user_id: entity.userId,
+    }
+  }
+
+  async create(income: Income): Promise<Income> {
+    const row = this.mapEntityToRow(income)
+
+    const { data, error } = await this.supabase
+      .from('incomes')
+      .insert({
+        ...row,
+        created_at: income.createdAt.toISOString(),
       })
-      .eq("id", income.id)
+      .select(`*, profiles ( name )`)
+      .single()
+
+    if (error) throw new Error(error.message)
+    return this.mapRowToEntity(data as IncomeRowWithProfile)
+  }
+
+  async update(income: Income): Promise<Income> {
+    const row = this.mapEntityToRow(income)
+
+    const { data, error } = await this.supabase
+      .from('incomes')
+      .update(row)
+      .eq('id', income.id)
+      .eq('team_id', income.teamId)
+      .select(`*, profiles ( name )`)
+      .single()
+
+    if (error) throw new Error(error.message)
+    return this.mapRowToEntity(data as IncomeRowWithProfile)
+  }
+
+  async delete(id: string, teamId: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('incomes')
+      .delete()
+      .eq('id', id)
+      .eq('team_id', teamId)
 
     if (error) throw new Error(error.message)
   }
 
-  async delete(id: string): Promise<void> {
-    const { error } = await supabase.from("incomes").delete().eq("id", id)
-
-    if (error) throw new Error(error.message)
-  }
-
-  async findById(id: string): Promise<Income | null> {
-    const { data, error } = await supabase.from("incomes").select("*").eq("id", id).maybeSingle()
+  async findById(id: string, teamId: string): Promise<Income | null> {
+    const { data, error } = await this.supabase
+      .from('incomes')
+      .select(`*, profiles ( name )`)
+      .eq('id', id)
+      .eq('team_id', teamId)
+      .maybeSingle()
 
     if (error) throw new Error(error.message)
     if (!data) return null
 
-    return new Income(
-      data.id,
-      data.amount,
-      data.description,
-      data.type,
-      new Date(data.date),
-      data.family_id,
-      data.user_id,
-      data.frequency,
-    )
+    return this.mapRowToEntity(data as IncomeRowWithProfile)
   }
 
-  async findByFamilyId(familyId: string): Promise<Income[]> {
-    const { data: incomesData, error: incomesError } = await supabase
-      .from("incomes")
-      .select("id, amount, description, type, frequency, date, user_id, family_id")
-      .eq("family_id", familyId)
-      .order("date", { ascending: false })
+  async findByTeamId(teamId: string): Promise<Income[]> {
+    const { data, error } = await this.supabase
+      .from('incomes')
+      .select(`*, profiles ( name )`)
+      .eq('team_id', teamId)
+      .order('date', { ascending: false })
 
-    if (incomesError) throw new Error(incomesError.message)
-    if (!incomesData || incomesData.length === 0) return []
+    if (error) throw new Error(error.message)
+    if (!data) return []
 
-    const userIds = [...new Set(incomesData.map((income) => income.user_id))]
-    const { data: usersData, error: usersError } = await supabase.from("profiles").select("id, name").in("id", userIds)
-
-    if (usersError) throw new Error(usersError.message)
-
-    const userNameMap = new Map(usersData.map((user) => [user.id, user.name]))
-
-    return incomesData.map(
-      (data) =>
-        new Income(
-          data.id,
-          data.amount,
-          data.description,
-          data.type,
-          new Date(data.date),
-          data.family_id,
-          data.user_id,
-          data.frequency,
-          userNameMap.get(data.user_id) || null,
-        ),
-    )
+    return data.map(row => this.mapRowToEntity(row as IncomeRowWithProfile))
   }
 }
