@@ -1,215 +1,259 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Edit, Trash2, Plus, Receipt, Eye, Search, Filter, Calendar, Tag } from "lucide-react"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  ArrowLeft,
+  Edit,
+  Trash2,
+  Plus,
+  Receipt,
+  Eye,
+  Search,
+  Filter,
+  Calendar,
+  Tag,
+  Loader2,
+} from "lucide-react";
 import {
   getExpensesUseCase,
   getCategoriesUseCase,
   deleteExpenseUseCase,
-} from "@/infrastructure/dependency-injection"
-import { getUserProfile } from "@/lib/auth"
-import { toast } from "@/hooks/use-toast"
-import { useAuth } from "@/app/auth/auth-provider"
-import type { ExpenseWithDetails } from "@/domain/entities/expense"
-import type { Category } from "@/domain/entities/expense"
+} from "@/infrastructure/dependency-injection";
+import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/app/auth/auth-provider";
+
+import type { ExpenseDetailsDTO } from "@/domain/dto/expense.types.d.ts";
+import type { CategoryDetailsDTO } from "@/domain/dto/category.types.d.ts";
 
 export default function ExpensesPage() {
-  const { user, loading } = useAuth()
-  const [expenses, setExpenses] = useState<ExpenseWithDetails[]>([])
-  const [filteredExpenses, setFilteredExpenses] = useState<ExpenseWithDetails[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [profile, setProfile] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [selectedReceipt, setSelectedReceipt] = useState<string | null>(null)
+  const { session, loading: authLoading } = useAuth();
+  const [expenses, setExpenses] = useState<ExpenseDetailsDTO[]>([]);
+  const [filteredExpenses, setFilteredExpenses] = useState<ExpenseDetailsDTO[]>(
+    []
+  );
+  const [categories, setCategories] = useState<CategoryDetailsDTO[]>([]);
+  const [profile, setProfile] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedReceipt, setSelectedReceipt] = useState<string | null>(null);
 
   // Filtros
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedMonth, setSelectedMonth] = useState<string>("all")
-  const [selectedYear, setSelectedYear] = useState<string>("all")
-  const [selectedCategory, setSelectedCategory] = useState<string>("all")
-  const [selectedClassification, setSelectedClassification] = useState<string>("all")
-  const [sortBy, setSortBy] = useState<string>("date-desc")
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState<string>("all");
+  const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedClassification, setSelectedClassification] =
+    useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("date-desc");
 
-  const router = useRouter()
+  const teamId = session?.teams?.[0]?.team.id;
+  const userId = session?.user?.id;
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/auth")
-      return
-    }
-
-    if (user && !profile) {
-      loadProfile()
-    }
-  }, [user, loading, router])
+  const router = useRouter();
 
   useEffect(() => {
-    if (profile) {
-      loadExpenses()
-      loadCategories()
+    if (authLoading) return;
+    if (!session || !userId) {
+      router.push("/auth");
+      return;
     }
-  }, [profile])
+    if (!teamId) {
+      router.push("/onboarding");
+      return;
+    }
+  }, [session, authLoading, userId, teamId, router]);
 
   useEffect(() => {
-    applyFilters()
-  }, [expenses, searchTerm, selectedMonth, selectedYear, selectedCategory, selectedClassification, sortBy])
-
-  const loadProfile = async () => {
-    try {
-      const userProfile = await getUserProfile()
-      if (!userProfile) {
-        router.push("/auth")
-        return
-      }
-      setProfile(userProfile)
-    } catch (error) {
-      console.error("Error loading profile:", error)
-      router.push("/auth")
+    if (teamId) {
+      loadExpenses();
+      loadCategories();
     }
-  }
+  }, [teamId]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [
+    expenses,
+    searchTerm,
+    selectedMonth,
+    selectedYear,
+    selectedCategory,
+    selectedClassification,
+    sortBy,
+  ]);
 
   const loadExpenses = async () => {
-    if (!profile?.familyId) return
-
-    setIsLoading(true)
+    if (!teamId) return;
+    setIsLoading(true);
     try {
-      const data = await getExpensesUseCase.execute({ familyId: profile.familyId })
-      setExpenses(data)
+      const data = await getExpensesUseCase.execute({ teamId });
+      setExpenses(data);
     } catch (error: any) {
       toast({
         title: "Erro ao carregar gastos",
         description: error.message,
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const loadCategories = async () => {
-    if (!profile?.familyId) return
-
+    if (!teamId) return;
     try {
-      const data = await getCategoriesUseCase.execute({ familyId: profile.familyId })
-      setCategories(data)
+      const data = await getCategoriesUseCase.execute(teamId);
+      setCategories(data);
     } catch (error: any) {
-      console.error("Error loading categories:", error)
+      console.error("Error loading categories:", error);
     }
-  }
+  };
+
+  const safeNewDate = (dateStr: string): Date => {
+    return new Date(dateStr.replace(/-/g, "/"));
+  };
 
   const applyFilters = () => {
-    let filtered = [...expenses]
+    let filtered = [...expenses];
 
-    // Filtro por busca
     if (searchTerm) {
       filtered = filtered.filter(
         (expense) =>
-          expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          expense.category.name.toLowerCase().includes(searchTerm.toLowerCase()),
-      )
+          expense.description
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          expense.category?.name
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
+      );
     }
 
-    // Filtro por mês
     if (selectedMonth !== "all") {
       filtered = filtered.filter((expense) => {
-        const expenseMonth = expense.date.getMonth() + 1
-        return expenseMonth.toString() === selectedMonth
-      })
+        const expenseMonth = safeNewDate(expense.date).getMonth() + 1;
+        return expenseMonth.toString() === selectedMonth;
+      });
     }
 
-    // Filtro por ano
     if (selectedYear !== "all") {
       filtered = filtered.filter((expense) => {
-        const expenseYear = expense.date.getFullYear()
-        return expenseYear.toString() === selectedYear
-      })
+        const expenseYear = safeNewDate(expense.date).getFullYear();
+        return expenseYear.toString() === selectedYear;
+      });
     }
 
-    // Filtro por categoria
     if (selectedCategory !== "all") {
-      filtered = filtered.filter((expense) => expense.category.id === selectedCategory)
+      filtered = filtered.filter(
+        (expense) => expense.category?.id === selectedCategory
+      );
     }
 
-    // Filtro por classificação
     if (selectedClassification !== "all") {
-      filtered = filtered.filter((expense) => expense.category.classification === selectedClassification)
+      filtered = filtered.filter(
+        (expense) => expense.category?.classification === selectedClassification
+      );
     }
 
-    // Ordenação
     switch (sortBy) {
       case "date-desc":
-        filtered.sort((a, b) => b.date.getTime() - a.date.getTime())
-        break
+        filtered.sort(
+          (a, b) =>
+            safeNewDate(b.date).getTime() - safeNewDate(a.date).getTime()
+        );
+        break;
       case "date-asc":
-        filtered.sort((a, b) => a.date.getTime() - b.date.getTime())
-        break
+        filtered.sort(
+          (a, b) =>
+            safeNewDate(a.date).getTime() - safeNewDate(b.date).getTime()
+        );
+        break;
       case "amount-desc":
-        filtered.sort((a, b) => b.amount - a.amount)
-        break
+        filtered.sort((a, b) => b.amount - a.amount);
+        break;
       case "amount-asc":
-        filtered.sort((a, b) => a.amount - b.amount)
-        break
+        filtered.sort((a, b) => a.amount - b.amount);
+        break;
       case "category":
-        filtered.sort((a, b) => a.category.name.localeCompare(b.category.name))
-        break
+        filtered.sort((a, b) =>
+          (a.category?.name || "").localeCompare(b.category?.name || "")
+        );
+        break;
     }
 
-    setFilteredExpenses(filtered)
-  }
+    setFilteredExpenses(filtered);
+  };
 
   const deleteExpense = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este gasto?")) return
+    if (!teamId) return;
+    if (!confirm("Tem certeza que deseja excluir este gasto?")) return;
 
     try {
-      await deleteExpenseUseCase.execute({ expenseId: id, familyId: profile.familyId })
-      setExpenses(expenses.filter((expense) => expense.id !== id))
+      await deleteExpenseUseCase.execute({ expenseId: id, teamId: teamId });
+      setExpenses(expenses.filter((expense) => expense.id !== id));
       toast({
         title: "Gasto excluído",
         description: "O gasto foi excluído com sucesso.",
-      })
+      });
     } catch (error: any) {
       toast({
         title: "Erro ao excluir gasto",
         description: error.message,
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   const clearFilters = () => {
-    setSearchTerm("")
-    setSelectedMonth("all")
-    setSelectedYear("all")
-    setSelectedCategory("all")
-    setSelectedClassification("all")
-    setSortBy("date-desc")
-  }
+    setSearchTerm("");
+    setSelectedMonth("all");
+    setSelectedYear("all");
+    setSelectedCategory("all");
+    setSelectedClassification("all");
+    setSortBy("date-desc");
+  };
 
   const getClassificationColor = (classification: string) => {
     switch (classification) {
       case "necessidades":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 text-green-800";
       case "desejos":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-100 text-yellow-800";
       case "poupanca":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-100 text-blue-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("pt-BR")
-  }
+  const formatDate = (dateStr: string) => {
+    return safeNewDate(dateStr).toLocaleDateString("pt-BR");
+  };
 
   const getMonths = () => {
     return [
@@ -225,31 +269,29 @@ export default function ExpensesPage() {
       { value: "10", label: "Outubro" },
       { value: "11", label: "Novembro" },
       { value: "12", label: "Dezembro" },
-    ]
-  }
+    ];
+  };
 
   const getYears = () => {
-    const currentYear = new Date().getFullYear()
-    const years = []
+    const currentYear = new Date().getFullYear();
+    const years = [];
     for (let i = currentYear; i >= currentYear - 5; i--) {
-      years.push({ value: i.toString(), label: i.toString() })
+      years.push({ value: i.toString(), label: i.toString() });
     }
-    return years
-  }
+    return years;
+  };
 
-  const getTotalAmount = () => {
-    return filteredExpenses.reduce((total, expense) => total + expense.amount, 0)
-  }
+  const getTotalAmount = () => filteredExpenses.reduce((total, expense) => total + expense.amount, 0);
 
-  if (loading || isLoading) {
+  if (authLoading || isLoading || !session || !teamId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Carregando gastos...</h1>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <Loader2 className="animate-spin h-8 w-8 text-gray-900 mx-auto" />
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -258,14 +300,21 @@ export default function ExpensesPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" onClick={() => router.push("/dashboard")}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => router.push("/dashboard")}
+            >
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Gastos</h1>
               <p className="text-gray-600">
-                Gerencie todos os gastos da família • {filteredExpenses.length} gastos • Total: R${" "}
-                {getTotalAmount().toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                Gerencie todos os gastos da família • {filteredExpenses.length}{" "}
+                gastos • Total: R${" "}
+                {getTotalAmount().toLocaleString("pt-BR", {
+                  minimumFractionDigits: 2,
+                })}
               </p>
             </div>
           </div>
@@ -341,7 +390,10 @@ export default function ExpensesPage() {
               {/* Categoria */}
               <div className="space-y-2">
                 <Label>Categoria</Label>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <Select
+                  value={selectedCategory}
+                  onValueChange={setSelectedCategory}
+                >
                   <SelectTrigger>
                     <Tag className="h-4 w-4 mr-2" />
                     <SelectValue placeholder="Todas as categorias" />
@@ -362,7 +414,10 @@ export default function ExpensesPage() {
               {/* Classificação */}
               <div className="space-y-2">
                 <Label>Classificação</Label>
-                <Select value={selectedClassification} onValueChange={setSelectedClassification}>
+                <Select
+                  value={selectedClassification}
+                  onValueChange={setSelectedClassification}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Todas as classificações" />
                   </SelectTrigger>
@@ -383,7 +438,9 @@ export default function ExpensesPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="date-desc">Data (mais recente)</SelectItem>
+                    <SelectItem value="date-desc">
+                      Data (mais recente)
+                    </SelectItem>
                     <SelectItem value="date-asc">Data (mais antigo)</SelectItem>
                     <SelectItem value="amount-desc">Valor (maior)</SelectItem>
                     <SelectItem value="amount-asc">Valor (menor)</SelectItem>
@@ -395,7 +452,11 @@ export default function ExpensesPage() {
               {/* Limpar filtros */}
               <div className="space-y-2">
                 <Label>&nbsp;</Label>
-                <Button variant="outline" onClick={clearFilters} className="w-full bg-transparent">
+                <Button
+                  variant="outline"
+                  onClick={clearFilters}
+                  className="w-full bg-transparent"
+                >
                   Limpar Filtros
                 </Button>
               </div>
@@ -418,7 +479,9 @@ export default function ExpensesPage() {
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Receipt className="h-12 w-12 text-gray-400 mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {expenses.length === 0 ? "Nenhum gasto encontrado" : "Nenhum gasto corresponde aos filtros"}
+                    {expenses.length === 0
+                      ? "Nenhum gasto encontrado"
+                      : "Nenhum gasto corresponde aos filtros"}
                   </h3>
                   <p className="text-gray-600 text-center mb-4">
                     {expenses.length === 0
@@ -436,24 +499,36 @@ export default function ExpensesPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredExpenses.map((expense) => (
-                  <Card key={expense.id} className="hover:shadow-lg transition-shadow">
+                  <Card
+                    key={expense.id}
+                    className="hover:shadow-lg transition-shadow"
+                  >
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg">
-                          R$ {expense.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          R${" "}
+                          {expense.amount.toLocaleString("pt-BR", {
+                            minimumFractionDigits: 2,
+                          })}
                         </CardTitle>
-                        <Badge className={getClassificationColor(expense.category.classification)}>
-                          {expense.category.classification}
+                        <Badge
+                          className={getClassificationColor(
+                            expense.category?.classification! 
+                          )}
+                        >
+                          {expense.category?.classification}
                         </Badge>
                       </div>
                       <CardDescription>{expense.description}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="flex items-center justify-between text-sm text-gray-600">
-                        <span>Categoria: {expense.category.name}</span>
+                        <span>Categoria: {expense.category?.name}</span>
                         <span>{formatDate(expense.date)}</span>
                       </div>
-                      <div className="text-sm text-gray-600">Adicionado por: {expense.user.name}</div>
+                      <div className="text-sm text-gray-600">
+                        Adicionado por: {expense.owner?.name}
+                      </div>
                       {expense.receiptUrl && (
                         <div className="flex items-center gap-2">
                           <Dialog>
@@ -461,7 +536,9 @@ export default function ExpensesPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setSelectedReceipt(expense.receiptUrl!)}
+                                onClick={() =>
+                                  setSelectedReceipt(expense.receiptUrl!)
+                                }
                               >
                                 <Eye className="w-4 h-4 mr-1" />
                                 Ver Nota
@@ -486,7 +563,9 @@ export default function ExpensesPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => router.push(`/expenses/${expense.id}/edit`)}
+                          onClick={() =>
+                            router.push(`/expenses/${expense.id}/edit`)
+                          }
                           className="flex-1"
                         >
                           <Edit className="w-4 h-4 mr-1" />
@@ -516,7 +595,9 @@ export default function ExpensesPage() {
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Receipt className="h-12 w-12 text-gray-400 mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {expenses.length === 0 ? "Nenhum gasto encontrado" : "Nenhum gasto corresponde aos filtros"}
+                    {expenses.length === 0
+                      ? "Nenhum gasto encontrado"
+                      : "Nenhum gasto corresponde aos filtros"}
                   </h3>
                   <p className="text-gray-600 text-center mb-4">
                     {expenses.length === 0
@@ -535,7 +616,9 @@ export default function ExpensesPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Lista de Gastos</CardTitle>
-                  <CardDescription>Visualização em tabela de todos os gastos filtrados</CardDescription>
+                  <CardDescription>
+                    Visualização em tabela de todos os gastos filtrados
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
@@ -544,32 +627,50 @@ export default function ExpensesPage() {
                         <tr className="border-b">
                           <th className="text-left p-3 font-medium">Data</th>
                           <th className="text-left p-3 font-medium">Valor</th>
-                          <th className="text-left p-3 font-medium">Categoria</th>
-                          <th className="text-left p-3 font-medium">Descrição</th>
-                          <th className="text-left p-3 font-medium">Adicionado por</th>
+                          <th className="text-left p-3 font-medium">
+                            Categoria
+                          </th>
+                          <th className="text-left p-3 font-medium">
+                            Descrição
+                          </th>
+                          <th className="text-left p-3 font-medium">
+                            Adicionado por
+                          </th>
                           <th className="text-left p-3 font-medium">Nota</th>
                           <th className="text-left p-3 font-medium">Ações</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredExpenses.map((expense) => (
-                          <tr key={expense.id} className="border-b hover:bg-gray-50">
+                          <tr
+                            key={expense.id}
+                            className="border-b hover:bg-gray-50"
+                          >
                             <td className="p-3">{formatDate(expense.date)}</td>
                             <td className="p-3 font-medium">
-                              R$ {expense.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                              R${" "}
+                              {expense.amount.toLocaleString("pt-BR", {
+                                minimumFractionDigits: 2,
+                              })}
                             </td>
                             <td className="p-3">
                               <div className="flex flex-col gap-1">
-                                <span className="font-medium">{expense.category.name}</span>
+                                <span className="font-medium">
+                                  {expense.category?.name}
+                                </span>
                                 <Badge
-                                  className={`${getClassificationColor(expense.category.classification)} text-xs w-fit`}
+                                  className={`${getClassificationColor(
+                                    expense.category?.classification!
+                                  )} text-xs w-fit`}
                                 >
-                                  {expense.category.classification}
+                                  {expense.category?.classification!}
                                 </Badge>
                               </div>
                             </td>
-                            <td className="p-3 max-w-xs truncate">{expense.description}</td>
-                            <td className="p-3">{expense.user.name}</td>
+                            <td className="p-3 max-w-xs truncate">
+                              {expense.description}
+                            </td>
+                            <td className="p-3">{expense.owner?.name}</td>
                             <td className="p-3">
                               {expense.receiptUrl ? (
                                 <Dialog>
@@ -584,7 +685,10 @@ export default function ExpensesPage() {
                                     </DialogHeader>
                                     <div className="flex justify-center">
                                       <img
-                                        src={expense.receiptUrl || "/placeholder.svg"}
+                                        src={
+                                          expense.receiptUrl ||
+                                          "/placeholder.svg"
+                                        }
                                         alt="Nota fiscal"
                                         className="max-w-full max-h-96 object-contain"
                                       />
@@ -600,11 +704,17 @@ export default function ExpensesPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => router.push(`/expenses/${expense.id}/edit`)}
+                                  onClick={() =>
+                                    router.push(`/expenses/${expense.id}/edit`)
+                                  }
                                 >
                                   <Edit className="w-4 h-4" />
                                 </Button>
-                                <Button variant="destructive" size="sm" onClick={() => deleteExpense(expense.id)}>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => deleteExpense(expense.id)}
+                                >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </div>
@@ -625,37 +735,55 @@ export default function ExpensesPage() {
               {/* Total por classificação */}
               {["necessidades", "desejos", "poupanca"].map((classification) => {
                 const total = filteredExpenses
-                  .filter((expense) => expense.category.classification === classification)
-                  .reduce((sum, expense) => sum + expense.amount, 0)
+                  .filter(
+                    (expense) =>
+                      expense.category?.classification === classification
+                  )
+                  .reduce((sum, expense) => sum + expense.amount, 0);
                 const count = filteredExpenses.filter(
-                  (expense) => expense.category.classification === classification,
-                ).length
+                  (expense) =>
+                    expense.category?.classification === classification
+                ).length;
 
                 return (
                   <Card key={classification}>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium capitalize">{classification}</CardTitle>
+                      <CardTitle className="text-sm font-medium capitalize">
+                        {classification}
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        R$ {total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        R${" "}
+                        {total.toLocaleString("pt-BR", {
+                          minimumFractionDigits: 2,
+                        })}
                       </div>
-                      <p className="text-xs text-gray-600 mt-1">{count} gastos</p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {count} gastos
+                      </p>
                     </CardContent>
                   </Card>
-                )
+                );
               })}
 
               {/* Total geral */}
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Total Geral</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Total Geral
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    R$ {getTotalAmount().toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    R${" "}
+                    {getTotalAmount().toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                    })}
                   </div>
-                  <p className="text-xs text-gray-600 mt-1">{filteredExpenses.length} gastos</p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {filteredExpenses.length} gastos
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -668,30 +796,49 @@ export default function ExpensesPage() {
               <CardContent>
                 <div className="space-y-4">
                   {categories.map((category) => {
-                    const categoryExpenses = filteredExpenses.filter((expense) => expense.category.id === category.id)
-                    const total = categoryExpenses.reduce((sum, expense) => sum + expense.amount, 0)
-                    const percentage = getTotalAmount() > 0 ? (total / getTotalAmount()) * 100 : 0
+                    const categoryExpenses = filteredExpenses.filter(
+                      (expense) => expense.category?.id === category.id
+                    );
+                    const total = categoryExpenses.reduce(
+                      (sum, expense) => sum + expense.amount,
+                      0
+                    );
+                    const percentage =
+                      getTotalAmount() > 0
+                        ? (total / getTotalAmount()) * 100
+                        : 0;
 
-                    if (total === 0) return null
+                    if (total === 0) return null;
 
                     return (
-                      <div key={category.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div
+                        key={category.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      >
                         <div className="flex items-center gap-3">
-                          <Badge className={getClassificationColor(category.classification)}>
+                          <Badge
+                            className={getClassificationColor(
+                              category.classification
+                            )}
+                          >
                             {category.classification}
                           </Badge>
                           <span className="font-medium">{category.name}</span>
                         </div>
                         <div className="text-right">
                           <div className="font-bold">
-                            R$ {total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                            R${" "}
+                            {total.toLocaleString("pt-BR", {
+                              minimumFractionDigits: 2,
+                            })}
                           </div>
                           <div className="text-sm text-gray-600">
-                            {percentage.toFixed(1)}% • {categoryExpenses.length} gastos
+                            {percentage.toFixed(1)}% • {categoryExpenses.length}{" "}
+                            gastos
                           </div>
                         </div>
                       </div>
-                    )
+                    );
                   })}
                 </div>
               </CardContent>
@@ -700,5 +847,5 @@ export default function ExpensesPage() {
         </Tabs>
       </div>
     </div>
-  )
+  );
 }

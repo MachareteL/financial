@@ -9,6 +9,8 @@ import { GetDashboardDataUseCase } from "@/app/dashboard/_use-case/get-dashboard
 import { SupabaseIncomeRepository } from "../repositories/supabase-income.repository";
 import { CreateExpenseUseCase } from "@/app/expenses/_use-case/create-expense.use-case";
 import { GetCategoriesUseCase } from "@/app/categories/_use-case/get-categories.use-case";
+import { GetExpensesUseCase } from "@/app/expenses/_use-case/get-expenses.use-case";
+import { DeleteExpenseUseCase } from "@/app/expenses/_use-case/delete-expense.use-case";
 
 const container = Container.getInstance();
 
@@ -57,4 +59,14 @@ export const createExpenseUseCase = container.get(
 export const getCategoriesUseCase = container.get(
   "getCategoriesUseCase",
   () => new GetCategoriesUseCase(categoryRepository)
+);
+
+export const getExpensesUseCase = container.get(
+  "getExpensesUseCase",
+  () => new GetExpensesUseCase(expenseRepository)
+);
+
+export const deleteExpenseUseCase = container.get(
+  "deleteExpenseUseCase",
+  () => new DeleteExpenseUseCase(expenseRepository)
 );
