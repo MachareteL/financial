@@ -1,26 +1,21 @@
-import type { IBudgetRepository } from "@/domain/interfaces/budget.repository"
+import type { IBudgetRepository } from '@/domain/interfaces/budget.repository.interface'
+import type { BudgetDetailsDTO } from '@/domain/dto/budget.types.d.ts'
 
-export interface GetBudgetInput {
-  familyId: string
+export interface GetBudgetDTO {
+  teamId: string
   month: number
   year: number
-}
-
-export interface BudgetOutput {
-  id: string
-  month: number
-  year: number
-  necessidadesBudget: number
-  desejosBudget: number
-  poupancaBudget: number
-  totalIncome: number
 }
 
 export class GetBudgetUseCase {
   constructor(private budgetRepository: IBudgetRepository) {}
 
-  async execute(input: GetBudgetInput): Promise<BudgetOutput | null> {
-    const budget = await this.budgetRepository.findByFamilyAndPeriod(input.familyId, input.month, input.year)
+  async execute(dto: GetBudgetDTO): Promise<BudgetDetailsDTO | null> {
+    const budget = await this.budgetRepository.findByTeamAndPeriod(
+      dto.teamId,
+      dto.month,
+      dto.year,
+    )
 
     if (!budget) {
       return null
@@ -30,10 +25,10 @@ export class GetBudgetUseCase {
       id: budget.id,
       month: budget.month,
       year: budget.year,
+      totalIncome: budget.totalIncome,
       necessidadesBudget: budget.necessidadesBudget,
       desejosBudget: budget.desejosBudget,
       poupancaBudget: budget.poupancaBudget,
-      totalIncome: budget.totalIncome,
     }
   }
 }

@@ -1,58 +1,83 @@
-import type { IBudgetRepository } from "@/domain/interfaces/budget.repository"
-import { Budget } from "@/domain/entities/budget"
-import { supabase } from "@/lib/supabase"
+import type { IBudgetRepository } from '@/domain/interfaces/budget.repository.interface'
+import { Budget } from '@/domain/entities/budget'
+import { getSupabaseClient } from '../database/supabase.client'
+import type { Database } from '@/domain/dto/database.types.d.ts'
 
-export class SupabaseBudgetRepository implements IBudgetRepository {
-  async create(budget: Budget): Promise<void> {
-    const { error } = await supabase.from("budgets").insert({
-      id: budget.id,
-      month: budget.month,
-      year: budget.year,
-      total_income: budget.totalIncome,
-      necessidades_budget: budget.necessidadesBudget,
-      desejos_budget: budget.desejosBudget,
-      poupanca_budget: budget.poupancaBudget,
-      family_id: budget.familyId,
+type BudgetRow = Database['public']['Tables']['budgets']['Row']
+
+export class BudgetRepository implements IBudgetRepository {
+  private supabase = getSupabaseClient()
+
+  // 1. MAPEAMENTO: DO BANCO (Row) PARA A ENTIDADE
+  private mapRowToEntity(row: BudgetRow): Budget {
+    return new Budget({
+      id: row.id,
+      month: row.month,
+      year: row.year,
+      totalIncome: row.total_income,
+      necessidadesBudget: row.necessidades_budget,
+      desejosBudget: row.desejos_budget,
+      poupancaBudget: row.poupanca_budget,
+      teamId: row.team_id!,
+      createdAt: new Date(row.created_at),
     })
-
-    if (error) throw new Error(error.message)
   }
 
-  async update(budget: Budget): Promise<void> {
-    const { error } = await supabase
-      .from("budgets")
-      .update({
-        total_income: budget.totalIncome,
-        necessidades_budget: budget.necessidadesBudget,
-        desejos_budget: budget.desejosBudget,
-        poupanca_budget: budget.poupancaBudget,
+  // 2. MAPEAMENTO: DA ENTIDADE PARA O BANCO (Row)
+  private mapEntityToRow(entity: Budget): Omit<BudgetRow, 'id' | 'created_at'> {
+    return {
+      month: entity.month,
+      year: entity.year,
+      total_income: entity.totalIncome,
+      necessidades_budget: entity.necessidadesBudget,
+      desejos_budget: entity.desejosBudget,
+      poupanca_budget: entity.poupancaBudget,
+      team_id: entity.teamId,
+    }
+  }
+
+  async create(budget: Budget): Promise<Budget> {
+    const row = this.mapEntityToRow(budget)
+    const { data, error } = await this.supabase
+      .from('budgets')
+      .insert({
+        ...row,
+        id: budget.id,
+        created_at: budget.createdAt.toISOString(),
       })
-      .eq("id", budget.id)
+      .select()
+      .single()
 
     if (error) throw new Error(error.message)
+    return this.mapRowToEntity(data)
   }
 
-  async findByFamilyAndPeriod(familyId: string, month: number, year: number): Promise<Budget | null> {
-    const { data, error } = await supabase
-      .from("budgets")
-      .select("*")
-      .eq("family_id", familyId)
-      .eq("month", month)
-      .eq("year", year)
+  async update(budget: Budget): Promise<Budget> {
+    const row = this.mapEntityToRow(budget)
+    const { data, error } = await this.supabase
+      .from('budgets')
+      .update(row)
+      .eq('id', budget.id)
+      .eq('team_id', budget.teamId)
+      .select()
+      .single()
+
+    if (error) throw new Error(error.message)
+    return this.mapRowToEntity(data)
+  }
+
+  async findByTeamAndPeriod(teamId: string, month: number, year: number): Promise<Budget | null> {
+    const { data, error } = await this.supabase
+      .from('budgets')
+      .select('*')
+      .eq('team_id', teamId)
+      .eq('month', month)
+      .eq('year', year)
       .maybeSingle()
 
     if (error) throw new Error(error.message)
     if (!data) return null
 
-    return new Budget(
-      data.id,
-      data.month,
-      data.year,
-      data.total_income,
-      data.necessidades_budget,
-      data.desejos_budget,
-      data.poupanca_budget,
-      data.family_id,
-    )
+    return this.mapRowToEntity(data)
   }
 }
