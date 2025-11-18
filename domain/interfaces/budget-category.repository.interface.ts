@@ -1,6 +1,7 @@
 import type { BudgetCategory } from '../entities/budget-category'
 
 export interface IBudgetCategoryRepository {
+  findById(id: string, teamId: string): Promise<BudgetCategory | null>
   findByTeamId(teamId: string): Promise<BudgetCategory[]>
   create(category: BudgetCategory): Promise<BudgetCategory>
   update(category: BudgetCategory): Promise<BudgetCategory>

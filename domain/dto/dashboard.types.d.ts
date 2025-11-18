@@ -1,19 +1,20 @@
+export type DashboardFolderData = {
+  id: string;
+  name: string;
+  percentage: number;
+  budgeted: number;
+  spent: number;
+};
 
-export type DashboardExpenseData = {
-  category: string
-  amount: number
-  classification: string
-}
-
-export type DashboardMonthlyData = {
-  necessidades: number
-  desejos: number
-  poupanca: number
-  total: number
-}
+export type DashboardExpenseChartData = {
+  name: string;
+  amount: number;
+  budCategoryName: string;
+};
 
 export type DashboardDataDTO = {
-  expenses: DashboardExpenseData[]
-  monthlyData: DashboardMonthlyData
-  monthlyIncome: number
-}
+  totalIncome: number;
+  totalSpent: number;
+  folders: DashboardFolderData[];
+  expenseChartData: DashboardExpenseChartData[];
+};

@@ -43,6 +43,9 @@ import { GetCategoriesUseCase } from "@/app/categories/_use-case/get-categories.
 import { CreateCategoryUseCase } from "@/app/categories/_use-case/create-category.use-case";
 import { UpdateCategoryUseCase } from "@/app/categories/_use-case/update-category.use-case";
 import { DeleteCategoryUseCase } from "@/app/categories/_use-case/delete-category.use-case";
+import { CreateBudgetCategoryUseCase } from "@/app/budget/_use-case/create-budget-category.use-case";
+import { UpdateBudgetCategoryUseCase } from "@/app/budget/_use-case/update-budget-category.use-case";
+import { DeleteBudgetCategoryUseCase } from "@/app/budget/_use-case/delete-budget-category.use-case";
 
 const container = Container.getInstance();
 
@@ -115,7 +118,12 @@ export const createTeamUseCase = container.get(
 // Dashboard
 export const getDashboardDataUseCase = container.get(
   "getDashboardDataUseCase",
-  () => new GetDashboardDataUseCase(expenseRepository, incomeRepository)
+  () =>
+    new GetDashboardDataUseCase(
+      expenseRepository,
+      budgetRepository,
+      budgetCategoryRepository
+    )
 );
 
 // Expenses
@@ -133,7 +141,11 @@ export const deleteExpenseUseCase = container.get(
 );
 export const getExpenseSummaryByPeriodUseCase = container.get(
   "getExpenseSummaryByPeriodUseCase",
-  () => new GetExpenseSummaryByPeriodUseCase(expenseRepository)
+  () =>
+    new GetExpenseSummaryByPeriodUseCase(
+      expenseRepository,
+      budgetCategoryRepository
+    )
 );
 
 // Categories
@@ -186,4 +198,16 @@ export const saveBudgetUseCase = container.get(
 export const getBudgetCategoriesUseCase = container.get(
   "getBudgetCategoriesUseCase",
   () => new GetBudgetCategoriesUseCase(budgetCategoryRepository)
+);
+export const createBudgetCategoryUseCase = container.get(
+  "createBudgetCategoryUseCase",
+  () => new CreateBudgetCategoryUseCase(budgetCategoryRepository)
+);
+export const updateBudgetCategoryUseCase = container.get(
+  "updateBudgetCategoryUseCase",
+  () => new UpdateBudgetCategoryUseCase(budgetCategoryRepository)
+);
+export const deleteBudgetCategoryUseCase = container.get(
+  "deleteBudgetCategoryUseCase",
+  () => new DeleteBudgetCategoryUseCase(budgetCategoryRepository)
 );

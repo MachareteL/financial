@@ -1,36 +1,63 @@
-import type { IExpenseRepository } from '@/domain/interfaces/expense.repository.interface'
-import type { ExpenseSummaryDTO } from '@/domain/dto/budget.types.d.ts'
+import type { IExpenseRepository } from "@/domain/interfaces/expense.repository.interface";
+import type { IBudgetCategoryRepository } from "@/domain/interfaces/budget-category.repository.interface";
+import type { ExpenseSummaryByBudgetCategoryDTO } from "@/domain/dto/budget.types.d.ts";
 
 export interface GetExpenseSummaryDTO {
-  teamId: string
-  month: number
-  year: number
+  teamId: string;
+  month: number;
+  year: number;
+  totalIncome: number;
 }
 
 export class GetExpenseSummaryByPeriodUseCase {
-  constructor(private expenseRepository: IExpenseRepository) {}
+  constructor(
+    private expenseRepository: IExpenseRepository,
+    private budgetCategoryRepository: IBudgetCategoryRepository
+  ) {}
 
-  async execute(dto: GetExpenseSummaryDTO): Promise<ExpenseSummaryDTO> {
-    const startDate = new Date(dto.year, dto.month - 1, 1)
-    const endDate = new Date(dto.year, dto.month, 0, 23, 59, 59, 999)
+  async execute(
+    dto: GetExpenseSummaryDTO
+  ): Promise<ExpenseSummaryByBudgetCategoryDTO[]> {
+    const startDate = new Date(dto.year, dto.month - 1, 1);
+    const endDate = new Date(dto.year, dto.month, 0, 23, 59, 59, 999);
 
-    const expenses = await this.expenseRepository.findByDateRange(dto.teamId, startDate, endDate)
+    const budgetCategories = await this.budgetCategoryRepository.findByTeamId(
+      dto.teamId
+    );
 
-    const totals: ExpenseSummaryDTO = {
-      necessidades: 0,
-      desejos: 0,
-      poupanca: 0,
-      total: 0,
-    }
+    const expenses = await this.expenseRepository.findByDateRange(
+      dto.teamId,
+      startDate,
+      endDate
+    );
 
+    const expensesByBudgetCategory = new Map<string, number>();
     for (const expense of expenses) {
-      const classification = expense.category?.classification || 'necessidades'
-      if (classification in totals) {
-         totals[classification as keyof typeof totals] += expense.amount
+      const budgetCatId = expense.category?.budgetCategoryId;
+      if (budgetCatId) {
+        const currentSpent = expensesByBudgetCategory.get(budgetCatId) || 0;
+        expensesByBudgetCategory.set(
+          budgetCatId,
+          currentSpent + expense.amount
+        );
       }
-      totals.total += expense.amount
     }
 
-    return totals
+    const summary: ExpenseSummaryByBudgetCategoryDTO[] = budgetCategories.map(
+      (bc) => {
+        const spent = expensesByBudgetCategory.get(bc.id) || 0;
+        const budgeted = dto.totalIncome * bc.percentage;
+
+        return {
+          id: bc.id,
+          name: bc.name,
+          percentage: bc.percentage,
+          spent: spent,
+          budgeted: budgeted,
+        };
+      }
+    );
+
+    return summary;
   }
 }

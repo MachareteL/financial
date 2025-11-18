@@ -1,25 +1,27 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
-import { Plus, TrendingUp, AlertTriangle, LogOut, Users, Tag, Target, DollarSign } from "lucide-react"
+import { Plus, TrendingUp, LogOut, Users, Tag, Target, DollarSign, Wallet, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/app/auth/auth-provider"
-import { getDashboardDataUseCase } from "@/infrastructure/dependency-injection" 
-import type { DashboardDataDTO } from "@/domain/dto/dashboard.types" 
-import { signOutUseCase } from "@/infrastructure/dependency-injection"
+import { getDashboardDataUseCase, signOutUseCase } from "@/infrastructure/dependency-injection" 
+import type { DashboardDataDTO, DashboardFolderData, DashboardExpenseChartData } from "@/domain/dto/dashboard.types.d.ts"
 
-type ChartExpenseData = DashboardDataDTO['expenses'][number];
-type MonthlyData = DashboardDataDTO['monthlyData'];
+// Definição de cores (pode ser movida para um util)
+const COLORS: Record<string, string> = {
+  Necessidades: "#10b981", // Verde
+  Desejos: "#f59e0b",      // Amarelo/Laranja
+  Poupança: "#3b82f6",     // Azul
+  Padrão: "#8884d8",       // Roxo Padrão (recharts)
+}
 
-const COLORS = {
-  necessidades: "#10b981",
-  desejos: "#f59e0b",
-  poupanca: "#3b82f6",
+const getFolderColor = (folderName: string) => {
+  return COLORS[folderName] || COLORS['Padrão'];
 }
 
 export default function DashboardPage() {
@@ -29,26 +31,21 @@ export default function DashboardPage() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
 
-  const [expenseData, setExpenseData] = useState<ChartExpenseData[]>([])
-  const [monthlyData, setMonthlyData] = useState<MonthlyData>({
-    necessidades: 0,
-    desejos: 0,
-    poupanca: 0,
-    total: 0,
-  })
-  const [monthlyIncome, setMonthlyIncome] = useState(0)
+  // Estados para os dados dinâmicos
+  const [expenseChartData, setExpenseChartData] = useState<DashboardExpenseChartData[]>([])
+  const [folderData, setFolderData] = useState<DashboardFolderData[]>([])
+  const [totalIncome, setTotalIncome] = useState(0)
+  const [totalSpent, setTotalSpent] = useState(0)
   const [isLoadingData, setIsLoadingData] = useState(true)
 
   const teamId = session?.teams?.[0]?.team.id
   
   useEffect(() => {
     if (authLoading) return;
-
     if (!session) {
       router.push("/auth");
       return;
     }
-
     if (!teamId) { 
       router.push("/onboarding");
       return;
@@ -57,11 +54,13 @@ export default function DashboardPage() {
     const loadData = async () => {
       setIsLoadingData(true);
       try {
-        const dashboardData = await getDashboardDataUseCase.execute(teamId, selectedMonth, selectedYear)
-
-        setExpenseData(dashboardData.expenses)
-        setMonthlyData(dashboardData.monthlyData)
-        setMonthlyIncome(dashboardData.monthlyIncome)
+        const data = await getDashboardDataUseCase.execute(teamId, selectedMonth, selectedYear)
+        
+        setExpenseChartData(data.expenseChartData)
+        setFolderData(data.folders)
+        setTotalIncome(data.totalIncome)
+        setTotalSpent(data.totalSpent)
+        
       } catch (error: any) {
         console.error("[Dashboard] Error loading data:", error)
         toast({
@@ -87,69 +86,42 @@ export default function DashboardPage() {
     }
   }
 
-  const getClassificationPercentage = (classification: keyof MonthlyData) => {
-    if (monthlyIncome === 0) return 0
-    return (monthlyData[classification] / monthlyIncome) * 100
-  }
+  // --- Memos para os Gráficos ---
+  const pieData = useMemo(() => {
+    return folderData
+      .map(folder => ({
+        name: folder.name,
+        value: folder.spent,
+        color: getFolderColor(folder.name),
+      }))
+      .filter((item) => item.value > 0)
+  }, [folderData])
+  
+  const barData = useMemo(() => {
+    return expenseChartData.map(item => ({
+      ...item,
+      fill: getFolderColor(item.budCategoryName),
+    }))
+  }, [expenseChartData])
+  
+  const months = useMemo(() => [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+  ], []);
 
-  const getAlert = () => {
-    if (monthlyIncome === 0) return null
-
-    const necessidadesPercent = getClassificationPercentage("necessidades")
-    const desejosPercent = getClassificationPercentage("desejos")
-
-    const actualSavings = monthlyIncome - monthlyData.total
-    const actualSavingsPercent = (actualSavings / monthlyIncome) * 100
-
-    if (necessidadesPercent > 50) {
-      return {
-        type: "warning",
-        message: `Gastos com Necessidades estão em ${necessidadesPercent.toFixed(1)}% da receita (meta: 50%)`,
-      }
-    }
-    if (desejosPercent > 30) {
-      return {
-        type: "warning",
-        message: `Gastos com Desejos estão em ${desejosPercent.toFixed(1)}% da receita (meta: 30%)`,
-      }
-    }
-    if (actualSavingsPercent < 20) {
-      return {
-        type: "info",
-        message: `Poupança está em ${actualSavingsPercent.toFixed(1)}% da receita (meta: 20%)`,
-      }
-    }
-    return null
-  }
-
-  // Loading unificado
+  // --- Renderização de Loading ---
   if (authLoading || !session || !teamId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Carregando...</h1>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-        </div>
+        <Loader2 className="animate-spin h-8 w-8 text-gray-900 mx-auto" />
       </div>
     )
   }
 
-  const pieData = [
-    { name: "Necessidades", value: monthlyData.necessidades, color: COLORS.necessidades },
-    { name: "Desejos", value: monthlyData.desejos, color: COLORS.desejos },
-    { name: "Poupança", value: monthlyData.poupanca, color: COLORS.poupanca },
-  ].filter((item) => item.value > 0)
-
-  const months = [
-    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
-  ]
-
-  const alert = getAlert()
-
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header (com loading no Select) */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
@@ -157,14 +129,16 @@ export default function DashboardPage() {
               Bem-vindo, {session.user.name} - {session.teams[0].team.name}
             </p>
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap items-center">
+             {isLoadingData && (
+              <Loader2 className="animate-spin h-5 w-5 text-gray-500" />
+            )}
             <Select
               value={selectedMonth.toString()}
               onValueChange={(value) => setSelectedMonth(Number.parseInt(value))}
+              disabled={isLoadingData}
             >
-              <SelectTrigger
-                className="w-32"
-                loading={isLoadingData}>
+              <SelectTrigger className="w-32" loading={isLoadingData}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -175,8 +149,12 @@ export default function DashboardPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(Number.parseInt(value))}>
-              <SelectTrigger className="w-24">
+            <Select 
+              value={selectedYear.toString()} 
+              onValueChange={(value) => setSelectedYear(Number.parseInt(value))}
+              disabled={isLoadingData}
+            >
+              <SelectTrigger className="w-24" loading={isLoadingData}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -198,38 +176,23 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {alert && (
-          <Card
-            className={`border-l-4 ${alert.type === "warning" ? "border-l-orange-500 bg-orange-50" : "border-l-blue-500 bg-blue-50"}`}
-          >
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-2">
-                <AlertTriangle
-                  className={`w-5 h-5 ${alert.type === "warning" ? "text-orange-600" : "text-blue-600"}`}
-                />
-                <p className={`font-medium ${alert.type === "warning" ? "text-orange-800" : "text-blue-800"}`}>
-                  {alert.message}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {/* Card: Receita Total */}
+        {/* Cards de Resumo Principais (Refatorados) */}
+        <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 transition-opacity ${isLoadingData ? 'opacity-50' : 'opacity-100'}`}>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
+              <CardTitle className="text-sm font-medium">Receita Planejada</CardTitle>
               <DollarSign className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                R$ {monthlyIncome.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                R$ {totalIncome.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
               </div>
+              <p className="text-xs text-gray-500">
+                {totalIncome > 0 ? "Definido no Orçamento" : "Orçamento não definido"}
+              </p>
             </CardContent>
           </Card>
 
-          {/* Card: Total Gasto */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Gasto</CardTitle>
@@ -237,66 +200,59 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                R$ {monthlyData.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                R$ {totalSpent.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
               </div>
-              <p className="text-xs text-muted-foreground">
-                {monthlyIncome > 0 ? `${((monthlyData.total / monthlyIncome) * 100).toFixed(1)}% da receita` : ""}
+              <p className="text-xs text-gray-500">
+                {totalIncome > 0 ? `${((totalSpent / totalIncome) * 100).toFixed(0)}% da receita` : ""}
               </p>
             </CardContent>
           </Card>
-
-           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Necessidades</CardTitle>
-              <div className="text-xs text-muted-foreground">50% meta</div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {getClassificationPercentage("necessidades").toFixed(1)}%
-              </div>
-              <p className="text-xs text-muted-foreground">
-                R$ {monthlyData.necessidades.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </p>
-            </CardContent>
-          </Card>
-
+          
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Desejos</CardTitle>
-              <div className="text-xs text-muted-foreground">30% meta</div>
+              <CardTitle className="text-sm font-medium">Saldo (Receita - Gasto)</CardTitle>
+              <Wallet className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-amber-600">
-                {getClassificationPercentage("desejos").toFixed(1)}%
+              <div className={`text-2xl font-bold ${(totalIncome - totalSpent) >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                R$ {(totalIncome - totalSpent).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
               </div>
-              <p className="text-xs text-muted-foreground">
-                R$ {monthlyData.desejos.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Poupança Real</CardTitle>
-              <div className="text-xs text-muted-foreground">20% meta</div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {monthlyIncome > 0 ? (((monthlyIncome - monthlyData.total) / monthlyIncome) * 100).toFixed(1) : "0.0"}%
-              </div>
-              <p className="text-xs text-muted-foreground">
-                R$ {(monthlyIncome - monthlyData.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+               <p className="text-xs text-gray-500">
+                {totalIncome > 0 ? `${(((totalIncome - totalSpent) / totalIncome) * 100).toFixed(0)}% restante` : ""}
               </p>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Gráfico de Pizza */}
+        {/* Cards Dinâmicos por "Pasta" */}
+        <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 transition-opacity ${isLoadingData ? 'opacity-50' : 'opacity-100'}`}>
+          {folderData.map((folder) => (
+             <Card key={folder.id}>
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-center">
+                   <CardTitle className="text-sm font-medium">{folder.name}</CardTitle>
+                   <span className="text-xs text-muted-foreground">Meta: {(folder.percentage * 100).toFixed(0)}%</span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold" style={{ color: getFolderColor(folder.name) }}>
+                  R$ {folder.spent.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  de R$ {folder.budgeted.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} planejados
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Gráficos */}
+        <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 transition-opacity ${isLoadingData ? 'opacity-50' : 'opacity-100'}`}>
+          {/* Gráfico de Pizza (Gastos por "Pasta") */}
           <Card>
             <CardHeader>
-              <CardTitle>Distribuição 50/30/20</CardTitle>
-              <CardDescription>Distribuição dos gastos por classificação</CardDescription>
+              <CardTitle>Gastos por Pasta</CardTitle>
+              <CardDescription>Distribuição dos gastos por pasta de orçamento</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-80">
@@ -308,8 +264,8 @@ export default function DashboardPage() {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name} ${((percent as number ?? 0) * 100).toFixed(0)}%`}
-                        outerRadius={80}
+                        label={({ name, percent }) => `${name} ${((Number(percent ?? 0) * 100)).toFixed(0)}%`}
+                        outerRadius={100}
                         fill="#8884d8"
                         dataKey="value"
                       >
@@ -334,20 +290,20 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Gráfico de Barras */}
+          {/* Gráfico de Barras (Gastos por Categoria) */}
           <Card>
             <CardHeader>
               <CardTitle>Gastos por Categoria</CardTitle>
-              <CardDescription>Distribuição dos gastos por categoria</CardDescription>
+              <CardDescription>Distribuição dos gastos por categoria (de gasto)</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-80">
-                {expenseData.length > 0 ? (
+                {barData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={expenseData}>
+                    <BarChart data={barData} layout="vertical">
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="category" angle={-45} textAnchor="end" height={80} />
-                      <YAxis />
+                      <XAxis type="number" />
+                      <YAxis dataKey="name" type="category" width={100} dx={-5} />
                       <Tooltip
                         formatter={(value: number) => [
                           `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
@@ -356,11 +312,10 @@ export default function DashboardPage() {
                       />
                       <Bar
                         dataKey="amount"
-                        fill="#8884d8"
+                        background={{ fill: '#eee' }}
                       >
-                        {/* Preenchimento com cor da classificação */}
-                        {expenseData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[entry.classification as keyof typeof COLORS] || "#8884d8"} />
+                        {barData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
                         ))}
                       </Bar>
                     </BarChart>

@@ -37,6 +37,20 @@ export class BudgetCategoryRepository implements IBudgetCategoryRepository {
     return (data || []).map(this.mapRowToEntity)
   }
 
+  async findById(id: string, teamId: string): Promise<BudgetCategory | null> {
+    const { data, error } = await this.supabase
+      .from('budget_categories')
+      .select('*')
+      .eq('id', id)
+      .eq('team_id', teamId)
+      .single()
+      
+    if (error) {
+      throw new Error(error.message);
+    }
+    return this.mapRowToEntity(data);
+  }
+
   async create(category: BudgetCategory): Promise<BudgetCategory> {
     const row = this.mapEntityToRow(category)
     const { data, error } = await this.supabase

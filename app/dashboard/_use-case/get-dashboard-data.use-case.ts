@@ -1,65 +1,70 @@
-import type { DashboardDataDTO } from "@/domain/dto/dashboard.types"
-import type { Income } from "@/domain/entities/income"
-import type { IExpenseRepository } from "@/domain/interfaces/expense.repository.interface"
-import type { IIncomeRepository } from "@/domain/interfaces/income.repository.interface"
+import type { IExpenseRepository } from '@/domain/interfaces/expense.repository.interface'
+import type { IBudgetRepository } from '@/domain/interfaces/budget.repository.interface'
+import type { IBudgetCategoryRepository } from '@/domain/interfaces/budget-category.repository.interface'
+import type { DashboardDataDTO, DashboardFolderData, DashboardExpenseChartData } from '@/domain/dto/dashboard.types.d.ts'
 
 export class GetDashboardDataUseCase {
   constructor(
     private expenseRepository: IExpenseRepository,
-    private incomeRepository: IIncomeRepository,
+    private budgetRepository: IBudgetRepository,
+    private budgetCategoryRepository: IBudgetCategoryRepository
   ) {}
 
-  async execute(familyId: string, month: number, year: number): Promise<DashboardDataDTO> {
+  async execute(teamId: string, month: number, year: number): Promise<DashboardDataDTO> {
     const startDate = new Date(year, month - 1, 1)
-    const endDate = new Date(year, month, 0)
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999)
 
-    // Get expenses for the month
-    const expenses = await this.expenseRepository.findByDateRange(familyId, startDate, endDate)
+    const budget = await this.budgetRepository.findByTeamAndPeriod(teamId, month, year)
+    const totalIncome = budget?.totalIncome ?? 0
 
-    const allIncomes = await this.incomeRepository.findByTeamId(familyId)
+    const budgetCategories = await this.budgetCategoryRepository.findByTeamId(teamId)
 
-    // Calculate monthly income
-    const monthlyIncome = this.calculateMonthlyIncome(allIncomes, month, year)
+    const expenses = await this.expenseRepository.findByDateRange(teamId, startDate, endDate)
 
-    // Process expenses by category and classification
-    const categoryTotals: { [key: string]: { amount: number; classification: string } } = {}
-    const classificationTotals = { necessidades: 0, desejos: 0, poupanca: 0, total: 0 }
+    const folderMap = new Map<string, DashboardFolderData>()
+    const expenseChartMap = new Map<string, DashboardExpenseChartData>()
+    let totalSpent = 0
 
-    expenses.forEach((expense) => {
-      const categoryName = expense.category?.name || "Sem categoria"
-      const classification = expense.category?.classification || "necessidades"
-      const amount = expense.amount
+    // Inicializa o mapa de "pastas"
+    for (const bc of budgetCategories) {
+      folderMap.set(bc.id, {
+        id: bc.id,
+        name: bc.name,
+        percentage: bc.percentage,
+        budgeted: totalIncome * bc.percentage,
+        spent: 0,
+      })
+    }
 
-      if (!categoryTotals[categoryName]) {
-        categoryTotals[categoryName] = { amount: 0, classification }
+    for (const expense of expenses) {
+      totalSpent += expense.amount
+
+      const budgetCatId = expense.category?.budgetCategoryId
+      const categoryName = expense.category?.name || 'Sem Categoria'
+      const budgetCatName = expense.category?.budgetCategory?.name || 'Sem Pasta'
+
+      if (budgetCatId && folderMap.has(budgetCatId)) {
+        const folder = folderMap.get(budgetCatId)!
+        folder.spent += expense.amount
       }
-      categoryTotals[categoryName].amount += amount
-      classificationTotals[classification as keyof typeof classificationTotals] += amount
-      classificationTotals.total += amount
-    })
 
-    const expenseData = Object.entries(categoryTotals).map(([category, data]) => ({
-      category,
-      amount: data.amount,
-      classification: data.classification,
-    }))
+      const chartEntry = expenseChartMap.get(categoryName)
+      if (chartEntry) {
+        chartEntry.amount += expense.amount
+      } else {
+        expenseChartMap.set(categoryName, {
+          name: categoryName,
+          amount: expense.amount,
+          budCategoryName: budgetCatName,
+        })
+      }
+    }
 
     return {
-      expenses: expenseData,
-      monthlyData: classificationTotals,
-      monthlyIncome,
+      totalIncome,
+      totalSpent,
+      folders: Array.from(folderMap.values()),
+      expenseChartData: Array.from(expenseChartMap.values()),
     }
-  }
-
-  private calculateMonthlyIncome(incomes: Income[], month: number, year: number): number {
-    return incomes
-      .filter((income) => {
-        if (income.type === "one_time") {
-          const incomeDate = new Date(income.date)
-          return incomeDate.getMonth() + 1 === month && incomeDate.getFullYear() === year
-        }
-        return income.type === "recurring" && income.frequency === "monthly"
-      })
-      .reduce((total, income) => total + income.amount, 0)
   }
 }
