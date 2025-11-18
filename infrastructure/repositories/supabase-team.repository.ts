@@ -1,7 +1,10 @@
-import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface"; 
+import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 import { Team } from "@/domain/entities/team";
 import { TeamRole, type TeamRoleProps } from "@/domain/entities/team-role";
-import { TeamInvite, type TeamInviteProps } from "@/domain/entities/team-invite";
+import {
+  TeamInvite,
+  type TeamInviteProps,
+} from "@/domain/entities/team-invite";
 import type { TeamMemberProfileDTO } from "@/domain/dto/team.types.d.ts";
 import { getSupabaseClient } from "../database/supabase.client";
 import type { Database } from "@/domain/dto/database.types.d.ts";
@@ -19,24 +22,39 @@ export class SupabaseTeamRepository implements ITeamRepository {
     if (teamError) throw new Error(teamError.message);
 
     const allPermissions = [
-      "view_dashboard", "view_expenses", "create_expenses", "edit_expenses", "delete_expenses",
-      "view_budget", "edit_budget", "view_investments", "edit_investments",
-      "view_categories", "edit_categories", "manage_family", "manage_roles",
+      "view_dashboard",
+      "view_expenses",
+      "create_expenses",
+      "edit_expenses",
+      "delete_expenses",
+      "view_budget",
+      "edit_budget",
+      "view_investments",
+      "edit_investments",
+      "view_categories",
+      "edit_categories",
+      "manage_team",
+      "manage_roles",
     ];
 
     const basicPermissions = [
-      "view_dashboard", "view_expenses", "create_expenses", 
-      "view_budget", "view_investments", "view_categories"
+      "view_dashboard",
+      "view_expenses",
+      "create_expenses",
+      "view_budget",
+      "view_investments",
+      "view_categories",
     ];
 
-    // Criar Cargo: Proprietário (Owner)
-    const ownerRoleData: Database["public"]["Tables"]["team_roles"]["Insert"] = {
-      team_id: teamData.id,
-      name: "Proprietário",
-      color: "#eab308", // Dourado/Amarelo
-      permissions: allPermissions,
-      description: "Acesso total e controle do time",
-    };
+    // Criar Cargo "Proprietário" (Owner)
+    const ownerRoleData: Database["public"]["Tables"]["team_roles"]["Insert"] =
+      {
+        team_id: teamData.id,
+        name: "Proprietário",
+        color: "#eab308", // Dourado
+        permissions: allPermissions,
+        description: "Dono do time. Acesso total e irrestrito.",
+      };
 
     const { data: ownerRole, error: ownerError } = await this.supabase
       .from("team_roles")
@@ -49,17 +67,19 @@ export class SupabaseTeamRepository implements ITeamRepository {
       throw new Error(ownerError.message);
     }
 
-    // Criar Cargo: Membro (Padrão)
-    const memberRoleData: Database["public"]["Tables"]["team_roles"]["Insert"] = {
-      team_id: teamData.id,
-      name: "Membro",
-      color: "#3b82f6", // Azul
-      permissions: basicPermissions,
-      description: "Acesso básico para visualização e criação",
-    };
+    // Criar Cargo "Membro" (Padrão)
+    const memberRoleData: Database["public"]["Tables"]["team_roles"]["Insert"] =
+      {
+        team_id: teamData.id,
+        name: "Membro",
+        color: "#3b82f6", // Azul
+        permissions: basicPermissions,
+        description: "Acesso básico para visualização e criação.",
+      };
 
     await this.supabase.from("team_roles").insert(memberRoleData);
 
+    // Associar o criador como "Proprietário"
     const { error: memberError } = await this.supabase
       .from("team_members")
       .insert({
@@ -79,17 +99,19 @@ export class SupabaseTeamRepository implements ITeamRepository {
       createdAt: new Date(teamData.created_at),
     });
   }
-  
+
   async getTeamMembers(teamId: string): Promise<TeamMemberProfileDTO[]> {
     const { data, error } = await this.supabase
       .from("team_members")
-      .select(`
+      .select(
+        `
         role_id,
         profiles (id, name, email, created_at),
         team_roles (id, name, color)
-      `)
+      `
+      )
       .eq("team_id", teamId);
-      
+
     if (error) throw new Error(error.message);
 
     return (data || []).map((item: any) => ({
@@ -98,17 +120,23 @@ export class SupabaseTeamRepository implements ITeamRepository {
       email: item.profiles!.email,
       createdAt: item.profiles!.created_at,
       roleId: item.role_id,
-      teamRole: item.team_roles ? {
-        id: item.team_roles.id,
-        name: item.team_roles.name,
-        color: item.team_roles.color,
-      } : undefined,
+      teamRole: item.team_roles
+        ? {
+            id: item.team_roles.id,
+            name: item.team_roles.name,
+            color: item.team_roles.color,
+          }
+        : undefined,
     }));
   }
 
-  async updateMemberRole(teamId: string, memberId: string, roleId: string | null): Promise<void> {
+  async updateMemberRole(
+    teamId: string,
+    memberId: string,
+    roleId: string | null
+  ): Promise<void> {
     if (!roleId) throw new Error("É necessário definir um cargo.");
-    
+
     const { error } = await this.supabase
       .from("team_members")
       .update({ role_id: roleId })
@@ -128,8 +156,6 @@ export class SupabaseTeamRepository implements ITeamRepository {
     if (error) throw new Error(error.message);
   }
 
-  // Roles
-
   async getTeamRoles(teamId: string): Promise<TeamRole[]> {
     const { data, error } = await this.supabase
       .from("team_roles")
@@ -139,19 +165,24 @@ export class SupabaseTeamRepository implements ITeamRepository {
 
     if (error) throw new Error(error.message);
 
-    return (data || []).map((item) => new TeamRole({
-      id: item.id,
-      name: item.name,
-      description: item.description || undefined,
-      color: item.color,
-      permissions: item.permissions as string[],
-      teamId: item.team_id,
-      createdAt: new Date(item.created_at),
-      updatedAt: new Date(item.updated_at || item.created_at),
-    }));
+    return (data || []).map(
+      (item) =>
+        new TeamRole({
+          id: item.id,
+          name: item.name,
+          description: item.description || undefined,
+          color: item.color,
+          permissions: item.permissions as string[],
+          teamId: item.team_id,
+          createdAt: new Date(item.created_at),
+          updatedAt: new Date(item.updated_at || item.created_at),
+        })
+    );
   }
 
-  async createTeamRole(role: Omit<TeamRoleProps, "id" | "createdAt" | "updatedAt">): Promise<TeamRole> {
+  async createTeamRole(
+    role: Omit<TeamRoleProps, "id" | "createdAt" | "updatedAt">
+  ): Promise<TeamRole> {
     const { data, error } = await this.supabase
       .from("team_roles")
       .insert({
@@ -178,15 +209,23 @@ export class SupabaseTeamRepository implements ITeamRepository {
     });
   }
 
-  async updateTeamRole(roleId: string, teamId: string, data: Partial<TeamRoleProps>): Promise<TeamRole> {
+  async updateTeamRole(
+    roleId: string,
+    teamId: string,
+    data: Partial<TeamRoleProps>
+  ): Promise<TeamRole> {
+    const updateData: Partial<
+      Database["public"]["Tables"]["team_roles"]["Update"]
+    > = {
+      name: data.name,
+      color: data.color,
+      permissions: data.permissions,
+      description: data.description,
+    };
+
     const { data: updated, error } = await this.supabase
       .from("team_roles")
-      .update({
-        name: data.name,
-        color: data.color,
-        permissions: data.permissions,
-        description: data.description,
-      })
+      .update(updateData)
       .eq("id", roleId)
       .eq("team_id", teamId)
       .select()
@@ -212,11 +251,9 @@ export class SupabaseTeamRepository implements ITeamRepository {
       .delete()
       .eq("id", roleId)
       .eq("team_id", teamId);
-      
+
     if (error) throw new Error(error.message);
   }
-
-  // Invites
 
   async getTeamInvites(teamId: string): Promise<TeamInvite[]> {
     const { data, error } = await this.supabase
@@ -227,19 +264,24 @@ export class SupabaseTeamRepository implements ITeamRepository {
 
     if (error) throw new Error(error.message);
 
-    return (data || []).map((item) => new TeamInvite({
-      id: item.id,
-      email: item.email,
-      status: item.status as any,
-      teamId: item.team_id!,
-      roleId: item.role_id,
-      invitedBy: item.invited_by!,
-      createdBy: item.invited_by!,
-      createdAt: new Date(item.created_at),
-    }));
+    return (data || []).map(
+      (item) =>
+        new TeamInvite({
+          id: item.id,
+          email: item.email,
+          status: item.status as any,
+          teamId: item.team_id!,
+          roleId: item.role_id,
+          invitedBy: item.invited_by!,
+          createdBy: item.invited_by!,
+          createdAt: new Date(item.created_at),
+        })
+    );
   }
 
-  async createTeamInvite(invite: Omit<TeamInviteProps, "id" | "createdAt">): Promise<TeamInvite> {
+  async createTeamInvite(
+    invite: Omit<TeamInviteProps, "id" | "createdAt">
+  ): Promise<TeamInvite> {
     const { data, error } = await this.supabase
       .from("team_invites")
       .insert({
@@ -265,14 +307,14 @@ export class SupabaseTeamRepository implements ITeamRepository {
       createdAt: new Date(data.created_at),
     });
   }
-  
+
   async deleteTeamInvite(inviteId: string, teamId: string): Promise<void> {
-      const { error } = await this.supabase
+    const { error } = await this.supabase
       .from("team_invites")
       .delete()
       .eq("id", inviteId)
       .eq("team_id", teamId);
-      
-      if (error) throw new Error(error.message);
+
+    if (error) throw new Error(error.message);
   }
 }
