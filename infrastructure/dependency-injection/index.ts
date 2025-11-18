@@ -15,16 +15,16 @@ import { SignInUseCase } from "@/app/auth/_use-case/sign-in.use-case";
 import { SignUpUseCase } from "@/app/auth/_use-case/sign-up.use-case";
 import { GetCurrentAuthUserUseCase } from "@/app/auth/_use-case/get-current-user.use-case";
 import { SignOutUseCase } from "@/app/auth/_use-case/sign-out.use-case";
-import { CreateTeamUseCase } from "@/app/team/_use-case/create-team.use-case";
+import { CreateTeamUseCase } from "@/app/(app)/team/_use-case/create-team.use-case";
 
 // Dashboard
-import { GetDashboardDataUseCase } from "@/app/dashboard/_use-case/get-dashboard-data.use-case";
+import { GetDashboardDataUseCase } from "@/app/(app)/dashboard/_use-case/get-dashboard-data.use-case";
 
 // Expenses
-import { CreateExpenseUseCase } from "@/app/expenses/_use-case/create-expense.use-case";
-import { GetExpensesUseCase } from "@/app/expenses/_use-case/get-expenses.use-case";
-import { DeleteExpenseUseCase } from "@/app/expenses/_use-case/delete-expense.use-case";
-import { GetExpenseSummaryByPeriodUseCase } from "@/app/expenses/_use-case/get-expense-summary-by-period.use-case";
+import { CreateExpenseUseCase } from "@/app/(app)/expenses/_use-case/create-expense.use-case";
+import { GetExpensesUseCase } from "@/app/(app)/expenses/_use-case/get-expenses.use-case";
+import { DeleteExpenseUseCase } from "@/app/(app)/expenses/_use-case/delete-expense.use-case";
+import { GetExpenseSummaryByPeriodUseCase } from "@/app/(app)/expenses/_use-case/get-expense-summary-by-period.use-case";
 
 // Incomes
 import { GetIncomesUseCase } from "@/app/income/_use_case/get-income.use-case";
@@ -33,19 +33,19 @@ import { UpdateIncomeUseCase } from "@/app/income/_use_case/update-income.use-ca
 import { DeleteIncomeUseCase } from "@/app/income/_use_case/delete-income.use-case";
 
 // Budget
-import { GetBudgetUseCase } from "@/app/budget/_use-case/get-budget.use-case";
-import { SaveBudgetUseCase } from "@/app/budget/_use-case/save-budget.use-case";
+import { GetBudgetUseCase } from "@/app/(app)/budget/_use-case/get-budget.use-case";
+import { SaveBudgetUseCase } from "@/app/(app)/budget/_use-case/save-budget.use-case";
 import { BudgetCategoryRepository } from "../repositories/budget-category.repository";
-import { GetBudgetCategoriesUseCase } from "@/app/budget/_use-case/get-budget-categories.use-case";
+import { GetBudgetCategoriesUseCase } from "@/app/(app)/budget/_use-case/get-budget-categories.use-case";
 
 // Categories
-import { GetCategoriesUseCase } from "@/app/categories/_use-case/get-categories.use-case";
-import { CreateCategoryUseCase } from "@/app/categories/_use-case/create-category.use-case";
-import { UpdateCategoryUseCase } from "@/app/categories/_use-case/update-category.use-case";
-import { DeleteCategoryUseCase } from "@/app/categories/_use-case/delete-category.use-case";
-import { CreateBudgetCategoryUseCase } from "@/app/budget/_use-case/create-budget-category.use-case";
-import { UpdateBudgetCategoryUseCase } from "@/app/budget/_use-case/update-budget-category.use-case";
-import { DeleteBudgetCategoryUseCase } from "@/app/budget/_use-case/delete-budget-category.use-case";
+import { GetCategoriesUseCase } from "@/app/(app)/categories/_use-case/get-categories.use-case";
+import { CreateCategoryUseCase } from "@/app/(app)/categories/_use-case/create-category.use-case";
+import { UpdateCategoryUseCase } from "@/app/(app)/categories/_use-case/update-category.use-case";
+import { DeleteCategoryUseCase } from "@/app/(app)/categories/_use-case/delete-category.use-case";
+import { CreateBudgetCategoryUseCase } from "@/app/(app)/budget/_use-case/create-budget-category.use-case";
+import { UpdateBudgetCategoryUseCase } from "@/app/(app)/budget/_use-case/update-budget-category.use-case";
+import { DeleteBudgetCategoryUseCase } from "@/app/(app)/budget/_use-case/delete-budget-category.use-case";
 
 const container = Container.getInstance();
 
