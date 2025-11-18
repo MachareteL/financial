@@ -32,7 +32,7 @@ export class GetExpensesUseCase {
       id: expense.id,
       amount: expense.amount,
       description: expense.description,
-      date: expense.date.toISOString().split("T")[0], // Converte Date para string
+      date: expense.date.toISOString().split("T")[0],
       teamId: expense.teamId,
       userId: expense.userId,
       categoryId: expense.categoryId,
@@ -42,7 +42,7 @@ export class GetExpensesUseCase {
         ? {
             id: expense.category.id,
             name: expense.category.name,
-            classification: expense.category.classification,
+            budgetCategoryName: expense.category.budgetCategory?.name || null,
           }
         : null,
 

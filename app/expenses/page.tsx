@@ -40,26 +40,39 @@ import {
   Calendar,
   Tag,
   Loader2,
+  Folder,
 } from "lucide-react";
+import { useAuth } from "@/app/auth/auth-provider";
+import { toast } from "@/hooks/use-toast";
+
 import {
   getExpensesUseCase,
   getCategoriesUseCase,
   deleteExpenseUseCase,
+  getBudgetCategoriesUseCase,
 } from "@/infrastructure/dependency-injection";
-import { toast } from "@/hooks/use-toast";
-import { useAuth } from "@/app/auth/auth-provider";
-
 import type { ExpenseDetailsDTO } from "@/domain/dto/expense.types.d.ts";
 import type { CategoryDetailsDTO } from "@/domain/dto/category.types.d.ts";
+import type { BudgetCategoryDetailsDTO } from "@/domain/dto/budget-category.types.d.ts";
+
+const BUDGET_CATEGORY_COLORS: Record<string, string> = {
+  Necessidades: "bg-green-100 text-green-800",
+  Desejos: "bg-yellow-100 text-yellow-800",
+  Poupança: "bg-blue-100 text-blue-800",
+};
 
 export default function ExpensesPage() {
   const { session, loading: authLoading } = useAuth();
+  const router = useRouter();
+
   const [expenses, setExpenses] = useState<ExpenseDetailsDTO[]>([]);
   const [filteredExpenses, setFilteredExpenses] = useState<ExpenseDetailsDTO[]>(
     []
   );
   const [categories, setCategories] = useState<CategoryDetailsDTO[]>([]);
-  const [profile, setProfile] = useState<any>(null);
+  const [budgetCategories, setBudgetCategories] = useState<
+    BudgetCategoryDetailsDTO[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedReceipt, setSelectedReceipt] = useState<string | null>(null);
 
@@ -68,14 +81,12 @@ export default function ExpensesPage() {
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
   const [selectedYear, setSelectedYear] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [selectedClassification, setSelectedClassification] =
+  const [selectedBudgetCategory, setSelectedBudgetCategory] =
     useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("date-desc");
 
   const teamId = session?.teams?.[0]?.team.id;
   const userId = session?.user?.id;
-
-  const router = useRouter();
 
   useEffect(() => {
     if (authLoading) return;
@@ -91,8 +102,7 @@ export default function ExpensesPage() {
 
   useEffect(() => {
     if (teamId) {
-      loadExpenses();
-      loadCategories();
+      loadAllData();
     }
   }, [teamId]);
 
@@ -104,34 +114,32 @@ export default function ExpensesPage() {
     selectedMonth,
     selectedYear,
     selectedCategory,
-    selectedClassification,
+    selectedBudgetCategory,
     sortBy,
   ]);
 
-  const loadExpenses = async () => {
+  const loadAllData = async () => {
     if (!teamId) return;
     setIsLoading(true);
     try {
-      const data = await getExpensesUseCase.execute({ teamId });
-      setExpenses(data);
+      const [expensesData, categoriesData, budgetCategoriesData] =
+        await Promise.all([
+          getExpensesUseCase.execute({ teamId }),
+          getCategoriesUseCase.execute(teamId),
+          getBudgetCategoriesUseCase.execute(teamId),
+        ]);
+
+      setExpenses(expensesData);
+      setCategories(categoriesData);
+      setBudgetCategories(budgetCategoriesData);
     } catch (error: any) {
       toast({
-        title: "Erro ao carregar gastos",
+        title: "Erro ao carregar dados",
         description: error.message,
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const loadCategories = async () => {
-    if (!teamId) return;
-    try {
-      const data = await getCategoriesUseCase.execute(teamId);
-      setCategories(data);
-    } catch (error: any) {
-      console.error("Error loading categories:", error);
     }
   };
 
@@ -174,12 +182,17 @@ export default function ExpensesPage() {
       );
     }
 
-    if (selectedClassification !== "all") {
-      filtered = filtered.filter(
-        (expense) => expense.category?.classification === selectedClassification
+    if (selectedBudgetCategory !== "all") {
+      const categoryIdsInBudgetCategory = categories
+        .filter((c) => c.budgetCategoryId === selectedBudgetCategory)
+        .map((c) => c.id);
+
+      filtered = filtered.filter((expense) =>
+        categoryIdsInBudgetCategory.includes(expense.categoryId)
       );
     }
 
+    // Ordenação
     switch (sortBy) {
       case "date-desc":
         filtered.sort(
@@ -234,21 +247,15 @@ export default function ExpensesPage() {
     setSelectedMonth("all");
     setSelectedYear("all");
     setSelectedCategory("all");
-    setSelectedClassification("all");
+    setSelectedBudgetCategory("all");
     setSortBy("date-desc");
   };
 
-  const getClassificationColor = (classification: string) => {
-    switch (classification) {
-      case "necessidades":
-        return "bg-green-100 text-green-800";
-      case "desejos":
-        return "bg-yellow-100 text-yellow-800";
-      case "poupanca":
-        return "bg-blue-100 text-blue-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+  const getBudgetCategoryColor = (budgetCategoryName: string | null) => {
+    if (!budgetCategoryName) return "bg-gray-100 text-gray-800";
+    return (
+      BUDGET_CATEGORY_COLORS[budgetCategoryName] || "bg-gray-100 text-gray-800"
+    );
   };
 
   const formatDate = (dateStr: string) => {
@@ -281,7 +288,8 @@ export default function ExpensesPage() {
     return years;
   };
 
-  const getTotalAmount = () => filteredExpenses.reduce((total, expense) => total + expense.amount, 0);
+  const getTotalAmount = () =>
+    filteredExpenses.reduce((total, expense) => total + expense.amount, 0);
 
   if (authLoading || isLoading || !session || !teamId) {
     return (
@@ -310,8 +318,7 @@ export default function ExpensesPage() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Gastos</h1>
               <p className="text-gray-600">
-                Gerencie todos os gastos da família • {filteredExpenses.length}{" "}
-                gastos • Total: R${" "}
+                {filteredExpenses.length} gastos • Total: R${" "}
                 {getTotalAmount().toLocaleString("pt-BR", {
                   minimumFractionDigits: 2,
                 })}
@@ -355,7 +362,7 @@ export default function ExpensesPage() {
                 <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                   <SelectTrigger>
                     <Calendar className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Todos os meses" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os meses</SelectItem>
@@ -374,7 +381,7 @@ export default function ExpensesPage() {
                 <Select value={selectedYear} onValueChange={setSelectedYear}>
                   <SelectTrigger>
                     <Calendar className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Todos os anos" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os anos</SelectItem>
@@ -387,9 +394,33 @@ export default function ExpensesPage() {
                 </Select>
               </div>
 
-              {/* Categoria */}
+              {/* NOVO FILTRO: Pasta de Orçamento */}
               <div className="space-y-2">
-                <Label>Categoria</Label>
+                <Label>Pasta de Orçamento</Label>
+                <Select
+                  value={selectedBudgetCategory}
+                  onValueChange={setSelectedBudgetCategory}
+                >
+                  <SelectTrigger>
+                    <Folder className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Todas as Pastas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as Pastas</SelectItem>
+                    {budgetCategories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name} ({category.percentage * 100}%)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Categoria (Gasto) */}
+              <div className="space-y-2">
+                <Label>Categoria (Gasto)</Label>
                 <Select
                   value={selectedCategory}
                   onValueChange={setSelectedCategory}
@@ -405,27 +436,6 @@ export default function ExpensesPage() {
                         {category.name}
                       </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Classificação */}
-              <div className="space-y-2">
-                <Label>Classificação</Label>
-                <Select
-                  value={selectedClassification}
-                  onValueChange={setSelectedClassification}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todas as classificações" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as classificações</SelectItem>
-                    <SelectItem value="necessidades">Necessidades</SelectItem>
-                    <SelectItem value="desejos">Desejos</SelectItem>
-                    <SelectItem value="poupanca">Poupança</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -464,7 +474,7 @@ export default function ExpensesPage() {
           </CardContent>
         </Card>
 
-        {/* Tabs para diferentes visualizações */}
+        {/* Tabs */}
         <Tabs defaultValue="cards" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="cards">Cards</TabsTrigger>
@@ -485,8 +495,8 @@ export default function ExpensesPage() {
                   </h3>
                   <p className="text-gray-600 text-center mb-4">
                     {expenses.length === 0
-                      ? "Comece adicionando seu primeiro gasto para acompanhar suas finanças."
-                      : "Tente ajustar os filtros para encontrar os gastos desejados."}
+                      ? "Comece adicionando seu primeiro gasto."
+                      : "Tente ajustar os filtros."}
                   </p>
                   {expenses.length === 0 && (
                     <Button onClick={() => router.push("/expenses/new")}>
@@ -512,25 +522,25 @@ export default function ExpensesPage() {
                           })}
                         </CardTitle>
                         <Badge
-                          className={getClassificationColor(
-                            expense.category?.classification! 
+                          className={getBudgetCategoryColor(
+                            expense.category?.budgetCategoryName!
                           )}
                         >
-                          {expense.category?.classification}
+                          {expense.category?.budgetCategoryName || "Sem Pasta"}
                         </Badge>
                       </div>
                       <CardDescription>{expense.description}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="flex items-center justify-between text-sm text-gray-600">
-                        <span>Categoria: {expense.category?.name}</span>
+                        <span>{expense.category?.name}</span>
                         <span>{formatDate(expense.date)}</span>
                       </div>
                       <div className="text-sm text-gray-600">
                         Adicionado por: {expense.owner?.name}
                       </div>
-                      {expense.receiptUrl && (
-                        <div className="flex items-center gap-2">
+                      <div className="flex gap-2 pt-2">
+                        {expense.receiptUrl && (
                           <Dialog>
                             <DialogTrigger asChild>
                               <Button
@@ -540,8 +550,7 @@ export default function ExpensesPage() {
                                   setSelectedReceipt(expense.receiptUrl!)
                                 }
                               >
-                                <Eye className="w-4 h-4 mr-1" />
-                                Ver Nota
+                                <Eye className="w-4 h-4" />
                               </Button>
                             </DialogTrigger>
                             <DialogContent className="max-w-2xl">
@@ -557,9 +566,7 @@ export default function ExpensesPage() {
                               </div>
                             </DialogContent>
                           </Dialog>
-                        </div>
-                      )}
-                      <div className="flex gap-2 pt-2">
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
@@ -592,138 +599,81 @@ export default function ExpensesPage() {
           <TabsContent value="table" className="space-y-4">
             {filteredExpenses.length === 0 ? (
               <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <Receipt className="h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {expenses.length === 0
-                      ? "Nenhum gasto encontrado"
-                      : "Nenhum gasto corresponde aos filtros"}
-                  </h3>
-                  <p className="text-gray-600 text-center mb-4">
-                    {expenses.length === 0
-                      ? "Comece adicionando seu primeiro gasto para acompanhar suas finanças."
-                      : "Tente ajustar os filtros para encontrar os gastos desejados."}
-                  </p>
-                  {expenses.length === 0 && (
-                    <Button onClick={() => router.push("/expenses/new")}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Adicionar Primeiro Gasto
-                    </Button>
-                  )}
+                <CardContent className="py-12 text-center text-gray-500">
+                  Nenhum gasto encontrado.
                 </CardContent>
               </Card>
             ) : (
               <Card>
-                <CardHeader>
-                  <CardTitle>Lista de Gastos</CardTitle>
-                  <CardDescription>
-                    Visualização em tabela de todos os gastos filtrados
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left p-3 font-medium">Data</th>
-                          <th className="text-left p-3 font-medium">Valor</th>
-                          <th className="text-left p-3 font-medium">
-                            Categoria
-                          </th>
-                          <th className="text-left p-3 font-medium">
-                            Descrição
-                          </th>
-                          <th className="text-left p-3 font-medium">
-                            Adicionado por
-                          </th>
-                          <th className="text-left p-3 font-medium">Nota</th>
-                          <th className="text-left p-3 font-medium">Ações</th>
+                <CardContent className="overflow-x-auto pt-6">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-3 font-medium">Data</th>
+                        <th className="text-left p-3 font-medium">Valor</th>
+                        <th className="text-left p-3 font-medium">Categoria</th>
+                        <th className="text-left p-3 font-medium">Descrição</th>
+                        <th className="text-left p-3 font-medium">
+                          Adicionado por
+                        </th>
+                        <th className="text-left p-3 font-medium">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredExpenses.map((expense) => (
+                        <tr
+                          key={expense.id}
+                          className="border-b hover:bg-gray-50"
+                        >
+                          <td className="p-3">{formatDate(expense.date)}</td>
+                          <td className="p-3 font-medium">
+                            R${" "}
+                            {expense.amount.toLocaleString("pt-BR", {
+                              minimumFractionDigits: 2,
+                            })}
+                          </td>
+                          <td className="p-3">
+                            <div className="flex flex-col gap-1">
+                              <span className="font-medium">
+                                {expense.category?.name}
+                              </span>
+                              <Badge
+                                className={`${getBudgetCategoryColor(
+                                  expense.category?.budgetCategoryName!
+                                )} text-xs w-fit`}
+                              >
+                                {expense.category?.budgetCategoryName!}
+                              </Badge>
+                            </div>
+                          </td>
+                          <td className="p-3 max-w-xs truncate">
+                            {expense.description}
+                          </td>
+                          <td className="p-3">{expense.owner?.name}</td>
+                          <td className="p-3">
+                            <div className="flex gap-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  router.push(`/expenses/${expense.id}/edit`)
+                                }
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => deleteExpense(expense.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {filteredExpenses.map((expense) => (
-                          <tr
-                            key={expense.id}
-                            className="border-b hover:bg-gray-50"
-                          >
-                            <td className="p-3">{formatDate(expense.date)}</td>
-                            <td className="p-3 font-medium">
-                              R${" "}
-                              {expense.amount.toLocaleString("pt-BR", {
-                                minimumFractionDigits: 2,
-                              })}
-                            </td>
-                            <td className="p-3">
-                              <div className="flex flex-col gap-1">
-                                <span className="font-medium">
-                                  {expense.category?.name}
-                                </span>
-                                <Badge
-                                  className={`${getClassificationColor(
-                                    expense.category?.classification!
-                                  )} text-xs w-fit`}
-                                >
-                                  {expense.category?.classification!}
-                                </Badge>
-                              </div>
-                            </td>
-                            <td className="p-3 max-w-xs truncate">
-                              {expense.description}
-                            </td>
-                            <td className="p-3">{expense.owner?.name}</td>
-                            <td className="p-3">
-                              {expense.receiptUrl ? (
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button variant="outline" size="sm">
-                                      <Eye className="w-4 h-4" />
-                                    </Button>
-                                  </DialogTrigger>
-                                  <DialogContent className="max-w-2xl">
-                                    <DialogHeader>
-                                      <DialogTitle>Nota Fiscal</DialogTitle>
-                                    </DialogHeader>
-                                    <div className="flex justify-center">
-                                      <img
-                                        src={
-                                          expense.receiptUrl ||
-                                          "/placeholder.svg"
-                                        }
-                                        alt="Nota fiscal"
-                                        className="max-w-full max-h-96 object-contain"
-                                      />
-                                    </div>
-                                  </DialogContent>
-                                </Dialog>
-                              ) : (
-                                <span className="text-gray-400">-</span>
-                              )}
-                            </td>
-                            <td className="p-3">
-                              <div className="flex gap-1">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() =>
-                                    router.push(`/expenses/${expense.id}/edit`)
-                                  }
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => deleteExpense(expense.id)}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      ))}
+                    </tbody>
+                  </table>
                 </CardContent>
               </Card>
             )}
@@ -732,24 +682,29 @@ export default function ExpensesPage() {
           {/* Summary View */}
           <TabsContent value="summary" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Total por classificação */}
-              {["necessidades", "desejos", "poupanca"].map((classification) => {
-                const total = filteredExpenses
-                  .filter(
-                    (expense) =>
-                      expense.category?.classification === classification
-                  )
-                  .reduce((sum, expense) => sum + expense.amount, 0);
-                const count = filteredExpenses.filter(
+              {budgetCategories.map((budgetCategory) => {
+                const categoryIdsInBudgetCategory = categories
+                  .filter((c) => c.budgetCategoryId === budgetCategory.id)
+                  .map((c) => c.id);
+
+                const expensesInBudgetCategory = filteredExpenses.filter(
                   (expense) =>
-                    expense.category?.classification === classification
-                ).length;
+                    categoryIdsInBudgetCategory.includes(expense.categoryId)
+                );
+
+                const total = expensesInBudgetCategory.reduce(
+                  (sum, expense) => sum + expense.amount,
+                  0
+                );
+                const count = expensesInBudgetCategory.length;
+
+                // if (count === 0) return null; // Não mostra "pastas" sem gastos
 
                 return (
-                  <Card key={classification}>
+                  <Card key={budgetCategory.id}>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm font-medium capitalize">
-                        {classification}
+                        {budgetCategory.name}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -760,7 +715,7 @@ export default function ExpensesPage() {
                         })}
                       </div>
                       <p className="text-xs text-gray-600 mt-1">
-                        {count} gastos
+                        {count} saídas
                       </p>
                     </CardContent>
                   </Card>
@@ -782,16 +737,16 @@ export default function ExpensesPage() {
                     })}
                   </div>
                   <p className="text-xs text-gray-600 mt-1">
-                    {filteredExpenses.length} gastos
+                    {filteredExpenses.length} saídas
                   </p>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Gastos por categoria */}
+            {/* Gastos por Categoria (de Gasto) */}
             <Card>
               <CardHeader>
-                <CardTitle>Gastos por Categoria</CardTitle>
+                <CardTitle>Gastos por Categoria (Gasto)</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -817,11 +772,11 @@ export default function ExpensesPage() {
                       >
                         <div className="flex items-center gap-3">
                           <Badge
-                            className={getClassificationColor(
-                              category.classification
+                            className={getBudgetCategoryColor(
+                              category.budgetCategoryName
                             )}
                           >
-                            {category.classification}
+                            {category.budgetCategoryName}
                           </Badge>
                           <span className="font-medium">{category.name}</span>
                         </div>

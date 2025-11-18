@@ -2,7 +2,7 @@ export type ExpenseDetailsDTO = {
   id: string;
   amount: number;
   description: string | null | undefined;
-  date: string;
+  date: string; // string para UI
   teamId: string;
   userId: string;
   categoryId: string;
@@ -11,7 +11,7 @@ export type ExpenseDetailsDTO = {
   category: {
     id: string;
     name: string;
-    classification: "necessidades" | "desejos" | "poupanca";
+    budgetCategoryName: string | null;
   } | null;
 
   owner: {

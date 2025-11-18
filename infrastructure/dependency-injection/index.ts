@@ -5,7 +5,9 @@ import {
   CategoryRepository,
   TeamRepository,
   ExpenseRepository,
-  BudgetRepository
+  BudgetRepository,
+  StorageRepository,
+  IncomeRepository,
 } from "../repositories";
 
 // Auth
@@ -23,20 +25,21 @@ import { CreateExpenseUseCase } from "@/app/expenses/_use-case/create-expense.us
 import { GetCategoriesUseCase } from "@/app/categories/_use-case/get-categories.use-case";
 import { GetExpensesUseCase } from "@/app/expenses/_use-case/get-expenses.use-case";
 import { DeleteExpenseUseCase } from "@/app/expenses/_use-case/delete-expense.use-case";
-import { GetExpenseSummaryByPeriodUseCase } from "@/app/expenses/_use-case/get-expense-summary-by-period.use-case"; // <-- NOVO
+import { GetExpenseSummaryByPeriodUseCase } from "@/app/expenses/_use-case/get-expense-summary-by-period.use-case";
 
-// Incomes (Exemplo, corrija os paths se estiverem errados)
+// Incomes
 import { GetIncomesUseCase } from "@/app/income/_use_case/get-income.use-case";
 import { CreateIncomeUseCase } from "@/app/income/_use_case/create-income.use-case";
 import { UpdateIncomeUseCase } from "@/app/income/_use_case/update-income.use-case";
-import { DeleteIncomeUseCase } from "@/app/income/_use_case/delete-income.use-case"; // <-- NOVO
+import { DeleteIncomeUseCase } from "@/app/income/_use_case/delete-income.use-case";
 
 // Budget
-import { GetBudgetUseCase } from "@/app/budget/_use-case/get-budget.use-case"; // <-- NOVO
-import { SaveBudgetUseCase } from "@/app/budget/_use-case/save-budget.use-case"; // <-- NOVO
+import { GetBudgetUseCase } from "@/app/budget/_use-case/get-budget.use-case";
+import { SaveBudgetUseCase } from "@/app/budget/_use-case/save-budget.use-case";
+import { BudgetCategoryRepository } from "../repositories/budget-category.repository";
+import { GetBudgetCategoriesUseCase } from "@/app/budget/_use-case/get-budget-categories.use-case";
 
 const container = Container.getInstance();
-
 
 const authRepository = container.get(
   "authRepository",
@@ -58,7 +61,7 @@ const expenseRepository = container.get(
   "expenseRepository",
   () => new ExpenseRepository()
 );
-const IncomeRepository = container.get(
+const incomeRepository = container.get(
   "incomeRepository",
   () => new IncomeRepository()
 );
@@ -70,7 +73,10 @@ const budgetRepository = container.get(
   "budgetRepository",
   () => new BudgetRepository()
 );
-
+const budgetCategoryRepository = container.get(
+  "budgetCategoryRepository",
+  () => new BudgetCategoryRepository()
+);
 
 // Auth
 export const getCurrentAuthUserUseCase = container.get(
@@ -93,13 +99,18 @@ export const signOutUseCase = container.get(
 // Team
 export const createTeamUseCase = container.get(
   "createTeamUseCase",
-  () => new CreateTeamUseCase(teamRepository, categoryRepository)
+  () =>
+    new CreateTeamUseCase(
+      teamRepository,
+      categoryRepository,
+      budgetCategoryRepository
+    )
 );
 
 // Dashboard
 export const getDashboardDataUseCase = container.get(
   "getDashboardDataUseCase",
-  () => new GetDashboardDataUseCase(expenseRepository, IncomeRepository)
+  () => new GetDashboardDataUseCase(expenseRepository, incomeRepository)
 );
 
 // Expenses
@@ -127,21 +138,21 @@ export const getExpenseSummaryByPeriodUseCase = container.get(
 // Incomes
 export const getIncomesUseCase = container.get(
   "getIncomesUseCase",
-  () => new GetIncomesUseCase(IncomeRepository)
+  () => new GetIncomesUseCase(incomeRepository)
 );
 export const createIncomeUseCase = container.get(
   "createIncomeUseCase",
-  () => new CreateIncomeUseCase(IncomeRepository)
+  () => new CreateIncomeUseCase(incomeRepository)
 );
 
 export const updateIncomeUseCase = container.get(
   "updateIncomeUseCase",
-  () => new UpdateIncomeUseCase(IncomeRepository)
+  () => new UpdateIncomeUseCase(incomeRepository)
 );
 
 export const deleteIncomeUseCase = container.get(
   "deleteIncomeUseCase",
-  () => new DeleteIncomeUseCase(IncomeRepository)
+  () => new DeleteIncomeUseCase(incomeRepository)
 );
 
 // Budget
@@ -152,4 +163,8 @@ export const getBudgetUseCase = container.get(
 export const saveBudgetUseCase = container.get(
   "saveBudgetUseCase",
   () => new SaveBudgetUseCase(budgetRepository)
+);
+export const getBudgetCategoriesUseCase = container.get(
+  "getBudgetCategoriesUseCase",
+  () => new GetBudgetCategoriesUseCase(budgetCategoryRepository)
 );
