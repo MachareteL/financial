@@ -23,4 +23,8 @@ export class ManageMembersUseCase {
   async removeMember(teamId: string, memberId: string): Promise<void> {
     await this.teamRepository.removeMember(teamId, memberId);
   }
+  
+  async cancelInvite(inviteId: string, teamId: string): Promise<void> {
+    await this.teamRepository.deleteTeamInvite(inviteId, teamId);
+  }
 }

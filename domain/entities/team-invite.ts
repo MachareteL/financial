@@ -32,7 +32,8 @@ export class TeamInvite {
   get status(): TeamInviteStatus { return this.props.status }
   get teamId(): string { return this.props.teamId }
   get roleId(): string | null { return this.props.roleId }
-
+  get invitedBy(): string { return this.props.invitedBy }
+  get createdAt(): Date { return this.props.createdAt }
   
   public accept(): void {
     if (this.props.status !== 'pending') {

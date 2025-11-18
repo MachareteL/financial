@@ -465,7 +465,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           profile_id?: string
-          role_id?: string
+          role_id?: string | null
           team_id?: string
         }
         Relationships: [
