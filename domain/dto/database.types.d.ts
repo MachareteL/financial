@@ -116,36 +116,59 @@ export type Database = {
         }
         Relationships: []
       }
+      budget_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          percentage: number
+          team_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          percentage?: number
+          team_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          percentage?: number
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_categories_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budgets: {
         Row: {
           created_at: string
-          desejos_budget: number
           id: string
           month: number
-          necessidades_budget: number
-          poupanca_budget: number
           team_id: string | null
           total_income: number
           year: number
         }
         Insert: {
           created_at?: string
-          desejos_budget?: number
           id?: string
           month: number
-          necessidades_budget?: number
-          poupanca_budget?: number
           team_id?: string | null
           total_income?: number
           year: number
         }
         Update: {
           created_at?: string
-          desejos_budget?: number
           id?: string
           month?: number
-          necessidades_budget?: number
-          poupanca_budget?: number
           team_id?: string | null
           total_income?: number
           year?: number
@@ -154,27 +177,34 @@ export type Database = {
       }
       categories: {
         Row: {
-          classification: string
+          budget_category_id: string
           created_at: string
           id: string
           name: string
           team_id: string | null
         }
         Insert: {
-          classification: string
+          budget_category_id: string
           created_at?: string
           id?: string
           name: string
           team_id?: string | null
         }
         Update: {
-          classification?: string
+          budget_category_id?: string
           created_at?: string
           id?: string
           name?: string
           team_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "categories_budget_category_id_fkey"
+            columns: ["budget_category_id"]
+            isOneToOne: false
+            referencedRelation: "budget_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "categories_team_id_fkey"
             columns: ["team_id"]

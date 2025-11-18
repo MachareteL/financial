@@ -15,23 +15,17 @@ export class BudgetRepository implements IBudgetRepository {
       month: row.month,
       year: row.year,
       totalIncome: row.total_income,
-      necessidadesBudget: row.necessidades_budget,
-      desejosBudget: row.desejos_budget,
-      poupancaBudget: row.poupanca_budget,
       teamId: row.team_id!,
       createdAt: new Date(row.created_at),
     })
   }
 
   // 2. MAPEAMENTO: DA ENTIDADE PARA O BANCO (Row)
-  private mapEntityToRow(entity: Budget): Omit<BudgetRow, 'id' | 'created_at'> {
+  private mapEntityToRow(entity: Budget): Omit<BudgetRow, 'id' | 'created_at' | 'desejos_budget' | 'necessidades_budget' | 'poupanca_budget'> {
     return {
       month: entity.month,
       year: entity.year,
       total_income: entity.totalIncome,
-      necessidades_budget: entity.necessidadesBudget,
-      desejos_budget: entity.desejosBudget,
-      poupanca_budget: entity.poupancaBudget,
       team_id: entity.teamId,
     }
   }
@@ -56,7 +50,7 @@ export class BudgetRepository implements IBudgetRepository {
     const row = this.mapEntityToRow(budget)
     const { data, error } = await this.supabase
       .from('budgets')
-      .update(row)
+      .update(row) // Só atualiza o total_income
       .eq('id', budget.id)
       .eq('team_id', budget.teamId)
       .select()

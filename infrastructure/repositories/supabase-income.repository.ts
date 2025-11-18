@@ -1,4 +1,3 @@
-// infrastructure/repositories/supabase-income.repository.ts
 import type { IIncomeRepository } from '@/domain/interfaces/income.repository.interface'
 import { Income } from '@/domain/entities/income'
 import { getSupabaseClient } from '../database/supabase.client'
@@ -12,7 +11,7 @@ type IncomeRowWithProfile = IncomeRow & {
   profiles: Pick<ProfileRow, 'name'> | null
 }
 
-export class SupabaseIncomeRepository implements IIncomeRepository {
+export class IncomeRepository implements IIncomeRepository {
   private supabase = getSupabaseClient()
 
   private mapRowToEntity(row: IncomeRowWithProfile): Income {

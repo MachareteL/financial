@@ -1,4 +1,5 @@
 import type { Category } from '../entities/category'
+import type { BudgetCategory } from '../entities/budget-category'
 
 export interface ICategoryRepository {
   findByTeamId(teamId: string): Promise<Category[]>
@@ -6,5 +7,6 @@ export interface ICategoryRepository {
   create(category: Category): Promise<Category>
   update(category: Category): Promise<Category>
   delete(categoryId: string, teamId: string): Promise<void>
-  createDefaultCategories(teamId: string): Promise<Category[]>
+
+  createDefaultCategories(teamId: string, budgetCategories: BudgetCategory[]): Promise<Category[]>
 }

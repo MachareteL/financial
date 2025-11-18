@@ -34,8 +34,6 @@ import { DeleteIncomeUseCase } from "@/app/income/_use_case/delete-income.use-ca
 // Budget
 import { GetBudgetUseCase } from "@/app/budget/_use-case/get-budget.use-case"; // <-- NOVO
 import { SaveBudgetUseCase } from "@/app/budget/_use-case/save-budget.use-case"; // <-- NOVO
-import { StorageRepository } from "../repositories/supabase.storage.repository";
-import { SupabaseIncomeRepository } from "../repositories/supabase-income.repository";
 
 const container = Container.getInstance();
 
@@ -60,9 +58,9 @@ const expenseRepository = container.get(
   "expenseRepository",
   () => new ExpenseRepository()
 );
-const incomeRepository = container.get(
+const IncomeRepository = container.get(
   "incomeRepository",
-  () => new SupabaseIncomeRepository()
+  () => new IncomeRepository()
 );
 const storageRepository = container.get(
   "storageRepository",
@@ -101,7 +99,7 @@ export const createTeamUseCase = container.get(
 // Dashboard
 export const getDashboardDataUseCase = container.get(
   "getDashboardDataUseCase",
-  () => new GetDashboardDataUseCase(expenseRepository, incomeRepository)
+  () => new GetDashboardDataUseCase(expenseRepository, IncomeRepository)
 );
 
 // Expenses
@@ -129,21 +127,21 @@ export const getExpenseSummaryByPeriodUseCase = container.get(
 // Incomes
 export const getIncomesUseCase = container.get(
   "getIncomesUseCase",
-  () => new GetIncomesUseCase(incomeRepository)
+  () => new GetIncomesUseCase(IncomeRepository)
 );
 export const createIncomeUseCase = container.get(
   "createIncomeUseCase",
-  () => new CreateIncomeUseCase(incomeRepository)
+  () => new CreateIncomeUseCase(IncomeRepository)
 );
 
 export const updateIncomeUseCase = container.get(
   "updateIncomeUseCase",
-  () => new UpdateIncomeUseCase(incomeRepository)
+  () => new UpdateIncomeUseCase(IncomeRepository)
 );
 
 export const deleteIncomeUseCase = container.get(
   "deleteIncomeUseCase",
-  () => new DeleteIncomeUseCase(incomeRepository)
+  () => new DeleteIncomeUseCase(IncomeRepository)
 );
 
 // Budget
