@@ -22,7 +22,6 @@ import { GetDashboardDataUseCase } from "@/app/dashboard/_use-case/get-dashboard
 
 // Expenses
 import { CreateExpenseUseCase } from "@/app/expenses/_use-case/create-expense.use-case";
-import { GetCategoriesUseCase } from "@/app/categories/_use-case/get-categories.use-case";
 import { GetExpensesUseCase } from "@/app/expenses/_use-case/get-expenses.use-case";
 import { DeleteExpenseUseCase } from "@/app/expenses/_use-case/delete-expense.use-case";
 import { GetExpenseSummaryByPeriodUseCase } from "@/app/expenses/_use-case/get-expense-summary-by-period.use-case";
@@ -38,6 +37,12 @@ import { GetBudgetUseCase } from "@/app/budget/_use-case/get-budget.use-case";
 import { SaveBudgetUseCase } from "@/app/budget/_use-case/save-budget.use-case";
 import { BudgetCategoryRepository } from "../repositories/budget-category.repository";
 import { GetBudgetCategoriesUseCase } from "@/app/budget/_use-case/get-budget-categories.use-case";
+
+// Categories
+import { GetCategoriesUseCase } from "@/app/categories/_use-case/get-categories.use-case";
+import { CreateCategoryUseCase } from "@/app/categories/_use-case/create-category.use-case";
+import { UpdateCategoryUseCase } from "@/app/categories/_use-case/update-category.use-case";
+import { DeleteCategoryUseCase } from "@/app/categories/_use-case/delete-category.use-case";
 
 const container = Container.getInstance();
 
@@ -118,10 +123,6 @@ export const createExpenseUseCase = container.get(
   "createExpenseUseCase",
   () => new CreateExpenseUseCase(expenseRepository, storageRepository)
 );
-export const getCategoriesUseCase = container.get(
-  "getCategoriesUseCase",
-  () => new GetCategoriesUseCase(categoryRepository)
-);
 export const getExpensesUseCase = container.get(
   "getExpensesUseCase",
   () => new GetExpensesUseCase(expenseRepository)
@@ -133,6 +134,24 @@ export const deleteExpenseUseCase = container.get(
 export const getExpenseSummaryByPeriodUseCase = container.get(
   "getExpenseSummaryByPeriodUseCase",
   () => new GetExpenseSummaryByPeriodUseCase(expenseRepository)
+);
+
+// Categories
+export const getCategoriesUseCase = container.get(
+  "getCategoriesUseCase",
+  () => new GetCategoriesUseCase(categoryRepository)
+);
+export const createCategoryUseCase = container.get(
+  "createCategoryUseCase",
+  () => new CreateCategoryUseCase(categoryRepository)
+);
+export const updateCategoryUseCase = container.get(
+  "updateCategoryUseCase",
+  () => new UpdateCategoryUseCase(categoryRepository)
+);
+export const deleteCategoryUseCase = container.get(
+  "deleteCategoryUseCase",
+  () => new DeleteCategoryUseCase(categoryRepository)
 );
 
 // Incomes

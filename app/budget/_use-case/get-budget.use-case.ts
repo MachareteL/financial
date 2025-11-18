@@ -26,9 +26,6 @@ export class GetBudgetUseCase {
       month: budget.month,
       year: budget.year,
       totalIncome: budget.totalIncome,
-      necessidadesBudget: budget.necessidadesBudget,
-      desejosBudget: budget.desejosBudget,
-      poupancaBudget: budget.poupancaBudget,
     }
   }
 }

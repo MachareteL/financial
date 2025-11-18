@@ -1,15 +1,8 @@
 import type { BudgetProps } from '../entities/budget'
-import type { DashboardMonthlyData } from './dashboard.types.d.ts'
 
 export type BudgetDetailsDTO = Pick<
   BudgetProps,
-  | 'id'
-  | 'month'
-  | 'year'
-  | 'totalIncome'
-  | 'necessidadesBudget'
-  | 'desejosBudget'
-  | 'poupancaBudget'
+  'id' | 'month' | 'year' | 'totalIncome'
 >
 
 export type SaveBudgetDTO = {
@@ -19,4 +12,10 @@ export type SaveBudgetDTO = {
   totalIncome: number
 }
 
-export type ExpenseSummaryDTO = DashboardMonthlyData
+export type ExpenseSummaryByBudgetCategoryDTO = {
+  id: string;             // ID da BudgetCategory
+  name: string;           // Nome (ex: "Necessidades")
+  percentage: number;     // Percentual (ex: 0.5)
+  spent: number;          // Gasto total (ex: 1500.00)
+  budgeted: number;       // Valor planejado (ex: 2500.00)
+}

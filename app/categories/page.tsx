@@ -1,14 +1,25 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import type React from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -16,187 +27,179 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash2, ArrowLeft } from "lucide-react"
-import { supabase } from "@/lib/supabase"
-import { getUserProfile } from "@/lib/auth"
-import { toast } from "@/hooks/use-toast"
-import { useAuth } from "@/app/auth/auth-provider"
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  ArrowLeft,
+  Loader2,
+  Tag,
+  Folder,
+} from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/app/auth/auth-provider";
 
-interface Category {
-  id: string
-  name: string
-  classification: "necessidades" | "desejos" | "poupanca"
-  created_at: string
-}
+import type { CategoryDetailsDTO } from "@/domain/dto/category.types.d.ts";
+import type { BudgetCategoryDetailsDTO } from "@/domain/dto/budget-category.types.d.ts";
+import {
+  getCategoriesUseCase,
+  getBudgetCategoriesUseCase,
+  createCategoryUseCase,
+  updateCategoryUseCase,
+  deleteCategoryUseCase,
+} from "@/infrastructure/dependency-injection";
+
+const BUDGET_CATEGORY_COLORS: Record<string, string> = {
+  Necessidades: "bg-green-100 text-green-800",
+  Desejos: "bg-yellow-100 text-yellow-800",
+  Poupança: "bg-blue-100 text-blue-800",
+};
 
 export default function CategoriesPage() {
-  const { user, loading } = useAuth()
-  const [categories, setCategories] = useState<Category[]>([])
-  const [profile, setProfile] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const router = useRouter()
+  const { session, loading: authLoading } = useAuth();
+  const [categories, setCategories] = useState<CategoryDetailsDTO[]>([]);
+  const [budgetCategories, setBudgetCategories] = useState<
+    BudgetCategoryDetailsDTO[]
+  >([]);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+
+  const [editingCategory, setEditingCategory] =
+    useState<CategoryDetailsDTO | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const router = useRouter();
+
+  const teamId = session?.teams?.[0]?.team.id;
+  const userId = session?.user?.id;
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/auth")
-      return
+    if (authLoading) return;
+    if (!session || !userId) {
+      router.push("/auth");
+      return;
     }
-
-    if (user && !profile) {
-      loadProfile()
+    if (!teamId) {
+      router.push("/onboarding");
+      return;
     }
-  }, [user, loading, router])
+  }, [session, authLoading, userId, teamId, router]);
 
   useEffect(() => {
-    if (profile) {
-      loadCategories()
+    if (teamId) {
+      loadData(teamId);
     }
-  }, [profile])
+  }, [teamId]);
 
-  const loadProfile = async () => {
+  const loadData = async (teamId: string) => {
+    setIsLoadingData(true);
     try {
-      const userProfile = await getUserProfile()
-      if (!userProfile) {
-        router.push("/auth")
-        return
-      }
-      setProfile(userProfile)
-    } catch (error) {
-      console.error("Error loading profile:", error)
-      router.push("/auth")
-    }
-  }
+      const [categoriesData, budgetCategoriesData] = await Promise.all([
+        getCategoriesUseCase.execute(teamId),
+        getBudgetCategoriesUseCase.execute(teamId),
+      ]);
 
-  const loadCategories = async () => {
-    if (!profile?.family_id) return
-
-    try {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("*")
-        .eq("family_id", profile.family_id)
-        .order("name")
-
-      if (error) throw error
-      setCategories(data || [])
+      setCategories(categoriesData);
+      setBudgetCategories(budgetCategoriesData);
     } catch (error: any) {
       toast({
-        title: "Erro ao carregar categorias",
+        title: "Erro ao carregar dados",
         description: error.message,
         variant: "destructive",
-      })
+      });
+    } finally {
+      setIsLoadingData(false);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    if (!teamId) return;
 
-    const formData = new FormData(e.currentTarget)
-    const name = formData.get("name") as string
-    const classification = formData.get("classification") as "necessidades" | "desejos" | "poupanca"
+    setIsLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get("name") as string;
+    const budgetCategoryId = formData.get("budgetCategoryId") as string;
 
     try {
       if (editingCategory) {
-        // Update existing category
-        const { error } = await supabase
-          .from("categories")
-          .update({ name, classification })
-          .eq("id", editingCategory.id)
-
-        if (error) throw error
-
-        toast({
-          title: "Categoria atualizada com sucesso!",
-        })
-      } else {
-        // Create new category
-        const { error } = await supabase.from("categories").insert({
+        await updateCategoryUseCase.execute({
+          categoryId: editingCategory.id,
+          teamId,
           name,
-          classification,
-          family_id: profile.family_id,
-        })
-
-        if (error) throw error
-
-        toast({
-          title: "Categoria criada com sucesso!",
-        })
+          budgetCategoryId,
+        });
+        toast({ title: "Categoria atualizada com sucesso!" });
+      } else {
+        await createCategoryUseCase.execute({
+          name,
+          budgetCategoryId,
+          teamId,
+        });
+        toast({ title: "Categoria criada com sucesso!" });
       }
 
-      setIsDialogOpen(false)
-      setEditingCategory(null)
-      loadCategories()
+      setIsDialogOpen(false);
+      setEditingCategory(null);
+      await loadData(teamId);
     } catch (error: any) {
       toast({
-        title: editingCategory ? "Erro ao atualizar categoria" : "Erro ao criar categoria",
+        title: editingCategory ? "Erro ao atualizar" : "Erro ao criar",
         description: error.message,
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  const deleteCategory = async (id: string) => {
+  const handleDelete = async (category: CategoryDetailsDTO) => {
+    if (!teamId) return;
+    if (
+      !confirm(`Tem certeza que deseja excluir a categoria "${category.name}"?`)
+    )
+      return;
+
+    setIsLoading(true);
     try {
-      const { error } = await supabase.from("categories").delete().eq("id", id)
-
-      if (error) throw error
-
-      toast({
-        title: "Categoria excluída com sucesso!",
-      })
-
-      loadCategories()
+      await deleteCategoryUseCase.execute({
+        categoryId: category.id,
+        teamId: teamId,
+      });
+      toast({ title: "Categoria excluída com sucesso!" });
+      await loadData(teamId);
     } catch (error: any) {
       toast({
         title: "Erro ao excluir categoria",
         description: error.message,
         variant: "destructive",
-      })
+      });
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
-  const getClassificationColor = (classification: string) => {
-    switch (classification) {
-      case "necessidades":
-        return "bg-green-100 text-green-800"
-      case "desejos":
-        return "bg-amber-100 text-amber-800"
-      case "poupanca":
-        return "bg-blue-100 text-blue-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
+  const getBudgetCategoryColor = (budgetCategoryName: string | null) => {
+    if (!budgetCategoryName) return "bg-gray-100 text-gray-800";
+    return (
+      BUDGET_CATEGORY_COLORS[budgetCategoryName] || "bg-gray-100 text-gray-800"
+    );
+  };
 
-  const getClassificationLabel = (classification: string) => {
-    switch (classification) {
-      case "necessidades":
-        return "Necessidades (50%)"
-      case "desejos":
-        return "Desejos (30%)"
-      case "poupanca":
-        return "Poupança (20%)"
-      default:
-        return classification
-    }
-  }
+  const openDialog = (category: CategoryDetailsDTO | null) => {
+    setEditingCategory(category);
+    setIsDialogOpen(true);
+  };
 
-  if (loading || !profile) {
+  if (authLoading || isLoadingData || !session || !teamId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Carregando...</h1>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-        </div>
+        <Loader2 className="animate-spin h-8 w-8 text-gray-900 mx-auto" />
       </div>
-    )
+    );
   }
 
   return (
@@ -204,23 +207,33 @@ export default function CategoriesPage() {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard")}>
-            <ArrowLeft className="w-4 h-4" />
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => router.push("/dashboard")}
+          >
+            <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900">Categorias</h1>
-            <p className="text-gray-600">Gerencie as categorias de gastos da sua família</p>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Categorias de Gasto
+            </h1>
+            <p className="text-gray-600">
+              Gerencie as categorias para classificar seus gastos.
+            </p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => setEditingCategory(null)}>
+              <Button onClick={() => openDialog(null)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Nova Categoria
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{editingCategory ? "Editar Categoria" : "Nova Categoria"}</DialogTitle>
+                <DialogTitle>
+                  {editingCategory ? "Editar Categoria" : "Nova Categoria"}
+                </DialogTitle>
                 <DialogDescription>
                   {editingCategory
                     ? "Atualize os dados da categoria"
@@ -239,26 +252,47 @@ export default function CategoriesPage() {
                   />
                 </div>
 
+                {/* 7. Select de "Pastas" (BudgetCategory) */}
                 <div className="space-y-2">
-                  <Label htmlFor="classification">Classificação</Label>
-                  <Select name="classification" defaultValue={editingCategory?.classification || ""} required>
+                  <Label htmlFor="budgetCategoryId">Pasta de Orçamento</Label>
+                  <Select
+                    name="budgetCategoryId"
+                    defaultValue={
+                      editingCategory?.budgetCategoryId ||
+                      budgetCategories[0]?.id
+                    }
+                    required
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma classificação" />
+                      <SelectValue placeholder="Selecione uma pasta" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="necessidades">Necessidades (50%)</SelectItem>
-                      <SelectItem value="desejos">Desejos (30%)</SelectItem>
-                      <SelectItem value="poupanca">Poupança (20%)</SelectItem>
+                      {budgetCategories.map((bc) => (
+                        <SelectItem key={bc.id} value={bc.id}>
+                          {bc.name} ({(bc.percentage * 100).toFixed(0)}%)
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="flex gap-4">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsDialogOpen(false)}
+                    className="flex-1"
+                  >
                     Cancelar
                   </Button>
                   <Button type="submit" disabled={isLoading} className="flex-1">
-                    {isLoading ? "Salvando..." : editingCategory ? "Atualizar" : "Criar"}
+                    {isLoading ? (
+                      <Loader2 className="animate-spin" />
+                    ) : editingCategory ? (
+                      "Atualizar"
+                    ) : (
+                      "Criar"
+                    )}
                   </Button>
                 </div>
               </form>
@@ -277,41 +311,43 @@ export default function CategoriesPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        setEditingCategory(category)
-                        setIsDialogOpen(true)
-                      }}
+                      onClick={() => openDialog(category)}
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        if (confirm("Tem certeza que deseja excluir esta categoria?")) {
-                          deleteCategory(category.id)
-                        }
-                      }}
+                      onClick={() => handleDelete(category)}
+                      disabled={isLoading}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4 text-red-500" />
                     </Button>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <Badge className={getClassificationColor(category.classification)}>
-                  {getClassificationLabel(category.classification)}
+                {/* 8. Badge atualizada para "Pasta" */}
+                <Badge
+                  className={getBudgetCategoryColor(
+                    category.budgetCategoryName
+                  )}
+                >
+                  <Folder className="w-3 h-3 mr-1.5" />
+                  {category.budgetCategoryName || "Sem Pasta"}
                 </Badge>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {categories.length === 0 && (
+        {categories.length === 0 && !isLoadingData && (
           <Card>
             <CardContent className="pt-6 text-center">
-              <p className="text-gray-500 mb-4">Nenhuma categoria encontrada.</p>
-              <Button onClick={() => setIsDialogOpen(true)}>
+              <p className="text-gray-500 mb-4">
+                Nenhuma categoria encontrada.
+              </p>
+              <Button onClick={() => openDialog(null)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Criar Primeira Categoria
               </Button>
@@ -319,28 +355,37 @@ export default function CategoriesPage() {
           </Card>
         )}
 
-        {/* Info Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Sistema 50/30/20</CardTitle>
-            <CardDescription>Como organizar suas categorias</CardDescription>
+            <CardTitle>Pastas de Orçamento</CardTitle>
+            <CardDescription>
+              Como organizar suas categorias de gasto
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center gap-3">
-              <Badge className="bg-green-100 text-green-800">Necessidades (50%)</Badge>
-              <span className="text-sm text-gray-600">Moradia, alimentação, transporte, saúde</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Badge className="bg-amber-100 text-amber-800">Desejos (30%)</Badge>
-              <span className="text-sm text-gray-600">Lazer, entretenimento, compras não essenciais</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Badge className="bg-blue-100 text-blue-800">Poupança (20%)</Badge>
-              <span className="text-sm text-gray-600">Investimentos, reserva de emergência</span>
-            </div>
+            {budgetCategories.map((bc) => (
+              <div key={bc.id} className="flex items-center gap-3">
+                <Badge className={getBudgetCategoryColor(bc.name)}>
+                  {bc.name} ({(bc.percentage * 100).toFixed(0)}%)
+                </Badge>
+                <span className="text-sm text-gray-600">
+                  {categories
+                    .filter((c) => c.budgetCategoryId === bc.id)
+                    .map((c) => c.name)
+                    .join(", ")}
+                </span>
+              </div>
+            ))}
+            <Button
+              variant="link"
+              className="p-0 h-auto"
+              onClick={() => router.push("/budget")}
+            >
+              Editar pastas e percentuais
+            </Button>
           </CardContent>
         </Card>
       </div>
     </div>
-  )
+  );
 }

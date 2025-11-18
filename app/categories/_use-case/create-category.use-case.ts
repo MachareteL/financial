@@ -10,7 +10,7 @@ export class CreateCategoryUseCase {
       id: crypto.randomUUID(),
       createdAt: new Date(),
       name: dto.name,
-      classification: dto.classification,
+      budgetCategoryId: dto.budgetCategoryId,
       teamId: dto.teamId,
     });
 
