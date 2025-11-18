@@ -6,7 +6,7 @@ export interface ReceiptData {
   amount?: number;
   date?: string; // YYYY-MM-DD
   description?: string;
-  category?: string; // Sugestão de categoria
+  category?: string;
 }
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
@@ -16,7 +16,6 @@ export async function parseReceiptAction(
 ): Promise<ReceiptData | null> {
   const file = formData.get("file") as File;
 
-  // Validação básica
   if (!file || file.size === 0) {
     return null;
   }
@@ -26,11 +25,10 @@ export async function parseReceiptAction(
     const base64Data = Buffer.from(arrayBuffer).toString("base64");
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-      generationConfig: { responseMimeType: "application/json" }, // Força saída JSON
+      model: process.env.GOOGLE_GEMINI_MODEL!,
+      generationConfig: { responseMimeType: "application/json" },
     });
 
-    // 3. Prompt Otimizado
     const prompt = `
       Analise esta imagem de nota fiscal/recibo e extraia os seguintes dados em formato JSON estrito:
       - "amount": O valor total da compra (número float, ex: 120.50).
@@ -40,7 +38,6 @@ export async function parseReceiptAction(
       Se algum campo não for encontrado, retorne null para ele.
     `;
 
-    // 4. Execução
     const result = await model.generateContent([
       prompt,
       {
