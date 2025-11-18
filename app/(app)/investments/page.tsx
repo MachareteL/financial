@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,24 +18,24 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
-import { Plus, Edit, Trash2, ArrowLeft, TrendingUp, DollarSign, Target, Calendar } from "lucide-react"
-import { supabase } from "@/lib/supabase"
-import { getUserProfile } from "@/lib/auth"
+import { Plus, Edit, Trash2, ArrowLeft, TrendingUp, DollarSign, Target, Calendar, Loader2 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/app/auth/auth-provider"
 
-interface Investment {
-  id: string
-  name: string
-  type: string
-  initial_amount: number
-  current_amount: number
-  monthly_contribution: number
-  annual_return_rate: number
-  start_date: string
-  created_at: string
-}
+// 1. Importar Casos de Uso e DTOs
+import {
+  getInvestmentsUseCase,
+  createInvestmentUseCase,
+  updateInvestmentUseCase,
+  deleteInvestmentUseCase,
+} from "@/infrastructure/dependency-injection"
+import type { 
+  InvestmentDetailsDTO, 
+  CreateInvestmentDTO, 
+  UpdateInvestmentDTO 
+} from "@/domain/dto/investment.types.d.ts"
 
+// Tipo auxiliar para o gráfico
 interface ProjectionData {
   month: string
   value: number
@@ -45,107 +44,105 @@ interface ProjectionData {
 }
 
 export default function InvestmentsPage() {
-  const { user, loading } = useAuth()
-  const [investments, setInvestments] = useState<Investment[]>([])
-  const [profile, setProfile] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingInvestment, setEditingInvestment] = useState<Investment | null>(null)
-  const [projectionData, setProjectionData] = useState<ProjectionData[]>([])
-  const [projectionYears, setProjectionYears] = useState(5)
+  const { session, loading: authLoading } = useAuth()
   const router = useRouter()
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/auth")
-      return
-    }
+  const [investments, setInvestments] = useState<InvestmentDetailsDTO[]>([])
+  const [isLoading, setIsLoading] = useState(false) // Loading de ações (salvar/deletar)
+  const [isDataLoading, setIsDataLoading] = useState(true) // Loading inicial
+  
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingInvestment, setEditingInvestment] = useState<InvestmentDetailsDTO | null>(null)
+  
+  const [projectionData, setProjectionData] = useState<ProjectionData[]>([])
+  const [projectionYears, setProjectionYears] = useState(5)
 
-    if (user && !profile) {
-      loadProfile()
-    }
-  }, [user, loading, router])
+  const teamId = session?.teams?.[0]?.team.id
+  const userId = session?.user?.id
 
+  // 2. Autenticação
   useEffect(() => {
-    if (profile) {
+    if (authLoading) return;
+    if (!session || !userId) {
+      router.push("/auth");
+      return;
+    }
+    if (!teamId) {
+      router.push("/onboarding");
+      return;
+    }
+  }, [session, authLoading, userId, teamId, router])
+
+  // 3. Carregamento de Dados
+  useEffect(() => {
+    if (teamId) {
       loadInvestments()
     }
-  }, [profile])
+  }, [teamId])
 
+  // 4. Recalcular Projeções quando os investimentos mudam
   useEffect(() => {
     if (investments.length > 0) {
       calculateProjections()
+    } else {
+      setProjectionData([])
     }
   }, [investments, projectionYears])
 
-  const loadProfile = async () => {
-    try {
-      const userProfile = await getUserProfile()
-      if (!userProfile) {
-        router.push("/auth")
-        return
-      }
-      setProfile(userProfile)
-    } catch (error) {
-      console.error("Error loading profile:", error)
-      router.push("/auth")
-    }
-  }
-
   const loadInvestments = async () => {
-    if (!profile?.family_id) return
-
+    if (!teamId) return;
+    setIsDataLoading(true)
     try {
-      const { data, error } = await supabase
-        .from("investments")
-        .select("*")
-        .eq("family_id", profile.family_id)
-        .order("created_at", { ascending: false })
-
-      if (error) throw error
-      setInvestments(data || [])
+      const data = await getInvestmentsUseCase.execute(teamId)
+      setInvestments(data)
     } catch (error: any) {
       toast({
         title: "Erro ao carregar investimentos",
         description: error.message,
         variant: "destructive",
       })
+    } finally {
+      setIsDataLoading(false)
     }
   }
 
+  // Lógica de Projeção (Mantida do seu código original, pois é boa)
   const calculateProjections = () => {
     const totalMonths = projectionYears * 12
     const projections: ProjectionData[] = []
 
-    let totalValue = investments.reduce((sum, inv) => sum + inv.current_amount, 0)
-    let totalContributions = investments.reduce((sum, inv) => sum + inv.initial_amount, 0)
+    let totalValue = investments.reduce((sum, inv) => sum + inv.currentAmount, 0)
+    let totalContributions = investments.reduce((sum, inv) => sum + inv.initialAmount, 0)
     let totalReturns = totalValue - totalContributions
 
     for (let month = 0; month <= totalMonths; month++) {
       if (month > 0) {
         // Add monthly contributions
-        const monthlyContribution = investments.reduce((sum, inv) => sum + inv.monthly_contribution, 0)
+        const monthlyContribution = investments.reduce((sum, inv) => sum + inv.monthlyContribution, 0)
         totalValue += monthlyContribution
         totalContributions += monthlyContribution
 
         // Apply monthly returns
         const monthlyReturn = investments.reduce((sum, inv) => {
-          const monthlyRate = inv.annual_return_rate / 100 / 12
+          const monthlyRate = inv.annualReturnRate / 100 / 12
           const currentInvestmentValue =
-            inv.current_amount + inv.monthly_contribution * month + (totalReturns * inv.current_amount) / totalValue
+            inv.currentAmount + inv.monthlyContribution * month + (totalReturns * inv.currentAmount) / (totalValue || 1)
           return sum + currentInvestmentValue * monthlyRate
         }, 0)
 
         totalValue += monthlyReturn
         totalReturns += monthlyReturn
       }
-
-      projections.push({
-        month: `${Math.floor(month / 12)}a ${month % 12}m`,
-        value: totalValue,
-        contributions: totalContributions,
-        returns: totalReturns,
-      })
+      
+      // Reduz a quantidade de pontos no gráfico (1 ponto a cada 6 meses)
+      if (month % 6 === 0) {
+        projections.push({
+          month: `${Math.floor(month / 12)}a ${month % 12}m`,
+          value: totalValue,
+          contributions: totalContributions,
+          returns: totalReturns,
+        })
+      }
     }
 
     setProjectionData(projections)
@@ -153,42 +150,46 @@ export default function InvestmentsPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (!teamId) return;
+
     setIsLoading(true)
 
     const formData = new FormData(e.currentTarget)
-    const name = formData.get("name") as string
-    const type = formData.get("type") as string
-    const initialAmount = Number.parseFloat(formData.get("initialAmount") as string)
-    const currentAmount = Number.parseFloat(formData.get("currentAmount") as string)
-    const monthlyContribution = Number.parseFloat(formData.get("monthlyContribution") as string)
-    const annualReturnRate = Number.parseFloat(formData.get("annualReturnRate") as string)
-    const startDate = formData.get("startDate") as string
+    
+    // Coleta dados do formulário
+    const rawData = {
+      name: formData.get("name") as string,
+      type: formData.get("type") as any, // 'savings' | 'stocks' | ...
+      initialAmount: Number.parseFloat(formData.get("initialAmount") as string),
+      currentAmount: Number.parseFloat(formData.get("currentAmount") as string),
+      monthlyContribution: Number.parseFloat(formData.get("monthlyContribution") as string),
+      annualReturnRate: Number.parseFloat(formData.get("annualReturnRate") as string),
+      startDate: formData.get("startDate") as string,
+    }
 
     try {
-      const investmentData = {
-        name,
-        type,
-        initial_amount: initialAmount,
-        current_amount: currentAmount,
-        monthly_contribution: monthlyContribution,
-        annual_return_rate: annualReturnRate,
-        start_date: startDate,
-        family_id: profile.family_id,
-      }
-
       if (editingInvestment) {
-        const { error } = await supabase.from("investments").update(investmentData).eq("id", editingInvestment.id)
-        if (error) throw error
+        // 5. Chama Update Use Case
+        const dto: UpdateInvestmentDTO = { 
+          ...rawData, 
+          investmentId: editingInvestment.id,
+          teamId
+        }
+        await updateInvestmentUseCase.execute(dto)
         toast({ title: "Investimento atualizado com sucesso!" })
       } else {
-        const { error } = await supabase.from("investments").insert(investmentData)
-        if (error) throw error
+        // 6. Chama Create Use Case
+        const dto: CreateInvestmentDTO = { 
+          ...rawData,
+          teamId
+        }
+        await createInvestmentUseCase.execute(dto)
         toast({ title: "Investimento adicionado com sucesso!" })
       }
 
       setIsDialogOpen(false)
       setEditingInvestment(null)
-      loadInvestments()
+      await loadInvestments() // Recarrega a lista
     } catch (error: any) {
       toast({
         title: "Erro ao salvar investimento",
@@ -201,11 +202,14 @@ export default function InvestmentsPage() {
   }
 
   const deleteInvestment = async (id: string) => {
+    if (!teamId) return;
+    if (!confirm("Tem certeza que deseja excluir este investimento?")) return;
+
     try {
-      const { error } = await supabase.from("investments").delete().eq("id", id)
-      if (error) throw error
+      // 7. Chama Delete Use Case
+      await deleteInvestmentUseCase.execute(id, teamId)
       toast({ title: "Investimento excluído com sucesso!" })
-      loadInvestments()
+      await loadInvestments()
     } catch (error: any) {
       toast({
         title: "Erro ao excluir investimento",
@@ -215,6 +219,7 @@ export default function InvestmentsPage() {
     }
   }
 
+  // Helpers de UI
   const getInvestmentTypeLabel = (type: string) => {
     const types: { [key: string]: string } = {
       savings: "Poupança",
@@ -239,18 +244,19 @@ export default function InvestmentsPage() {
     return colors[type] || "bg-gray-100 text-gray-800"
   }
 
-  const totalCurrentValue = investments.reduce((sum, inv) => sum + inv.current_amount, 0)
-  const totalInitialValue = investments.reduce((sum, inv) => sum + inv.initial_amount, 0)
-  const totalMonthlyContribution = investments.reduce((sum, inv) => sum + inv.monthly_contribution, 0)
+  // Totais
+  const totalCurrentValue = investments.reduce((sum, inv) => sum + inv.currentAmount, 0)
+  const totalMonthlyContribution = investments.reduce((sum, inv) => sum + inv.monthlyContribution, 0)
+  const totalInitialValue = investments.reduce((sum, inv) => sum + inv.initialAmount, 0)
   const totalReturns = totalCurrentValue - totalInitialValue
   const averageReturn = totalInitialValue > 0 ? (totalReturns / totalInitialValue) * 100 : 0
 
-  if (loading || !profile) {
+  if (authLoading || isDataLoading || !session || !teamId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Carregando...</h1>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <h1 className="text-2xl font-bold mb-4">Carregando investimentos...</h1>
+          <Loader2 className="animate-spin h-8 w-8 text-gray-900 mx-auto" />
         </div>
       </div>
     )
@@ -261,13 +267,14 @@ export default function InvestmentsPage() {
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard")}>
+          <Button variant="outline" size="icon" onClick={() => router.push("/dashboard")}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-gray-900">Investimentos</h1>
             <p className="text-gray-600">Gerencie seus investimentos e veja projeções futuras</p>
           </div>
+          
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => setEditingInvestment(null)}>
@@ -320,7 +327,7 @@ export default function InvestmentsPage() {
                       type="number"
                       step="0.01"
                       min="0"
-                      defaultValue={editingInvestment?.initial_amount || ""}
+                      defaultValue={editingInvestment?.initialAmount || ""}
                       required
                     />
                   </div>
@@ -333,7 +340,7 @@ export default function InvestmentsPage() {
                       type="number"
                       step="0.01"
                       min="0"
-                      defaultValue={editingInvestment?.current_amount || ""}
+                      defaultValue={editingInvestment?.currentAmount || ""}
                       required
                     />
                   </div>
@@ -347,7 +354,7 @@ export default function InvestmentsPage() {
                     type="number"
                     step="0.01"
                     min="0"
-                    defaultValue={editingInvestment?.monthly_contribution || "0"}
+                    defaultValue={editingInvestment?.monthlyContribution || "0"}
                     required
                   />
                 </div>
@@ -361,7 +368,7 @@ export default function InvestmentsPage() {
                     step="0.01"
                     min="0"
                     max="100"
-                    defaultValue={editingInvestment?.annual_return_rate || ""}
+                    defaultValue={editingInvestment?.annualReturnRate || ""}
                     required
                   />
                 </div>
@@ -372,7 +379,7 @@ export default function InvestmentsPage() {
                     id="startDate"
                     name="startDate"
                     type="date"
-                    defaultValue={editingInvestment?.start_date || new Date().toISOString().split("T")[0]}
+                    defaultValue={editingInvestment?.startDate || new Date().toISOString().split("T")[0]}
                     required
                   />
                 </div>
@@ -382,7 +389,7 @@ export default function InvestmentsPage() {
                     Cancelar
                   </Button>
                   <Button type="submit" disabled={isLoading} className="flex-1">
-                    {isLoading ? "Salvando..." : editingInvestment ? "Atualizar" : "Adicionar"}
+                    {isLoading ? <Loader2 className="animate-spin"/> : editingInvestment ? "Atualizar" : "Adicionar"}
                   </Button>
                 </div>
               </form>
@@ -523,8 +530,8 @@ export default function InvestmentsPage() {
             </Card>
           ) : (
             investments.map((investment) => {
-              const returns = investment.current_amount - investment.initial_amount
-              const returnPercentage = investment.initial_amount > 0 ? (returns / investment.initial_amount) * 100 : 0
+              const returns = investment.currentAmount - investment.initialAmount
+              const returnPercentage = investment.initialAmount > 0 ? (returns / investment.initialAmount) * 100 : 0
 
               return (
                 <Card key={investment.id}>
@@ -546,7 +553,7 @@ export default function InvestmentsPage() {
                           <div>
                             <p className="text-gray-500">Valor Atual</p>
                             <p className="font-medium">
-                              R$ {investment.current_amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                              R$ {investment.currentAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                             </p>
                           </div>
                           <div>
@@ -558,12 +565,12 @@ export default function InvestmentsPage() {
                           <div>
                             <p className="text-gray-500">Aporte Mensal</p>
                             <p className="font-medium">
-                              R$ {investment.monthly_contribution.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                              R$ {investment.monthlyContribution.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                             </p>
                           </div>
                           <div>
                             <p className="text-gray-500">Rendimento Anual</p>
-                            <p className="font-medium">{investment.annual_return_rate}%</p>
+                            <p className="font-medium">{investment.annualReturnRate}%</p>
                           </div>
                         </div>
                       </div>
@@ -580,13 +587,9 @@ export default function InvestmentsPage() {
                           <Edit className="w-4 h-4" />
                         </Button>
                         <Button
-                          variant="outline"
+                          variant="destructive"
                           size="sm"
-                          onClick={() => {
-                            if (confirm("Tem certeza que deseja excluir este investimento?")) {
-                              deleteInvestment(investment.id)
-                            }
-                          }}
+                          onClick={() => deleteInvestment(investment.id)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>

@@ -1,124 +1,100 @@
-import type { IInvestmentRepository } from "@/domain/interfaces/investment.repository.interface"
-import type { Investment } from "@/domain/entities/investment"
-import { getSupabaseClient } from "../database/supabase.client"
+import type { IInvestmentRepository } from '@/domain/interfaces/investment.repository.interface'
+import { Investment } from '@/domain/entities/investment'
+import { getSupabaseClient } from '../database/supabase.client'
+import type { Database } from '@/domain/dto/database.types.d.ts'
+
+type InvestmentRow = Database['public']['Tables']['investments']['Row']
 
 export class InvestmentRepository implements IInvestmentRepository {
   private supabase = getSupabaseClient()
 
-  async getInvestmentsByFamily(familyId: string): Promise<Investment[]> {
-    const { data, error } = await this.supabase
-      .from("investments")
-      .select("*")
-      .eq("family_id", familyId)
-      .order("purchase_date", { ascending: false })
-
-    if (error) throw new Error(error.message)
-
-    return (data || []).map((item) => ({
-      id: item.id,
-      familyId: item.family_id,
-      userId: item.user_id,
-      name: item.name,
-      type: item.type,
-      amount: item.amount,
-      currentValue: item.current_value,
-      purchaseDate: new Date(item.purchase_date),
-      notes: item.notes,
-      createdAt: new Date(item.created_at),
-    }))
+  private mapRowToEntity(row: InvestmentRow): Investment {
+    return new Investment({
+      id: row.id,
+      teamId: row.team_id!,
+      name: row.name,
+      type: row.type as any,
+      initialAmount: row.initial_amount,
+      currentAmount: row.current_amount,
+      monthlyContribution: row.monthly_contribution || 0,
+      annualReturnRate: row.annual_return_rate,
+      startDate: new Date(row.start_date),
+      createdAt: new Date(row.created_at),
+    })
   }
 
-  async getInvestmentById(investmentId: string, familyId: string): Promise<Investment | null> {
-    const { data, error } = await this.supabase
-      .from("investments")
-      .select("*")
-      .eq("id", investmentId)
-      .eq("family_id", familyId)
-      .maybeSingle()
-
-    if (error || !data) return null
-
+  private mapEntityToRow(entity: Investment): Omit<InvestmentRow, 'id' | 'created_at'> {
     return {
-      id: data.id,
-      familyId: data.family_id,
-      userId: data.user_id,
-      name: data.name,
-      type: data.type,
-      amount: data.amount,
-      currentValue: data.current_value,
-      purchaseDate: new Date(data.purchase_date),
-      notes: data.notes,
-      createdAt: new Date(data.created_at),
+      team_id: entity.teamId,
+      name: entity.name,
+      type: entity.type,
+      initial_amount: entity.initialAmount,
+      current_amount: entity.currentAmount,
+      monthly_contribution: entity.monthlyContribution,
+      annual_return_rate: entity.annualReturnRate,
+      start_date: entity.startDate.toISOString().split('T')[0],
     }
   }
 
-  async createInvestment(investment: Omit<Investment, "id" | "createdAt">): Promise<Investment> {
+  async findByTeamId(teamId: string): Promise<Investment[]> {
     const { data, error } = await this.supabase
-      .from("investments")
+      .from('investments')
+      .select('*')
+      .eq('team_id', teamId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw new Error(error.message)
+    return (data || []).map(this.mapRowToEntity)
+  }
+
+  async findById(id: string, teamId: string): Promise<Investment | null> {
+    const { data, error } = await this.supabase
+      .from('investments')
+      .select('*')
+      .eq('id', id)
+      .eq('team_id', teamId)
+      .maybeSingle()
+
+    if (error) throw new Error(error.message)
+    return data ? this.mapRowToEntity(data) : null
+  }
+
+  async create(investment: Investment): Promise<Investment> {
+    const row = this.mapEntityToRow(investment)
+    const { data, error } = await this.supabase
+      .from('investments')
       .insert({
-        family_id: investment.familyId,
-        user_id: investment.userId,
-        name: investment.name,
-        type: investment.type,
-        amount: investment.amount,
-        current_value: investment.currentValue,
-        purchase_date: investment.purchaseDate.toISOString(),
-        notes: investment.notes,
+        ...row,
+        id: investment.id,
+        created_at: investment.createdAt.toISOString(),
       })
       .select()
       .single()
 
     if (error) throw new Error(error.message)
-
-    return {
-      id: data.id,
-      familyId: data.family_id,
-      userId: data.user_id,
-      name: data.name,
-      type: data.type,
-      amount: data.amount,
-      currentValue: data.current_value,
-      purchaseDate: new Date(data.purchase_date),
-      notes: data.notes,
-      createdAt: new Date(data.created_at),
-    }
+    return this.mapRowToEntity(data)
   }
 
-  async updateInvestment(investmentId: string, familyId: string, data: Partial<Investment>): Promise<Investment> {
-    const updateData: any = {}
-    if (data.name !== undefined) updateData.name = data.name
-    if (data.type !== undefined) updateData.type = data.type
-    if (data.amount !== undefined) updateData.amount = data.amount
-    if (data.currentValue !== undefined) updateData.current_value = data.currentValue
-    if (data.purchaseDate !== undefined) updateData.purchase_date = data.purchaseDate.toISOString()
-    if (data.notes !== undefined) updateData.notes = data.notes
-
-    const { data: updated, error } = await this.supabase
-      .from("investments")
-      .update(updateData)
-      .eq("id", investmentId)
-      .eq("family_id", familyId)
+  async update(investment: Investment): Promise<Investment> {
+    const row = this.mapEntityToRow(investment)
+    const { data, error } = await this.supabase
+      .from('investments')
+      .update(row)
+      .eq('id', investment.id)
+      .eq('team_id', investment.teamId)
       .select()
       .single()
 
     if (error) throw new Error(error.message)
-
-    return {
-      id: updated.id,
-      familyId: updated.family_id,
-      userId: updated.user_id,
-      name: updated.name,
-      type: updated.type,
-      amount: updated.amount,
-      currentValue: updated.current_value,
-      purchaseDate: new Date(updated.purchase_date),
-      notes: updated.notes,
-      createdAt: new Date(updated.created_at),
-    }
+    return this.mapRowToEntity(data)
   }
 
-  async deleteInvestment(investmentId: string, familyId: string): Promise<void> {
-    const { error } = await this.supabase.from("investments").delete().eq("id", investmentId).eq("family_id", familyId)
+  async delete(id: string, teamId: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('investments')
+      .delete()
+      .eq('id', id)
+      .eq('team_id', teamId)
 
     if (error) throw new Error(error.message)
   }

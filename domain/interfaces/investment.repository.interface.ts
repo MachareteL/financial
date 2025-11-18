@@ -1,9 +1,9 @@
 import type { Investment } from "../entities/investment"
 
 export interface IInvestmentRepository {
-  getInvestmentsByFamily(familyId: string): Promise<Investment[]>
-  getInvestmentById(investmentId: string, familyId: string): Promise<Investment | null>
-  createInvestment(investment: Omit<Investment, "id" | "createdAt">): Promise<Investment>
-  updateInvestment(investmentId: string, familyId: string, data: Partial<Investment>): Promise<Investment>
-  deleteInvestment(investmentId: string, familyId: string): Promise<void>
+  findByTeamId(teamId: string): Promise<Investment[]>
+  findById(id: string, teamId: string): Promise<Investment | null>
+  create(investment: Investment): Promise<Investment>
+  update(investment: Investment): Promise<Investment>
+  delete(id: string, teamId: string): Promise<void>
 }
