@@ -6,10 +6,30 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Plus, Repeat, CreditCard, Loader2, Upload, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Repeat,
+  CreditCard,
+  Loader2,
+  Upload,
+  X,
+} from "lucide-react";
 import { useAuth } from "@/app/auth/auth-provider";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -29,6 +49,7 @@ export default function NewExpensePage() {
   const [isRecurring, setIsRecurring] = useState(false);
   const [isInstallment, setIsInstallment] = useState(false);
 
+  // Estados do Formulário
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -37,12 +58,14 @@ export default function NewExpensePage() {
     useState<CreateExpenseDTO["recurrenceType"]>("monthly");
   const [installments, setInstallments] = useState("2");
 
+  // Estados do Upload
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const teamId = session?.teams?.[0]?.team.id;
   const userId = session?.user?.id;
 
+  // Efeito de Autenticação e Carregamento
   useEffect(() => {
     if (authLoading) return;
     if (!session || !userId) {
@@ -79,7 +102,7 @@ export default function NewExpensePage() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        // 10MB limit
+        // 10MB
         toast({
           title: "Arquivo muito grande",
           description: "O limite é 10MB.",
@@ -99,7 +122,7 @@ export default function NewExpensePage() {
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
     }
-    // Limpa o input de arquivo
+
     const fileInput = document.getElementById("receipt") as HTMLInputElement;
     if (fileInput) fileInput.value = "";
   };
@@ -171,6 +194,7 @@ export default function NewExpensePage() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-2xl mx-auto space-y-6">
+        {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4" />
@@ -183,6 +207,7 @@ export default function NewExpensePage() {
           </div>
         </div>
 
+        {/* Formulário Principal */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -221,7 +246,8 @@ export default function NewExpensePage() {
                       <SelectContent>
                         {categories.map((category) => (
                           <SelectItem key={category.id} value={category.id}>
-                            {category.name} ({category.classification})
+                            {category.name} (
+                            {category.budgetCategoryName || "Sem Pasta"})
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -240,7 +266,7 @@ export default function NewExpensePage() {
                   </div>
                 </div>
 
-                {/* ... (Lógica de Valor/Parcelamento) ... */}
+                {/* Seção 2: Valor (Único vs. Parcelado) */}
                 {!isInstallment ? (
                   <div>
                     <Label htmlFor="amount">Valor (R$)</Label>
@@ -305,6 +331,7 @@ export default function NewExpensePage() {
                 )}
               </div>
 
+              {/* Seção 3: Opções Avançadas (Recorrente/Parcelado) */}
               <div className="space-y-4 border-t pt-6">
                 <div className="flex items-start space-x-3">
                   <Checkbox
@@ -370,7 +397,7 @@ export default function NewExpensePage() {
                 </div>
               </div>
 
-              {/* --- File Upload (RE-ADICIONADO) --- */}
+              {/* Seção 4: Upload de Nota Fiscal */}
               <div className="space-y-2 border-t pt-6">
                 <Label>Nota Fiscal (opcional)</Label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
@@ -423,7 +450,6 @@ export default function NewExpensePage() {
                 </div>
               </div>
 
-              {/* --- Botões de Ação --- */}
               <div className="flex gap-4 pt-6">
                 <Button
                   type="button"
@@ -438,11 +464,7 @@ export default function NewExpensePage() {
                   disabled={isLoading || isLoadingCategories}
                   className="flex-1"
                 >
-                  {isLoading ? (
-                    <Loader2 className="animate-spin" />
-                  ) : (
-                    "Salvar Gasto"
-                  )}
+                  {isLoading ? <Loader2 className="animate-spin" /> : "Salvar"}
                 </Button>
               </div>
             </form>
