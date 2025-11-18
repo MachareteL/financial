@@ -29,15 +29,19 @@ import {
   Loader2,
   Upload,
   X,
+  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/app/auth/auth-provider";
 import { toast } from "@/hooks/use-toast";
+
 import {
   createExpenseUseCase,
   getCategoriesUseCase,
 } from "@/infrastructure/dependency-injection";
 import type { CategoryDetailsDTO } from "@/domain/dto/category.types.d.ts";
 import type { CreateExpenseDTO } from "@/domain/dto/expense.types.d.ts";
+
+import { parseReceiptAction } from "@/app/(app)/expenses/_actions/parse-receipt";
 
 export default function NewExpensePage() {
   const { session, loading: authLoading } = useAuth();
@@ -46,10 +50,13 @@ export default function NewExpensePage() {
   const [categories, setCategories] = useState<CategoryDetailsDTO[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+
+  // Estado para o loading da IA
+  const [isParsingReceipt, setIsParsingReceipt] = useState(false);
+
   const [isRecurring, setIsRecurring] = useState(false);
   const [isInstallment, setIsInstallment] = useState(false);
 
-  // Estados do Formulário
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -58,14 +65,12 @@ export default function NewExpensePage() {
     useState<CreateExpenseDTO["recurrenceType"]>("monthly");
   const [installments, setInstallments] = useState("2");
 
-  // Estados do Upload
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const teamId = session?.teams?.[0]?.team.id;
   const userId = session?.user?.id;
 
-  // Efeito de Autenticação e Carregamento
   useEffect(() => {
     if (authLoading) return;
     if (!session || !userId) {
@@ -98,21 +103,72 @@ export default function NewExpensePage() {
     loadCategories();
   }, [session, authLoading, userId, teamId, router, categoryId]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // --- Lógica de Upload e OCR Inteligente ---
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        // 10MB
-        toast({
-          title: "Arquivo muito grande",
-          description: "O limite é 10MB.",
-          variant: "destructive",
-        });
-        return;
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "Arquivo muito grande",
+        description: "O limite é 10MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // 1. Define preview imediatamente
+    setSelectedFile(file);
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+
+    // 2. Inicia o processamento inteligente
+    setIsParsingReceipt(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      // Chama a Server Action
+      const data = await parseReceiptAction(formData);
+
+      if (data) {
+        let fieldsUpdated = 0;
+
+        // Preenche APENAS se os campos estiverem vazios
+        if (!amount && data.amount) {
+          setAmount(data.amount.toString());
+          fieldsUpdated++;
+        }
+        if (!description && data.description) {
+          setDescription(data.description);
+          fieldsUpdated++;
+        }
+        // A data sempre vem válida da IA ou null
+        if (data.date) {
+          // Opcional: Você pode decidir se sobrescreve a data padrão (hoje) ou não.
+          // Aqui vou sobrescrever pois a data da nota é mais relevante que "hoje".
+          setDate(data.date);
+          fieldsUpdated++;
+        }
+
+        if (fieldsUpdated > 0) {
+          toast({
+            title: "Nota Fiscal lida!",
+            description: "Dados preenchidos automaticamente pela IA.",
+            // Pode adicionar um ícone ou cor especial aqui
+          });
+        }
       }
-      setSelectedFile(file);
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
+    } catch (error) {
+      console.error("Erro ao ler nota:", error);
+      // Falha silenciosa ou toast discreto, para não bloquear o usuário
+      toast({
+        title: "Não foi possível ler os dados",
+        description: "Você pode preencher manualmente.",
+        variant: "destructive", // ou default
+      });
+    } finally {
+      setIsParsingReceipt(false);
     }
   };
 
@@ -122,7 +178,6 @@ export default function NewExpensePage() {
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
     }
-
     const fileInput = document.getElementById("receipt") as HTMLInputElement;
     if (fileInput) fileInput.value = "";
   };
@@ -194,7 +249,6 @@ export default function NewExpensePage() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4" />
@@ -207,7 +261,6 @@ export default function NewExpensePage() {
           </div>
         </div>
 
-        {/* Formulário Principal */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -215,24 +268,141 @@ export default function NewExpensePage() {
               Informações do Gasto
             </CardTitle>
             <CardDescription>
-              Preencha os dados do gasto que deseja registrar
+              Preencha os dados ou faça upload da nota fiscal para preenchimento
+              automático.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label>Nota Fiscal (opcional)</Label>
+                  {isParsingReceipt && (
+                    <span className="text-xs text-blue-600 flex items-center gap-1 animate-pulse">
+                      <Sparkles className="w-3 h-3" /> Lendo dados com IA...
+                    </span>
+                  )}
+                </div>
+                <div
+                  className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
+                    isParsingReceipt
+                      ? "border-blue-300 bg-blue-50"
+                      : "border-gray-300"
+                  }`}
+                >
+                  {previewUrl ? (
+                    <div className="space-y-4">
+                      <div className="relative">
+                        <img
+                          src={previewUrl}
+                          alt="Preview da nota fiscal"
+                          className="max-w-full h-48 object-contain mx-auto rounded"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                          onClick={removeFile}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <p className="text-sm text-gray-600 text-center truncate">
+                        {selectedFile?.name}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <Upload
+                        className={`mx-auto h-12 w-12 ${
+                          isParsingReceipt ? "text-blue-400" : "text-gray-400"
+                        }`}
+                      />
+                      <div className="mt-4">
+                        <label
+                          htmlFor="receipt"
+                          className="cursor-pointer font-medium text-blue-600 hover:text-blue-500"
+                        >
+                          Clique para fazer upload
+                          <input
+                            id="receipt"
+                            name="receipt"
+                            type="file"
+                            className="sr-only"
+                            accept="image/png, image/jpeg, application/pdf"
+                            onChange={handleFileSelect}
+                            disabled={isParsingReceipt}
+                          />
+                        </label>
+                        <p className="mt-1 block text-sm text-gray-500">
+                          PNG, JPG, PDF (Max 10MB)
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="description">Descrição</Label>
-                  <Input
-                    id="description"
-                    placeholder="Ex: Supermercado, Gasolina, Netflix..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="description"
+                      placeholder="Ex: Supermercado, Gasolina..."
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className={isParsingReceipt ? "opacity-50" : ""}
+                      required
+                    />
+                    {isParsingReceipt && (
+                      <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-gray-400" />
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="amount">Valor (R$)</Label>
+                    <div className="relative">
+                      <Input
+                        id="amount"
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        placeholder="0,00"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        className={isParsingReceipt ? "opacity-50" : ""}
+                        required
+                      />
+                      {isParsingReceipt && (
+                        <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-gray-400" />
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="date">Data</Label>
+                    <div className="relative">
+                      <Input
+                        id="date"
+                        type="date"
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                        className={isParsingReceipt ? "opacity-50" : ""}
+                        required
+                      />
+                      {isParsingReceipt && (
+                        <Loader2 className="absolute right-8 top-3 h-4 w-4 animate-spin text-gray-400" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Categoria */}
+                <div className="grid grid-cols-1 gap-4">
                   <div>
                     <Label htmlFor="category">Categoria</Label>
                     <Select
@@ -253,85 +423,63 @@ export default function NewExpensePage() {
                       </SelectContent>
                     </Select>
                   </div>
-
-                  <div>
-                    <Label htmlFor="date">Data</Label>
-                    <Input
-                      id="date"
-                      type="date"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      required
-                    />
-                  </div>
                 </div>
 
-                {/* Seção 2: Valor (Único vs. Parcelado) */}
+                {/* Parcelamento */}
                 {!isInstallment ? (
-                  <div>
-                    <Label htmlFor="amount">Valor (R$)</Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      step="0.01"
-                      min="0.01"
-                      placeholder="0,00"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      required
-                    />
-                  </div>
+                  <div className="hidden" />
                 ) : (
-                  <div className="space-y-4 rounded-lg border p-4">
-                    <h4 className="font-medium">Parcelamento</h4>
-                    <div>
-                      <Label htmlFor="totalAmount">Valor Total (R$)</Label>
-                      <Input
-                        id="totalAmount"
-                        type="number"
-                        step="0.01"
-                        min="0.01"
-                        placeholder="0,00"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="installments">Número de Parcelas</Label>
-                      <Select
-                        value={installments}
-                        onValueChange={setInstallments}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 23 }, (_, i) => i + 2).map(
-                            (num) => (
-                              <SelectItem key={num} value={num.toString()}>
-                                {num}x
-                              </SelectItem>
-                            )
-                          )}
-                        </SelectContent>
-                      </Select>
+                  <div className="space-y-4 rounded-lg border p-4 bg-gray-50">
+                    <h4 className="font-medium text-sm text-gray-900">
+                      Detalhes do Parcelamento
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="totalAmount">Valor Total</Label>
+                        <Input
+                          value={amount}
+                          disabled
+                          className="bg-gray-100"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="installments">Parcelas</Label>
+                        <Select
+                          value={installments}
+                          onValueChange={setInstallments}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: 23 }, (_, i) => i + 2).map(
+                              (num) => (
+                                <SelectItem key={num} value={num.toString()}>
+                                  {num}x
+                                </SelectItem>
+                              )
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                     {amount && installments && (
-                      <div className="p-3 bg-blue-50 rounded-lg">
-                        <p className="text-sm text-blue-800">
-                          <strong>{installments}x</strong> de{" "}
+                      <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded flex items-center gap-2">
+                        <CreditCard className="w-4 h-4" />
+                        <span>
+                          Serão criadas <strong>{installments} despesas</strong>{" "}
+                          de{" "}
                           <strong>
                             R$ {calculateInstallmentAmount().toFixed(2)}
                           </strong>
-                        </p>
+                        </span>
                       </div>
                     )}
                   </div>
                 )}
               </div>
 
-              {/* Seção 3: Opções Avançadas (Recorrente/Parcelado) */}
+              {/* Opções Avançadas */}
               <div className="space-y-4 border-t pt-6">
                 <div className="flex items-start space-x-3">
                   <Checkbox
@@ -360,7 +508,7 @@ export default function NewExpensePage() {
                           setRecurrenceType(value as any)
                         }
                       >
-                        <SelectTrigger className="w-48">
+                        <SelectTrigger className="w-48 mt-2">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -397,59 +545,6 @@ export default function NewExpensePage() {
                 </div>
               </div>
 
-              {/* Seção 4: Upload de Nota Fiscal */}
-              <div className="space-y-2 border-t pt-6">
-                <Label>Nota Fiscal (opcional)</Label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-                  {previewUrl ? (
-                    <div className="space-y-4">
-                      <div className="relative">
-                        <img
-                          src={previewUrl}
-                          alt="Preview da nota fiscal"
-                          className="max-w-full h-48 object-contain mx-auto rounded"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                          onClick={removeFile}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <p className="text-sm text-gray-600 text-center truncate">
-                        {selectedFile?.name}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                      <div className="mt-4">
-                        <label
-                          htmlFor="receipt"
-                          className="cursor-pointer font-medium text-blue-600 hover:text-blue-500"
-                        >
-                          Clique para fazer upload
-                          <input
-                            id="receipt"
-                            name="receipt"
-                            type="file"
-                            className="sr-only"
-                            accept="image/png, image/jpeg, application/pdf"
-                            onChange={handleFileSelect}
-                          />
-                        </label>
-                        <p className="mt-1 block text-sm text-gray-500">
-                          PNG, JPG, PDF (Max 10MB)
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
               <div className="flex gap-4 pt-6">
                 <Button
                   type="button"
@@ -461,7 +556,9 @@ export default function NewExpensePage() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isLoading || isLoadingCategories}
+                  disabled={
+                    isLoading || isLoadingCategories || isParsingReceipt
+                  }
                   className="flex-1"
                 >
                   {isLoading ? <Loader2 className="animate-spin" /> : "Salvar"}
