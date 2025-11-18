@@ -1,82 +1,81 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Users, Plus, UserPlus } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Plus, UserPlus } from "lucide-react"
-import { createFamily, getUserProfile } from "@/lib/auth"
-import { toast } from "@/hooks/use-toast"
-import { useAuth } from "@/components/auth-provider"
+import { useAuth } from "@/app/auth/auth-provider";
+import { createTeamUseCase } from "@/infrastructure/dependency-injection";
 
 export default function OnboardingPage() {
-  const { user, loading } = useAuth()
-  const [profile, setProfile] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  const { session, loading } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/auth")
-      return
+
+    if (!loading && !session) {
+      router.push("/auth");
+      return;
     }
 
-    if (user && !profile) {
-      loadProfile()
+    if (session?.teams && session.teams.length > 0) {
+      router.push("/dashboard");
     }
-  }, [user, loading, router])
+  }, [session, loading, router]);
 
-  useEffect(() => {
-    // Se usuário já tem família, redirecionar para dashboard
-    if (profile?.family_id) {
-      router.push("/dashboard")
-    }
-  }, [profile, router])
 
-  const loadProfile = async () => {
-    try {
-      const userProfile = await getUserProfile()
-      if (!userProfile) {
-        router.push("/auth")
-        return
-      }
-      setProfile(userProfile)
-    } catch (error) {
-      console.error("Error loading profile:", error)
-      router.push("/auth")
-    }
-  }
+  const handleCreateTeam = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-  const handleCreateFamily = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
+    if (!session?.user) return;
 
-    const formData = new FormData(e.currentTarget)
-    const familyName = formData.get("familyName") as string
+    setIsLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+
+    const teamName = formData.get("teamName") as string;
 
     try {
-      await createFamily(familyName)
+      // 8. Chamar o UseCase limpo
+      await createTeamUseCase.execute({
+        teamName,
+        userId: session.user.id,
+      });
+
       toast({
-        title: "Família criada com sucesso!",
-        description: `A família "${familyName}" foi criada.`,
-      })
-      router.push("/dashboard")
+        title: "Time criado com sucesso!",
+        description: `O time "${teamName}" foi criado.`,
+      });
+
+
+      router.refresh();
+      
     } catch (error: any) {
       toast({
-        title: "Erro ao criar família",
+        title: "Erro ao criar time",
         description: error.message,
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  if (loading || !profile) {
+
+  if (loading || !session || (session.teams && session.teams.length > 0)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -84,48 +83,51 @@ export default function OnboardingPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-2xl w-full space-y-6">
-        {/* Header */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Bem-vindo, {profile.name}!</h1>
-          <p className="text-gray-600">Para começar, você precisa criar uma família ou ser convidado para uma.</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Bem-vindo, {session.user.name}!
+          </h1>
+          <p className="text-gray-600">
+            Para começar, você precisa criar um time/equipe ou ser convidado para um(a).
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Criar Nova Família */}
           <Card>
             <CardHeader className="text-center">
               <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                 <Plus className="w-6 h-6 text-blue-600" />
               </div>
-              <CardTitle>Criar Nova Família</CardTitle>
-              <CardDescription>Comece uma nova família financeira e convide outros membros depois</CardDescription>
+              <CardTitle>Criar Nova equipe</CardTitle>
+              <CardDescription>
+                Comece um novo time financeiro e convide outros membros depois
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleCreateFamily} className="space-y-4">
+              <form onSubmit={handleCreateTeam} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="familyName">Nome da Família</Label>
+                  <Label htmlFor="teamName">Nome do Time</Label>
                   <Input
-                    id="familyName"
-                    name="familyName"
+                    id="teamName"
+                    name="teamName"
                     placeholder="Ex: Família Silva"
                     required
                     disabled={isLoading}
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Criando..." : "Criar Família"}
+                  {isLoading ? "Criando..." : "Criar Equipe"}
                 </Button>
               </form>
             </CardContent>
           </Card>
 
-          {/* Aguardar Convite */}
           <Card>
             <CardHeader className="text-center">
               <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
@@ -133,22 +135,24 @@ export default function OnboardingPage() {
               </div>
               <CardTitle>Aguardar Convite</CardTitle>
               <CardDescription>
-                Se alguém da sua família já tem uma conta, peça para te convidar pelo seu email
+                Se alguém da sua equipe já tem uma conta, peça para te convidar
+                pelo seu email
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600 mb-2">Seu email para convite:</p>
-                <p className="font-medium text-gray-900">{profile.email}</p>
+                <p className="text-sm text-gray-600 mb-2">
+                  Seu email para convite:
+                </p>
+                <p className="font-medium text-gray-900">{session.user.email}</p>
               </div>
               <p className="text-sm text-gray-500 text-center">
-                Quando receber o convite, você será automaticamente adicionado à família.
+                Quando receber o convite, você será automaticamente adicionado ao
+                time.
               </p>
             </CardContent>
           </Card>
         </div>
-
-        {/* Info */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -162,31 +166,34 @@ export default function OnboardingPage() {
                 <span className="text-xs font-bold text-blue-600">1</span>
               </div>
               <div>
-                <h4 className="font-medium">Crie ou entre em uma família</h4>
+                <h4 className="font-medium">Cada pessoa tem um Time ou uma Equipe</h4>
                 <p className="text-sm text-gray-600">
-                  Famílias compartilham gastos, categorias e orçamentos. Todos os membros podem ver e adicionar gastos.
+                  Um "time" é o espaço compartilhado onde vocês organizam a vida financeira em conjunto.
+                  Pode ser um time de trabalho, uma família ou qualquer grupo que queira gerenciar finanças em comum.
                 </p>
               </div>
             </div>
+
             <div className="flex items-start gap-3">
               <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                 <span className="text-xs font-bold text-blue-600">2</span>
               </div>
               <div>
-                <h4 className="font-medium">Convide outros membros</h4>
+                <h4 className="font-medium">Compartilhe gastos, categorias e orçamentos</h4>
                 <p className="text-sm text-gray-600">
-                  Depois de criar a família, você pode convidar cônjuge, filhos ou outros familiares.
+                  Membros do time podem ver e adicionar despesas, criar categorias e definir orçamentos. Tudo é centralizado no time para facilitar acompanhamento e planejamento.
                 </p>
               </div>
             </div>
+
             <div className="flex items-start gap-3">
               <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                 <span className="text-xs font-bold text-blue-600">3</span>
               </div>
               <div>
-                <h4 className="font-medium">Gerencie as finanças juntos</h4>
+                <h4 className="font-medium">Convide e gerencie membros</h4>
                 <p className="text-sm text-gray-600">
-                  Acompanhem gastos, definam orçamentos e alcancem metas financeiras em família.
+                  Você pode criar um time e convidar outras pessoas por e-mail. O criador do time pode gerenciar membros e permissões, garantindo privacidade e controle sobre quem vê os dados.
                 </p>
               </div>
             </div>
@@ -194,5 +201,5 @@ export default function OnboardingPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

@@ -1,23 +1,16 @@
 "use client"
-
-import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useAuth } from "@/components/auth-provider"
+import { useAuth } from "@/app/auth/auth-provider"
 import { TrendingUp, Users, PieChart, Target, BarChart3, Wallet, Calendar, ArrowRight, CheckCircle } from "lucide-react"
 
 export default function HomePage() {
-  const { user, loading } = useAuth()
+  const { session, loading } = useAuth()
   const router = useRouter()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const handleGetStarted = () => {
-    if (user) {
+    if (session) {
       router.push("/dashboard")
     } else {
       router.push("/auth")
@@ -68,21 +61,10 @@ export default function HomePage() {
     "Interface responsiva para todos os dispositivos",
   ]
 
-  if (!mounted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
-    )
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando...</p>
-        </div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
       </div>
     )
   }
@@ -98,7 +80,7 @@ export default function HomePage() {
               <span className="text-2xl font-bold text-gray-900">Finanças Familiares</span>
             </div>
             <div className="flex items-center space-x-4">
-              {user ? (
+              {session ? (
                 <div className="flex items-center space-x-4">
                   <Button onClick={() => router.push("/dashboard")}>Ir ao Dashboard</Button>
                 </div>
@@ -127,10 +109,10 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" onClick={handleGetStarted} className="text-lg px-8 py-3">
-              {user ? "Ir ao Dashboard" : "Começar Agora"}
+              {session ? "Ir ao Dashboard" : "Começar Agora"}
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            {!user && (
+            {!session && (
               <Button size="lg" variant="outline" onClick={() => router.push("/auth")} className="text-lg px-8 py-3">
                 Fazer Login
               </Button>
@@ -221,12 +203,12 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">Pronto para organizar suas finanças?</h2>
           <p className="text-xl text-gray-600 mb-8">
-            {user
+            {session
               ? "Acesse seu dashboard e continue gerenciando suas finanças familiares."
               : "Crie sua conta gratuita e comece a ter controle total das suas finanças hoje mesmo."}
           </p>
           <Button size="lg" onClick={handleGetStarted} className="text-lg px-12 py-4">
-            {user ? "Acessar Dashboard" : "Criar Conta Gratuita"}
+            {session ? "Acessar Dashboard" : "Criar Conta Gratuita"}
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
