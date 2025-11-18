@@ -14,108 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      backup_categories: {
-        Row: {
-          classification: string | null
-          created_at: string | null
-          family_id: string | null
-          id: string | null
-          name: string | null
-        }
-        Insert: {
-          classification?: string | null
-          created_at?: string | null
-          family_id?: string | null
-          id?: string | null
-          name?: string | null
-        }
-        Update: {
-          classification?: string | null
-          created_at?: string | null
-          family_id?: string | null
-          id?: string | null
-          name?: string | null
-        }
-        Relationships: []
-      }
-      backup_expenses: {
-        Row: {
-          amount: number | null
-          category_id: string | null
-          created_at: string | null
-          date: string | null
-          description: string | null
-          family_id: string | null
-          id: string | null
-          receipt_url: string | null
-          user_id: string | null
-        }
-        Insert: {
-          amount?: number | null
-          category_id?: string | null
-          created_at?: string | null
-          date?: string | null
-          description?: string | null
-          family_id?: string | null
-          id?: string | null
-          receipt_url?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          amount?: number | null
-          category_id?: string | null
-          created_at?: string | null
-          date?: string | null
-          description?: string | null
-          family_id?: string | null
-          id?: string | null
-          receipt_url?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      backup_families: {
-        Row: {
-          created_at: string | null
-          id: string | null
-          name: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string | null
-          name?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string | null
-          name?: string | null
-        }
-        Relationships: []
-      }
-      backup_profiles: {
-        Row: {
-          created_at: string | null
-          email: string | null
-          family_id: string | null
-          id: string | null
-          name: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          email?: string | null
-          family_id?: string | null
-          id?: string | null
-          name?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          email?: string | null
-          family_id?: string | null
-          id?: string | null
-          name?: string | null
-        }
-        Relationships: []
-      }
       budget_categories: {
         Row: {
           created_at: string
@@ -465,7 +363,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           profile_id?: string
-          role_id?: string | null
+          role_id?: string
           team_id?: string
         }
         Relationships: [

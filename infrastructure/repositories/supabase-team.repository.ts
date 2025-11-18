@@ -9,7 +9,7 @@ import type { TeamMemberProfileDTO } from "@/domain/dto/team.types.d.ts";
 import { getSupabaseClient } from "../database/supabase.client";
 import type { Database } from "@/domain/dto/database.types.d.ts";
 
-export class SupabaseTeamRepository implements ITeamRepository {
+export class TeamRepository implements ITeamRepository {
   private supabase = getSupabaseClient();
 
   async createTeam(teamName: string, adminUserId: string): Promise<Team> {

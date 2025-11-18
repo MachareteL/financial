@@ -4,12 +4,12 @@ export interface TeamMemberProfileDTO {
   email: string;
   roleId: string | null;
   createdAt: string; // ISO string
-  
+
   teamRole?: {
     id: string;
     name: string;
     color: string;
-  }
+  };
 }
 
 export interface CreateTeamRoleDTO {
@@ -38,4 +38,9 @@ export interface UpdateMemberRoleDTO {
   teamId: string;
   memberId: string;
   roleId: string | null;
+}
+
+export interface CreateTeamDTO {
+  teamName: string;
+  userId: string;
 }
