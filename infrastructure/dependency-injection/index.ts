@@ -54,6 +54,13 @@ import { CreateInvestmentUseCase } from "@/app/(app)/investments/_use-case/creat
 import { UpdateInvestmentUseCase } from "@/app/(app)/investments/_use-case/update-investment.use-case";
 import { DeleteInvestmentUseCase } from "@/app/(app)/investments/_use-case/delete-investment.use-case";
 
+// Team Management
+import { GetTeamDataUseCase } from "@/app/(app)/team/_use-case/get-team-data.use-case";
+import { ManageRolesUseCase } from "@/app/(app)/team/_use-case/manage-roles.use-case";
+import { ManageMembersUseCase } from "@/app/(app)/team/_use-case/manage-members.use-case";
+import { GetExpenseByIdUseCase } from "@/app/(app)/expenses/_use-case/get-expense-by-id.use-case";
+import { UpdateExpenseUseCase } from "@/app/(app)/expenses/_use-case/update-expense.use-case";
+
 const container = Container.getInstance();
 
 const authRepository = container.get(
@@ -138,6 +145,10 @@ export const getDashboardDataUseCase = container.get(
 );
 
 // Expenses
+export const getExpenseByIdUseCase = container.get(
+  "getExpenseByIdUseCase",
+  () => new GetExpenseByIdUseCase(expenseRepository)
+);
 export const createExpenseUseCase = container.get(
   "createExpenseUseCase",
   () => new CreateExpenseUseCase(expenseRepository, storageRepository)
@@ -149,6 +160,10 @@ export const getExpensesUseCase = container.get(
 export const deleteExpenseUseCase = container.get(
   "deleteExpenseUseCase",
   () => new DeleteExpenseUseCase(expenseRepository)
+);
+export const updateExpenseUseCase = container.get(
+  "updateExpenseUseCase",
+  () => new UpdateExpenseUseCase(expenseRepository, storageRepository)
 );
 export const getExpenseSummaryByPeriodUseCase = container.get(
   "getExpenseSummaryByPeriodUseCase",
@@ -239,4 +254,20 @@ export const updateInvestmentUseCase = container.get(
 export const deleteInvestmentUseCase = container.get(
   "deleteInvestmentUseCase",
   () => new DeleteInvestmentUseCase(investmentRepository)
+);
+
+// Team Management
+export const getTeamDataUseCase = container.get(
+  "getTeamDataUseCase",
+  () => new GetTeamDataUseCase(teamRepository)
+);
+
+export const manageRolesUseCase = container.get(
+  "manageRolesUseCase",
+  () => new ManageRolesUseCase(teamRepository)
+);
+
+export const manageMembersUseCase = container.get(
+  "manageMembersUseCase",
+  () => new ManageMembersUseCase(teamRepository)
 );

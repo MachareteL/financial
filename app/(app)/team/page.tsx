@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,45 +19,22 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ArrowLeft, Users, UserPlus, Mail, Edit, Trash2, Plus } from "lucide-react"
-import { supabase } from "@/lib/supabase"
-import { getUserProfile } from "@/lib/auth"
+import { ArrowLeft, Users, UserPlus, Mail, Edit, Trash2, Plus, Loader2 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/app/auth/auth-provider"
+import { useTeam } from "@/app/(app)/team/team-provider"
 
-interface FamilyMember {
-  id: string
-  name: string
-  email: string
-  role_id: string | null
-  created_at: string
-  family_roles?: {
-    id: string
-    name: string
-    color: string
-  }
-}
+// Importações de DTOs e Entidades
+import type { TeamMemberProfileDTO } from "@/domain/dto/team.types.d.ts"
+import type { TeamRole } from "@/domain/entities/team-role"
+import type { TeamInvite } from "@/domain/entities/team-invite"
 
-interface FamilyRole {
-  id: string
-  name: string
-  color: string
-  permissions: string[]
-  is_default: boolean
-  created_at: string
-}
-
-interface FamilyInvite {
-  id: string
-  email: string
-  role_id: string | null
-  status: string
-  created_at: string
-  family_roles?: {
-    name: string
-    color: string
-  }
-}
+// Importações de Casos de Uso (DI)
+import {
+  getTeamDataUseCase,
+  manageRolesUseCase,
+  manageMembersUseCase
+} from "@/infrastructure/dependency-injection"
 
 const AVAILABLE_PERMISSIONS = [
   { key: "view_dashboard", label: "Ver Dashboard" },
@@ -72,308 +48,204 @@ const AVAILABLE_PERMISSIONS = [
   { key: "edit_investments", label: "Editar Investimentos" },
   { key: "view_categories", label: "Ver Categorias" },
   { key: "edit_categories", label: "Editar Categorias" },
-  { key: "manage_family", label: "Gerenciar Família" },
+  { key: "manage_family", label: "Gerenciar Equipe" },
   { key: "manage_roles", label: "Gerenciar Cargos" },
 ]
 
 const ROLE_COLORS = [
-  "#ef4444",
-  "#f97316",
-  "#eab308",
-  "#22c55e",
-  "#06b6d4",
-  "#3b82f6",
-  "#8b5cf6",
-  "#ec4899",
-  "#f43f5e",
-  "#84cc16",
+  "#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4",
+  "#3b82f6", "#8b5cf6", "#ec4899", "#f43f5e", "#84cc16",
 ]
 
-export default function FamilyPage() {
-  const { user, loading } = useAuth()
-  const [profile, setProfile] = useState<any>(null)
-  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([])
-  const [familyRoles, setFamilyRoles] = useState<FamilyRole[]>([])
-  const [familyInvites, setFamilyInvites] = useState<FamilyInvite[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+export default function TeamPage() {
+  const { session } = useAuth()
+  const { currentTeam } = useTeam()
+  const router = useRouter()
 
-  // Dialog states
-  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
+  // Estados de Dados
+  const [members, setMembers] = useState<TeamMemberProfileDTO[]>([])
+  const [roles, setRoles] = useState<TeamRole[]>([])
+  const [invites, setInvites] = useState<TeamInvite[]>([])
+  
+  // Estados de UI
+  const [isLoading, setIsLoading] = useState(true) // Loading de dados
+  const [isActionLoading, setIsActionLoading] = useState(false) // Loading de ações
+
+  // Dialogs
   const [isInviteOpen, setIsInviteOpen] = useState(false)
   const [isCreateRoleOpen, setIsCreateRoleOpen] = useState(false)
   const [isEditRoleOpen, setIsEditRoleOpen] = useState(false)
-  const [editingRole, setEditingRole] = useState<FamilyRole | null>(null)
+  const [editingRole, setEditingRole] = useState<TeamRole | null>(null)
 
-  // Form states
+  // Forms
   const [newRoleName, setNewRoleName] = useState("")
   const [newRoleColor, setNewRoleColor] = useState(ROLE_COLORS[0])
   const [newRolePermissions, setNewRolePermissions] = useState<string[]>([])
   const [inviteEmail, setInviteEmail] = useState("")
-  const [inviteRoleId, setInviteRoleId] = useState<string>("default")
-  const [newProfileName, setNewProfileName] = useState("")
-
-  const router = useRouter()
+  const [inviteRoleId, setInviteRoleId] = useState<string>("")
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/auth")
-      return
+    if (currentTeam) {
+      loadTeamData()
     }
+  }, [currentTeam])
 
-    if (user && !profile) {
-      loadProfile()
-    }
-  }, [user, loading, router])
-
-  useEffect(() => {
-    if (profile) {
-      loadFamilyData()
-    }
-  }, [profile])
-
-  const loadProfile = async () => {
-    try {
-      const userProfile = await getUserProfile()
-      if (!userProfile) {
-        router.push("/auth")
-        return
-      }
-      setProfile(userProfile)
-      setNewProfileName(userProfile.name)
-    } catch (error) {
-      console.error("Error loading profile:", error)
-      router.push("/auth")
-    }
-  }
-
-  const loadFamilyData = async () => {
-    if (!profile?.family_id) return
-
+  const loadTeamData = async () => {
+    if (!currentTeam) return
     setIsLoading(true)
     try {
-      // Load family members
-      const { data: members, error: membersError } = await supabase
-        .from("profiles")
-        .select(`
-          id, name, email, role_id, created_at,
-          family_roles (id, name, color)
-        `)
-        .eq("family_id", profile.family_id)
-        .order("created_at")
-
-      if (membersError) throw membersError
-
-      // Load family roles
-      const { data: roles, error: rolesError } = await supabase
-        .from("family_roles")
-        .select("*")
-        .eq("family_id", profile.family_id)
-        .order("created_at")
-
-      if (rolesError) throw rolesError
-
-      // Load family invites
-      const { data: invites, error: invitesError } = await supabase
-        .from("family_invites")
-        .select(`
-          id, email, role_id, status, created_at,
-          family_roles (name, color)
-        `)
-        .eq("family_id", profile.family_id)
-        .eq("status", "pending")
-        .order("created_at", { ascending: false })
-
-      if (invitesError) throw invitesError
-
-      setFamilyMembers(members || [])
-      setFamilyRoles(roles || [])
-      setFamilyInvites(invites || [])
+      const data = await getTeamDataUseCase.execute(currentTeam.team.id)
+      setMembers(data.members)
+      setRoles(data.roles)
+      setInvites(data.invites)
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar dados da família",
-        description: error.message,
-        variant: "destructive",
-      })
+      toast({ title: "Erro ao carregar dados", description: error.message, variant: "destructive" })
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    try {
-      const { error } = await supabase.from("profiles").update({ name: newProfileName }).eq("id", profile.id)
-
-      if (error) throw error
-
-      setProfile({ ...profile, name: newProfileName })
-      setIsEditProfileOpen(false)
-      toast({
-        title: "Perfil atualizado",
-        description: "Suas informações foram atualizadas com sucesso.",
-      })
-    } catch (error: any) {
-      toast({
-        title: "Erro ao atualizar perfil",
-        description: error.message,
-        variant: "destructive",
-      })
-    }
-  }
+  // --- ACTIONS: ROLES ---
 
   const handleCreateRole = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!currentTeam) return
 
+    setIsActionLoading(true)
     try {
-      const { error } = await supabase.from("family_roles").insert({
+      await manageRolesUseCase.createRole({
+        teamId: currentTeam.team.id,
         name: newRoleName,
         color: newRoleColor,
         permissions: newRolePermissions,
-        family_id: profile.family_id,
-        is_default: false,
       })
 
-      if (error) throw error
-
-      setNewRoleName("")
-      setNewRoleColor(ROLE_COLORS[0])
-      setNewRolePermissions([])
+      toast({ title: "Cargo criado com sucesso!" })
       setIsCreateRoleOpen(false)
-      loadFamilyData()
-
-      toast({
-        title: "Cargo criado",
-        description: "O novo cargo foi criado com sucesso.",
-      })
+      resetRoleForm()
+      await loadTeamData()
     } catch (error: any) {
-      toast({
-        title: "Erro ao criar cargo",
-        description: error.message,
-        variant: "destructive",
-      })
+      toast({ title: "Erro ao criar cargo", description: error.message, variant: "destructive" })
+    } finally {
+      setIsActionLoading(false)
     }
   }
 
   const handleUpdateRole = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!editingRole) return
+    if (!currentTeam || !editingRole) return
 
+    setIsActionLoading(true)
     try {
-      const { error } = await supabase
-        .from("family_roles")
-        .update({
-          name: newRoleName,
-          color: newRoleColor,
-          permissions: newRolePermissions,
-        })
-        .eq("id", editingRole.id)
+      await manageRolesUseCase.updateRole({
+        roleId: editingRole.id,
+        teamId: currentTeam.team.id,
+        name: newRoleName,
+        color: newRoleColor,
+        permissions: newRolePermissions,
+      })
 
-      if (error) throw error
-
-      setEditingRole(null)
-      setNewRoleName("")
-      setNewRoleColor(ROLE_COLORS[0])
-      setNewRolePermissions([])
+      toast({ title: "Cargo atualizado com sucesso!" })
       setIsEditRoleOpen(false)
-      loadFamilyData()
-
-      toast({
-        title: "Cargo atualizado",
-        description: "O cargo foi atualizado com sucesso.",
-      })
+      resetRoleForm()
+      await loadTeamData()
     } catch (error: any) {
-      toast({
-        title: "Erro ao atualizar cargo",
-        description: error.message,
-        variant: "destructive",
-      })
+      toast({ title: "Erro ao atualizar cargo", description: error.message, variant: "destructive" })
+    } finally {
+      setIsActionLoading(false)
     }
   }
 
   const handleDeleteRole = async (roleId: string) => {
-    if (!confirm("Tem certeza que deseja excluir este cargo?")) return
+    if (!currentTeam) return
+    if (!confirm("Tem certeza que deseja excluir este cargo? Membros com este cargo ficarão sem permissões.")) return
 
+    setIsActionLoading(true)
     try {
-      const { error } = await supabase.from("family_roles").delete().eq("id", roleId)
-
-      if (error) throw error
-
-      loadFamilyData()
-      toast({
-        title: "Cargo excluído",
-        description: "O cargo foi excluído com sucesso.",
-      })
+      await manageRolesUseCase.deleteRole(roleId, currentTeam.team.id)
+      toast({ title: "Cargo excluído com sucesso!" })
+      await loadTeamData()
     } catch (error: any) {
-      toast({
-        title: "Erro ao excluir cargo",
-        description: error.message,
-        variant: "destructive",
-      })
+      toast({ title: "Erro ao excluir cargo", description: error.message, variant: "destructive" })
+    } finally {
+      setIsActionLoading(false)
     }
   }
 
+  // --- ACTIONS: MEMBERS & INVITES ---
+
   const handleInviteMember = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!currentTeam || !session?.user) return
 
+    setIsActionLoading(true)
     try {
-      const { error } = await supabase.from("family_invites").insert({
+      await manageMembersUseCase.inviteMember({
+        teamId: currentTeam.team.id,
         email: inviteEmail,
-        role_id: inviteRoleId || null,
-        family_id: profile.family_id,
-        invited_by: profile.id,
-        status: "pending",
+        roleId: inviteRoleId || null,
+        invitedBy: session.user.id
       })
 
-      if (error) throw error
-
+      toast({ title: "Convite enviado!", description: `Para: ${inviteEmail}` })
       setInviteEmail("")
       setInviteRoleId("")
       setIsInviteOpen(false)
-      loadFamilyData()
-
-      toast({
-        title: "Convite enviado",
-        description: `Um convite foi enviado para ${inviteEmail}.`,
-      })
+      await loadTeamData()
     } catch (error: any) {
-      toast({
-        title: "Erro ao enviar convite",
-        description: error.message,
-        variant: "destructive",
-      })
+      toast({ title: "Erro ao convidar", description: error.message, variant: "destructive" })
+    } finally {
+      setIsActionLoading(false)
     }
   }
 
   const handleUpdateMemberRole = async (memberId: string, roleId: string) => {
+    if (!currentTeam) return
+    // setIsActionLoading(true) // Opcional: bloquear a UI
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ role_id: roleId || null })
-        .eq("id", memberId)
-
-      if (error) throw error
-
-      loadFamilyData()
-      toast({
-        title: "Cargo atualizado",
-        description: "O cargo do membro foi atualizado com sucesso.",
+      await manageMembersUseCase.updateMemberRole({
+        teamId: currentTeam.team.id,
+        memberId,
+        roleId: roleId === "default" ? null : roleId
       })
+      toast({ title: "Permissão atualizada" })
+      await loadTeamData()
     } catch (error: any) {
-      toast({
-        title: "Erro ao atualizar cargo",
-        description: error.message,
-        variant: "destructive",
-      })
-    }
+      toast({ title: "Erro ao atualizar membro", description: error.message, variant: "destructive" })
+    } 
+  }
+  
+  const handleRemoveMember = async (memberId: string) => {
+      if (!currentTeam) return
+      if(!confirm("Tem certeza que deseja remover este membro da equipe?")) return;
+      
+      setIsActionLoading(true);
+      try {
+          await manageMembersUseCase.removeMember(currentTeam.team.id, memberId);
+          toast({ title: "Membro removido." });
+          await loadTeamData();
+      } catch (error: any) {
+        toast({ title: "Erro ao remover", description: error.message, variant: "destructive" })
+      } finally {
+        setIsActionLoading(false);
+      }
   }
 
-  const openEditRole = (role: FamilyRole) => {
+  // --- HELPERS ---
+
+  const openEditRole = (role: TeamRole) => {
     setEditingRole(role)
     setNewRoleName(role.name)
     setNewRoleColor(role.color)
     setNewRolePermissions(role.permissions)
     setIsEditRoleOpen(true)
+  }
+
+  const resetRoleForm = () => {
+    setEditingRole(null)
+    setNewRoleName("")
+    setNewRoleColor(ROLE_COLORS[0])
+    setNewRolePermissions([])
   }
 
   const togglePermission = (permission: string) => {
@@ -382,13 +254,10 @@ export default function FamilyPage() {
     )
   }
 
-  if (loading || isLoading) {
+  if (!currentTeam || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Carregando família...</h1>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-        </div>
+        <Loader2 className="animate-spin h-8 w-8 text-gray-900 mx-auto" />
       </div>
     )
   }
@@ -403,55 +272,11 @@ export default function FamilyPage() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Família</h1>
-              <p className="text-gray-600">Gerencie membros, cargos e permissões da família</p>
+              <h1 className="text-3xl font-bold text-gray-900">Equipe: {currentTeam.team.name}</h1>
+              <p className="text-gray-600">Gerencie membros, cargos e permissões</p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Edit className="w-4 h-4 mr-2" />
-                  Editar Perfil
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Editar Perfil</DialogTitle>
-                  <DialogDescription>Atualize suas informações pessoais</DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleUpdateProfile} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nome</Label>
-                    <Input
-                      id="name"
-                      value={newProfileName}
-                      onChange={(e) => setNewProfileName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" value={profile?.email || ""} disabled className="bg-gray-100" />
-                    <p className="text-xs text-gray-500">O email não pode ser alterado</p>
-                  </div>
-                  <div className="flex gap-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsEditProfileOpen(false)}
-                      className="flex-1"
-                    >
-                      Cancelar
-                    </Button>
-                    <Button type="submit" className="flex-1">
-                      Salvar
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
+          {/* Botão do Perfil (removido daqui, pois já está no layout header) */}
         </div>
 
         {/* Tabs */}
@@ -462,30 +287,29 @@ export default function FamilyPage() {
             <TabsTrigger value="invites">Convites</TabsTrigger>
           </TabsList>
 
-          {/* Members Tab */}
+          {/* ABA: MEMBROS */}
           <TabsContent value="members" className="space-y-4">
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-xl font-semibold">Membros da Família</h2>
-                <p className="text-gray-600">{familyMembers.length} membros</p>
+                <h2 className="text-xl font-semibold">Membros da Equipe</h2>
+                <p className="text-gray-600">{members.length} membros ativos</p>
               </div>
               <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
                 <DialogTrigger asChild>
                   <Button>
                     <UserPlus className="w-4 h-4 mr-2" />
-                    Convidar Membro
+                    Convidar
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Convidar Novo Membro</DialogTitle>
-                    <DialogDescription>Envie um convite para alguém se juntar à família</DialogDescription>
+                    <DialogDescription>O usuário receberá acesso à equipe {currentTeam.team.name}</DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleInviteMember} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="invite-email">Email</Label>
+                      <Label>Email</Label>
                       <Input
-                        id="invite-email"
                         type="email"
                         value={inviteEmail}
                         onChange={(e) => setInviteEmail(e.target.value)}
@@ -494,14 +318,12 @@ export default function FamilyPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="invite-role">Cargo (opcional)</Label>
+                      <Label>Cargo Inicial</Label>
                       <Select value={inviteRoleId} onValueChange={setInviteRoleId}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um cargo" />
-                        </SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="default">Sem cargo</SelectItem>
-                          {familyRoles.map((role) => (
+                          <SelectItem value="default">Sem cargo (padrão)</SelectItem>
+                          {roles.map((role) => (
                             <SelectItem key={role.id} value={role.id}>
                               <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: role.color }} />
@@ -513,11 +335,9 @@ export default function FamilyPage() {
                       </Select>
                     </div>
                     <div className="flex gap-4">
-                      <Button type="button" variant="outline" onClick={() => setIsInviteOpen(false)} className="flex-1">
-                        Cancelar
-                      </Button>
-                      <Button type="submit" className="flex-1">
-                        Enviar Convite
+                      <Button type="button" variant="outline" onClick={() => setIsInviteOpen(false)} className="flex-1">Cancelar</Button>
+                      <Button type="submit" disabled={isActionLoading} className="flex-1">
+                         {isActionLoading ? <Loader2 className="animate-spin"/> : "Enviar Convite"}
                       </Button>
                     </div>
                   </form>
@@ -526,45 +346,43 @@ export default function FamilyPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {familyMembers.map((member) => (
+              {members.map((member) => (
                 <Card key={member.id}>
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Users className="w-5 h-5 text-blue-600" />
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
+                           {member.name.substring(0,2).toUpperCase()}
                         </div>
                         <div>
                           <h3 className="font-semibold">{member.name}</h3>
-                          <p className="text-sm text-gray-600">{member.email}</p>
+                          <p className="text-sm text-gray-600 truncate max-w-[150px]">{member.email}</p>
                         </div>
                       </div>
-                      {member.id === profile?.id && <Badge variant="secondary">Você</Badge>}
+                      {member.id === session?.user?.id && <Badge variant="secondary">Você</Badge>}
                     </div>
 
                     <div className="space-y-3">
                       <div>
-                        <Label className="text-sm">Cargo</Label>
+                        <Label className="text-xs text-gray-500">Cargo</Label>
                         <Select
-                          value={member.role_id || "default"}
+                          value={member.roleId || "default"}
                           onValueChange={(value) => handleUpdateMemberRole(member.id, value)}
+                          disabled={member.id === session?.user?.id} // Não pode mudar o próprio cargo aqui por segurança
                         >
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger className="w-full mt-1">
                             <SelectValue placeholder="Sem cargo">
-                              {member.family_roles && (
+                              {member.teamRole && (
                                 <div className="flex items-center gap-2">
-                                  <div
-                                    className="w-3 h-3 rounded-full"
-                                    style={{ backgroundColor: member.family_roles.color }}
-                                  />
-                                  {member.family_roles.name}
+                                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: member.teamRole.color }} />
+                                  {member.teamRole.name}
                                 </div>
                               )}
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="default">Sem cargo</SelectItem>
-                            {familyRoles.map((role) => (
+                            {/* <SelectItem value="default">Sem cargo</SelectItem> */}
+                            {roles.map((role) => (
                               <SelectItem key={role.id} value={role.id}>
                                 <div className="flex items-center gap-2">
                                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: role.color }} />
@@ -575,10 +393,17 @@ export default function FamilyPage() {
                           </SelectContent>
                         </Select>
                       </div>
-
-                      <div className="text-xs text-gray-500">
-                        Membro desde {new Date(member.created_at).toLocaleDateString("pt-BR")}
-                      </div>
+                      
+                      {member.id !== session?.user?.id && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleRemoveMember(member.id)}
+                          >
+                              <Trash2 className="w-4 h-4 mr-2"/> Remover
+                          </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -586,262 +411,159 @@ export default function FamilyPage() {
             </div>
           </TabsContent>
 
-          {/* Roles Tab */}
+          {/* ABA: CARGOS */}
           <TabsContent value="roles" className="space-y-4">
-            <div className="flex justify-between items-center">
+             {/* ... (Mesma estrutura da sua página antiga, mas usando os handlers e estados novos) ... */}
+             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-xl font-semibold">Cargos da Família</h2>
-                <p className="text-gray-600">Gerencie cargos e permissões</p>
+                <h2 className="text-xl font-semibold">Cargos da Equipe</h2>
+                <p className="text-gray-600">Defina o que cada pessoa pode fazer.</p>
               </div>
               <Dialog open={isCreateRoleOpen} onOpenChange={setIsCreateRoleOpen}>
                 <DialogTrigger asChild>
-                  <Button>
+                  <Button onClick={resetRoleForm}>
                     <Plus className="w-4 h-4 mr-2" />
                     Criar Cargo
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl">
-                  <DialogHeader>
+                   <DialogHeader>
                     <DialogTitle>Criar Novo Cargo</DialogTitle>
-                    <DialogDescription>Defina um novo cargo com permissões específicas</DialogDescription>
                   </DialogHeader>
+                  {/* REUTILIZANDO O FORMULÁRIO PARA CRIAR */}
                   <form onSubmit={handleCreateRole} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="role-name">Nome do Cargo</Label>
-                        <Input
-                          id="role-name"
-                          value={newRoleName}
-                          onChange={(e) => setNewRoleName(e.target.value)}
-                          placeholder="Ex: Gerente, Visualizador..."
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Cor</Label>
-                        <div className="flex gap-2 flex-wrap">
-                          {ROLE_COLORS.map((color) => (
-                            <button
-                              key={color}
-                              type="button"
-                              className={`w-8 h-8 rounded-full border-2 ${
-                                newRoleColor === color ? "border-gray-900" : "border-gray-300"
-                              }`}
-                              style={{ backgroundColor: color }}
-                              onClick={() => setNewRoleColor(color)}
-                            />
-                          ))}
+                     {/* ... (Inputs de Nome, Cor e Checkboxes de Permissão) ... */}
+                     {/* (Vou simplificar aqui, copie o JSX do seu arquivo antigo para os inputs e checkboxes) */}
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Nome</Label>
+                            <Input value={newRoleName} onChange={e => setNewRoleName(e.target.value)} required />
                         </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Permissões</Label>
-                      <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 border rounded">
-                        {AVAILABLE_PERMISSIONS.map((permission) => (
-                          <div key={permission.key} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={permission.key}
-                              checked={newRolePermissions.includes(permission.key)}
-                              onCheckedChange={() => togglePermission(permission.key)}
-                            />
-                            <Label htmlFor={permission.key} className="text-sm">
-                              {permission.label}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex gap-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setIsCreateRoleOpen(false)}
-                        className="flex-1"
-                      >
-                        Cancelar
-                      </Button>
-                      <Button type="submit" className="flex-1">
-                        Criar Cargo
-                      </Button>
-                    </div>
+                        <div className="space-y-2">
+                            <Label>Cor</Label>
+                             <div className="flex gap-2 flex-wrap">
+                                {ROLE_COLORS.map((color) => (
+                                    <button
+                                    key={color}
+                                    type="button"
+                                    className={`w-6 h-6 rounded-full border ${newRoleColor === color ? "border-black ring-2" : "border-transparent"}`}
+                                    style={{ backgroundColor: color }}
+                                    onClick={() => setNewRoleColor(color)}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                     </div>
+                     <div className="space-y-2">
+                        <Label>Permissões</Label>
+                        <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border p-2 rounded">
+                            {AVAILABLE_PERMISSIONS.map(perm => (
+                                <div key={perm.key} className="flex items-center space-x-2">
+                                    <Checkbox id={perm.key} checked={newRolePermissions.includes(perm.key)} onCheckedChange={() => togglePermission(perm.key)} />
+                                    <Label htmlFor={perm.key}>{perm.label}</Label>
+                                </div>
+                            ))}
+                        </div>
+                     </div>
+                     <Button type="submit" className="w-full" disabled={isActionLoading}>
+                        {isActionLoading ? <Loader2 className="animate-spin"/> : "Criar Cargo"}
+                     </Button>
                   </form>
                 </DialogContent>
               </Dialog>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {familyRoles.map((role) => (
-                <Card key={role.id}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-4 h-4 rounded-full" style={{ backgroundColor: role.color }} />
-                        <CardTitle className="text-lg">{role.name}</CardTitle>
-                        {role.is_default && <Badge variant="secondary">Padrão</Badge>}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => openEditRole(role)}>
-                          <Edit className="w-4 h-4" />
+             </div>
+             
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {roles.map(role => (
+                    <Card key={role.id}>
+                        <CardHeader className="pb-2">
+                            <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: role.color }} />
+                                    <CardTitle className="text-lg">{role.name}</CardTitle>
+                                </div>
+                                <div className="flex gap-1">
+                                    <Button variant="ghost" size="icon" onClick={() => openEditRole(role)}><Edit className="w-4 h-4"/></Button>
+                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteRole(role.id)}><Trash2 className="w-4 h-4 text-red-500"/></Button>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-wrap gap-1">
+                                {role.permissions.slice(0, 5).map(p => (
+                                    <Badge key={p} variant="outline" className="text-xs text-gray-500">{AVAILABLE_PERMISSIONS.find(ap => ap.key === p)?.label || p}</Badge>
+                                ))}
+                                {role.permissions.length > 5 && <Badge variant="outline" className="text-xs">+{role.permissions.length - 5}</Badge>}
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
+             </div>
+             
+             {/* Dialog de Edição (mesmo form do create, mas com handleUpdateRole) */}
+             <Dialog open={isEditRoleOpen} onOpenChange={setIsEditRoleOpen}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader><DialogTitle>Editar Cargo</DialogTitle></DialogHeader>
+                    <form onSubmit={handleUpdateRole} className="space-y-4">
+                         {/* ... (Mesmos inputs de Nome, Cor, Permissões) ... */}
+                         <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Nome</Label>
+                                <Input value={newRoleName} onChange={e => setNewRoleName(e.target.value)} required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Cor</Label>
+                                <div className="flex gap-2 flex-wrap">
+                                    {ROLE_COLORS.map((color) => (
+                                        <button key={color} type="button" className={`w-6 h-6 rounded-full border ${newRoleColor === color ? "border-black ring-2" : "border-transparent"}`} style={{ backgroundColor: color }} onClick={() => setNewRoleColor(color)} />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Permissões</Label>
+                            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border p-2 rounded">
+                                {AVAILABLE_PERMISSIONS.map(perm => (
+                                    <div key={perm.key} className="flex items-center space-x-2">
+                                        <Checkbox id={`edit-${perm.key}`} checked={newRolePermissions.includes(perm.key)} onCheckedChange={() => togglePermission(perm.key)} />
+                                        <Label htmlFor={`edit-${perm.key}`}>{perm.label}</Label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <Button type="submit" className="w-full" disabled={isActionLoading}>
+                            {isActionLoading ? <Loader2 className="animate-spin"/> : "Salvar Alterações"}
                         </Button>
-                        {!role.is_default && (
-                          <Button variant="outline" size="sm" onClick={() => handleDeleteRole(role.id)}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div>
-                        <h4 className="font-medium text-sm mb-2">Permissões ({role.permissions.length})</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {role.permissions.slice(0, 3).map((permission) => {
-                            const permissionLabel = AVAILABLE_PERMISSIONS.find((p) => p.key === permission)?.label
-                            return (
-                              <Badge key={permission} variant="outline" className="text-xs">
-                                {permissionLabel}
-                              </Badge>
-                            )
-                          })}
-                          {role.permissions.length > 3 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{role.permissions.length - 3} mais
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="text-xs text-gray-500">
-                        Criado em {new Date(role.created_at).toLocaleDateString("pt-BR")}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Edit Role Dialog */}
-            <Dialog open={isEditRoleOpen} onOpenChange={setIsEditRoleOpen}>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Editar Cargo</DialogTitle>
-                  <DialogDescription>Atualize as informações e permissões do cargo</DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleUpdateRole} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-role-name">Nome do Cargo</Label>
-                      <Input
-                        id="edit-role-name"
-                        value={newRoleName}
-                        onChange={(e) => setNewRoleName(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Cor</Label>
-                      <div className="flex gap-2 flex-wrap">
-                        {ROLE_COLORS.map((color) => (
-                          <button
-                            key={color}
-                            type="button"
-                            className={`w-8 h-8 rounded-full border-2 ${
-                              newRoleColor === color ? "border-gray-900" : "border-gray-300"
-                            }`}
-                            style={{ backgroundColor: color }}
-                            onClick={() => setNewRoleColor(color)}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Permissões</Label>
-                    <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 border rounded">
-                      {AVAILABLE_PERMISSIONS.map((permission) => (
-                        <div key={permission.key} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`edit-${permission.key}`}
-                            checked={newRolePermissions.includes(permission.key)}
-                            onCheckedChange={() => togglePermission(permission.key)}
-                          />
-                          <Label htmlFor={`edit-${permission.key}`} className="text-sm">
-                            {permission.label}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4">
-                    <Button type="button" variant="outline" onClick={() => setIsEditRoleOpen(false)} className="flex-1">
-                      Cancelar
-                    </Button>
-                    <Button type="submit" className="flex-1">
-                      Salvar Alterações
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
+                    </form>
+                </DialogContent>
+             </Dialog>
           </TabsContent>
 
-          {/* Invites Tab */}
+          {/* ABA: CONVITES */}
           <TabsContent value="invites" className="space-y-4">
-            <div>
-              <h2 className="text-xl font-semibold">Convites Pendentes</h2>
-              <p className="text-gray-600">{familyInvites.length} convites aguardando resposta</p>
+            <div className="flex flex-col gap-4">
+                <h2 className="text-xl font-semibold">Convites Pendentes</h2>
+                {invites.length === 0 ? (
+                    <Card><CardContent className="py-8 text-center text-gray-500">Nenhum convite pendente.</CardContent></Card>
+                ) : (
+                    <div className="space-y-2">
+                        {invites.map(invite => (
+                            <Card key={invite.id}>
+                                <CardContent className="py-4 flex justify-between items-center">
+                                    <div className="flex items-center gap-3">
+                                        <Mail className="text-orange-500"/>
+                                        <div>
+                                            <p className="font-medium">{invite.email}</p>
+                                            <p className="text-xs text-gray-500">Enviado em {new Date().toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                    <Badge variant="secondary">Pendente</Badge>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                )}
             </div>
-
-            {familyInvites.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <Mail className="h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Nenhum convite pendente</h3>
-                  <p className="text-gray-600 text-center mb-4">
-                    Todos os convites foram aceitos ou não há convites enviados.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-3">
-                {familyInvites.map((invite) => (
-                  <Card key={invite.id}>
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                            <Mail className="w-5 h-5 text-orange-600" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold">{invite.email}</h3>
-                            <p className="text-sm text-gray-600">
-                              Enviado em {new Date(invite.created_at).toLocaleDateString("pt-BR")}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {invite.family_roles && (
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: invite.family_roles.color }}
-                              />
-                              <span className="text-sm">{invite.family_roles.name}</span>
-                            </div>
-                          )}
-                          <Badge variant="secondary">Pendente</Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
           </TabsContent>
         </Tabs>
       </div>

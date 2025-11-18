@@ -42,11 +42,12 @@ export type CreateExpenseDTO = {
 export type UpdateExpenseDTO = {
   expenseId: string;
   teamId: string;
-  amount: number;
+  amount?: number;
   description?: string;
-  date: string;
-  categoryId: string;
-  receiptUrl?: string;
+  date?: string;
+  categoryId?: string;
+  receiptUrl?: string | null; // URL existente ou null para remover
+  receiptFile?: File | null;
 };
 
 export type DeleteExpenseDTO = {

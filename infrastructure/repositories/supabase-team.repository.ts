@@ -1,10 +1,8 @@
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface"; 
-
 import { Team } from "@/domain/entities/team";
-import { TeamRole, TeamRoleProps } from "@/domain/entities/team-role";
-import { TeamInvite, TeamInviteProps } from "@/domain/entities/team-invite";
-import type { TeamMemberProfileDTO } from "@/domain/dto/team.types.d.ts"; // DTO para a UI
-
+import { TeamRole, type TeamRoleProps } from "@/domain/entities/team-role";
+import { TeamInvite, type TeamInviteProps } from "@/domain/entities/team-invite";
+import type { TeamMemberProfileDTO } from "@/domain/dto/team.types.d.ts";
 import { getSupabaseClient } from "../database/supabase.client";
 import type { Database } from "@/domain/dto/database.types.d.ts";
 
@@ -21,6 +19,7 @@ export class TeamRepository implements ITeamRepository {
 
     if (teamError) throw new Error(teamError.message);
 
+    // 2. Criar Role de Admin
     const adminRoleData: Database["public"]["Tables"]["team_roles"]["Insert"] = {
       team_id: teamData.id,
       name: "Administrador",
@@ -39,12 +38,11 @@ export class TeamRepository implements ITeamRepository {
       .single();
 
     if (roleError) {
-      // Tentar reverter a criação do time se a criação do cargo falhar
       await this.supabase.from("teams").delete().eq("id", teamData.id);
       throw new Error(roleError.message);
     }
 
-    // 3. Associar o usuário criador ao time como Admin
+    // 3. Adicionar membro na tabela de junção
     const { error: memberError } = await this.supabase
       .from("team_members")
       .insert({
@@ -54,7 +52,6 @@ export class TeamRepository implements ITeamRepository {
       });
 
     if (memberError) {
-      // Tentar reverter
       await this.supabase.from("teams").delete().eq("id", teamData.id);
       throw new Error(memberError.message);
     }
@@ -92,8 +89,36 @@ export class TeamRepository implements ITeamRepository {
     }));
   }
 
+  async updateMemberRole(teamId: string, memberId: string, roleId: string | null): Promise<void> {
+    if (!roleId) throw new Error("É necessário definir um cargo para o membro.");
+
+    const { error } = await this.supabase
+      .from("team_members")
+      .update({ role_id: roleId })
+      .eq("team_id", teamId)
+      .eq("profile_id", memberId);
+
+    if (error) throw new Error(error.message);
+  }
+
+  async removeMember(teamId: string, memberId: string): Promise<void> {
+    const { error } = await this.supabase
+      .from("team_members")
+      .delete()
+      .eq("team_id", teamId)
+      .eq("profile_id", memberId);
+
+    if (error) throw new Error(error.message);
+  }
+
+  // --- ROLES ---
+
   async getTeamRoles(teamId: string): Promise<TeamRole[]> {
-    const { data, error } = await this.supabase.from("team_roles").select("*").eq("team_id", teamId);
+    const { data, error } = await this.supabase
+      .from("team_roles")
+      .select("*")
+      .eq("team_id", teamId)
+      .order("created_at");
 
     if (error) throw new Error(error.message);
 
@@ -102,7 +127,7 @@ export class TeamRepository implements ITeamRepository {
       name: item.name,
       description: item.description || undefined,
       color: item.color,
-      permissions: item.permissions,
+      permissions: item.permissions as string[],
       teamId: item.team_id,
       createdAt: new Date(item.created_at),
       updatedAt: new Date(item.updated_at || item.created_at),
@@ -129,7 +154,7 @@ export class TeamRepository implements ITeamRepository {
       name: data.name,
       description: data.description || undefined,
       color: data.color,
-      permissions: data.permissions,
+      permissions: data.permissions as string[],
       teamId: data.team_id,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at || data.created_at),
@@ -137,7 +162,6 @@ export class TeamRepository implements ITeamRepository {
   }
 
   async updateTeamRole(roleId: string, teamId: string, data: Partial<TeamRoleProps>): Promise<TeamRole> {
-    // Mapear de camelCase (Props) para snake_case (DB)
     const updateData: Partial<Database["public"]["Tables"]["team_roles"]["Update"]> = {
       name: data.name,
       color: data.color,
@@ -155,13 +179,12 @@ export class TeamRepository implements ITeamRepository {
 
     if (error) throw new Error(error.message);
 
-    // FIX: Retornar instância da classe TeamRole
     return new TeamRole({
       id: updated.id,
       name: updated.name,
       description: updated.description || undefined,
       color: updated.color,
-      permissions: updated.permissions,
+      permissions: updated.permissions as string[],
       teamId: updated.team_id,
       createdAt: new Date(updated.created_at),
       updatedAt: new Date(updated.updated_at || updated.created_at),
@@ -169,23 +192,34 @@ export class TeamRepository implements ITeamRepository {
   }
 
   async deleteTeamRole(roleId: string, teamId: string): Promise<void> {
-    const { error } = await this.supabase.from("team_roles").delete().eq("id", roleId).eq("team_id", teamId);
+    const { error } = await this.supabase
+      .from("team_roles")
+      .delete()
+      .eq("id", roleId)
+      .eq("team_id", teamId);
+      
     if (error) throw new Error(error.message);
   }
 
+  // --- INVITES ---
+
   async getTeamInvites(teamId: string): Promise<TeamInvite[]> {
-    const { data, error } = await this.supabase.from("team_invites").select("*").eq("team_id", teamId);
+    const { data, error } = await this.supabase
+      .from("team_invites")
+      .select("*")
+      .eq("team_id", teamId)
+      .eq("status", "pending");
 
     if (error) throw new Error(error.message);
-
 
     return (data || []).map((item) => new TeamInvite({
       id: item.id,
       email: item.email,
-      status: item.status as any, // Zod validará
+      status: item.status as any,
       teamId: item.team_id!,
       roleId: item.role_id,
       invitedBy: item.invited_by!,
+      createdBy: item.invited_by!, // <--- Mapeado aqui
       createdAt: new Date(item.created_at),
     }));
   }
@@ -212,29 +246,18 @@ export class TeamRepository implements ITeamRepository {
       teamId: data.team_id!,
       roleId: data.role_id,
       invitedBy: data.invited_by!,
+      createdBy: data.invited_by!, // <--- Mapeado aqui
       createdAt: new Date(data.created_at),
     });
   }
-
-  async updateTeamInvite(inviteId: string, teamId: string, status: TeamInviteProps["status"]): Promise<TeamInvite> {
-    const { data, error } = await this.supabase
+  
+  async deleteTeamInvite(inviteId: string, teamId: string): Promise<void> {
+      const { error } = await this.supabase
       .from("team_invites")
-      .update({ status })
+      .delete()
       .eq("id", inviteId)
-      .eq("team_id", teamId)
-      .select()
-      .single();
-
-    if (error) throw new Error(error.message);
-
-    return new TeamInvite({
-      id: data.id,
-      email: data.email,
-      status: data.status as any,
-      teamId: data.team_id!,
-      roleId: data.role_id,
-      invitedBy: data.invited_by!,
-      createdAt: new Date(data.created_at),
-    });
+      .eq("team_id", teamId);
+      
+      if (error) throw new Error(error.message);
   }
 }
