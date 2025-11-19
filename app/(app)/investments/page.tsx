@@ -1,13 +1,25 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useEffect, useState, useMemo } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import type React from "react";
+import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -15,12 +27,30 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
-import { Plus, Edit, Trash2, ArrowLeft, TrendingUp, DollarSign, Target, Calendar, Loader2 } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
-import { useAuth } from "@/app/auth/auth-provider"
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  ArrowLeft,
+  TrendingUp,
+  DollarSign,
+  Target,
+  Calendar,
+  Loader2,
+} from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/app/auth/auth-provider";
 
 // 1. Importar Casos de Uso e DTOs
 import {
@@ -28,37 +58,41 @@ import {
   createInvestmentUseCase,
   updateInvestmentUseCase,
   deleteInvestmentUseCase,
-} from "@/infrastructure/dependency-injection"
-import type { 
-  InvestmentDetailsDTO, 
-  CreateInvestmentDTO, 
-  UpdateInvestmentDTO 
-} from "@/domain/dto/investment.types.d.ts"
+} from "@/infrastructure/dependency-injection";
+import type {
+  InvestmentDetailsDTO,
+  CreateInvestmentDTO,
+  UpdateInvestmentDTO,
+} from "@/domain/dto/investment.types.d.ts";
+import { useTeam } from "../team/team-provider";
 
 // Tipo auxiliar para o gráfico
 interface ProjectionData {
-  month: string
-  value: number
-  contributions: number
-  returns: number
+  month: string;
+  value: number;
+  contributions: number;
+  returns: number;
 }
 
 export default function InvestmentsPage() {
-  const { session, loading: authLoading } = useAuth()
-  const router = useRouter()
+  const { session, loading: authLoading } = useAuth();
+  const { currentTeam } = useTeam();
 
-  const [investments, setInvestments] = useState<InvestmentDetailsDTO[]>([])
-  const [isLoading, setIsLoading] = useState(false) // Loading de ações (salvar/deletar)
-  const [isDataLoading, setIsDataLoading] = useState(true) // Loading inicial
-  
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingInvestment, setEditingInvestment] = useState<InvestmentDetailsDTO | null>(null)
-  
-  const [projectionData, setProjectionData] = useState<ProjectionData[]>([])
-  const [projectionYears, setProjectionYears] = useState(5)
+  const teamId = currentTeam?.team.id;
+  const userId = session?.user.id;
 
-  const teamId = session?.teams?.[0]?.team.id
-  const userId = session?.user?.id
+  const router = useRouter();
+
+  const [investments, setInvestments] = useState<InvestmentDetailsDTO[]>([]);
+  const [isLoading, setIsLoading] = useState(false); // Loading de ações (salvar/deletar)
+  const [isDataLoading, setIsDataLoading] = useState(true); // Loading inicial
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingInvestment, setEditingInvestment] =
+    useState<InvestmentDetailsDTO | null>(null);
+
+  const [projectionData, setProjectionData] = useState<ProjectionData[]>([]);
+  const [projectionYears, setProjectionYears] = useState(5);
 
   // 2. Autenticação
   useEffect(() => {
@@ -71,69 +105,80 @@ export default function InvestmentsPage() {
       router.push("/onboarding");
       return;
     }
-  }, [session, authLoading, userId, teamId, router])
+  }, [session, authLoading, userId, teamId, router]);
 
   // 3. Carregamento de Dados
   useEffect(() => {
     if (teamId) {
-      loadInvestments()
+      loadInvestments();
     }
-  }, [teamId])
+  }, [teamId]);
 
   // 4. Recalcular Projeções quando os investimentos mudam
   useEffect(() => {
     if (investments.length > 0) {
-      calculateProjections()
+      calculateProjections();
     } else {
-      setProjectionData([])
+      setProjectionData([]);
     }
-  }, [investments, projectionYears])
+  }, [investments, projectionYears]);
 
   const loadInvestments = async () => {
     if (!teamId) return;
-    setIsDataLoading(true)
+    setIsDataLoading(true);
     try {
-      const data = await getInvestmentsUseCase.execute(teamId)
-      setInvestments(data)
+      const data = await getInvestmentsUseCase.execute(teamId);
+      setInvestments(data);
     } catch (error: any) {
       toast({
         title: "Erro ao carregar investimentos",
         description: error.message,
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsDataLoading(false)
+      setIsDataLoading(false);
     }
-  }
+  };
 
   // Lógica de Projeção (Mantida do seu código original, pois é boa)
   const calculateProjections = () => {
-    const totalMonths = projectionYears * 12
-    const projections: ProjectionData[] = []
+    const totalMonths = projectionYears * 12;
+    const projections: ProjectionData[] = [];
 
-    let totalValue = investments.reduce((sum, inv) => sum + inv.currentAmount, 0)
-    let totalContributions = investments.reduce((sum, inv) => sum + inv.initialAmount, 0)
-    let totalReturns = totalValue - totalContributions
+    let totalValue = investments.reduce(
+      (sum, inv) => sum + inv.currentAmount,
+      0
+    );
+    let totalContributions = investments.reduce(
+      (sum, inv) => sum + inv.initialAmount,
+      0
+    );
+    let totalReturns = totalValue - totalContributions;
 
     for (let month = 0; month <= totalMonths; month++) {
       if (month > 0) {
         // Add monthly contributions
-        const monthlyContribution = investments.reduce((sum, inv) => sum + inv.monthlyContribution, 0)
-        totalValue += monthlyContribution
-        totalContributions += monthlyContribution
+        const monthlyContribution = investments.reduce(
+          (sum, inv) => sum + inv.monthlyContribution,
+          0
+        );
+        totalValue += monthlyContribution;
+        totalContributions += monthlyContribution;
 
         // Apply monthly returns
         const monthlyReturn = investments.reduce((sum, inv) => {
-          const monthlyRate = inv.annualReturnRate / 100 / 12
+          const monthlyRate = inv.annualReturnRate / 100 / 12;
           const currentInvestmentValue =
-            inv.currentAmount + inv.monthlyContribution * month + (totalReturns * inv.currentAmount) / (totalValue || 1)
-          return sum + currentInvestmentValue * monthlyRate
-        }, 0)
+            inv.currentAmount +
+            inv.monthlyContribution * month +
+            (totalReturns * inv.currentAmount) / (totalValue || 1);
+          return sum + currentInvestmentValue * monthlyRate;
+        }, 0);
 
-        totalValue += monthlyReturn
-        totalReturns += monthlyReturn
+        totalValue += monthlyReturn;
+        totalReturns += monthlyReturn;
       }
-      
+
       // Reduz a quantidade de pontos no gráfico (1 ponto a cada 6 meses)
       if (month % 6 === 0) {
         projections.push({
@@ -141,65 +186,69 @@ export default function InvestmentsPage() {
           value: totalValue,
           contributions: totalContributions,
           returns: totalReturns,
-        })
+        });
       }
     }
 
-    setProjectionData(projections)
-  }
+    setProjectionData(projections);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!teamId) return;
 
-    setIsLoading(true)
+    setIsLoading(true);
 
-    const formData = new FormData(e.currentTarget)
-    
+    const formData = new FormData(e.currentTarget);
+
     // Coleta dados do formulário
     const rawData = {
       name: formData.get("name") as string,
       type: formData.get("type") as any, // 'savings' | 'stocks' | ...
       initialAmount: Number.parseFloat(formData.get("initialAmount") as string),
       currentAmount: Number.parseFloat(formData.get("currentAmount") as string),
-      monthlyContribution: Number.parseFloat(formData.get("monthlyContribution") as string),
-      annualReturnRate: Number.parseFloat(formData.get("annualReturnRate") as string),
+      monthlyContribution: Number.parseFloat(
+        formData.get("monthlyContribution") as string
+      ),
+      annualReturnRate: Number.parseFloat(
+        formData.get("annualReturnRate") as string
+      ),
       startDate: formData.get("startDate") as string,
-    }
+    };
 
     try {
       if (editingInvestment) {
         // 5. Chama Update Use Case
-        const dto: UpdateInvestmentDTO = { 
-          ...rawData, 
+        const dto: UpdateInvestmentDTO = {
+          ...rawData,
           investmentId: editingInvestment.id,
-          teamId
-        }
-        await updateInvestmentUseCase.execute(dto)
-        toast({ title: "Investimento atualizado com sucesso!" })
+          teamId,
+        };
+        await updateInvestmentUseCase.execute(dto);
+        toast({ title: "Investimento atualizado com sucesso!" });
       } else {
         // 6. Chama Create Use Case
-        const dto: CreateInvestmentDTO = { 
+        const dto: CreateInvestmentDTO = {
           ...rawData,
-          teamId
-        }
-        await createInvestmentUseCase.execute(dto)
-        toast({ title: "Investimento adicionado com sucesso!" })
+          teamId,
+        };
+        await createInvestmentUseCase.execute(dto);
+        toast({ title: "Investimento adicionado com sucesso!" });
       }
 
-      setIsDialogOpen(false)
-      setEditingInvestment(null)
-      await loadInvestments() // Recarrega a lista
+      setIsDialogOpen(false);
+      setEditingInvestment(null);
+      await loadInvestments(); // Recarrega a lista
     } catch (error: any) {
       toast({
         title: "Erro ao salvar investimento",
         description: error.message,
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const deleteInvestment = async (id: string) => {
     if (!teamId) return;
@@ -207,17 +256,17 @@ export default function InvestmentsPage() {
 
     try {
       // 7. Chama Delete Use Case
-      await deleteInvestmentUseCase.execute(id, teamId)
-      toast({ title: "Investimento excluído com sucesso!" })
-      await loadInvestments()
+      await deleteInvestmentUseCase.execute(id, teamId);
+      toast({ title: "Investimento excluído com sucesso!" });
+      await loadInvestments();
     } catch (error: any) {
       toast({
         title: "Erro ao excluir investimento",
         description: error.message,
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   // Helpers de UI
   const getInvestmentTypeLabel = (type: string) => {
@@ -228,9 +277,9 @@ export default function InvestmentsPage() {
       real_estate: "Imóveis",
       crypto: "Criptomoedas",
       other: "Outros",
-    }
-    return types[type] || type
-  }
+    };
+    return types[type] || type;
+  };
 
   const getInvestmentTypeColor = (type: string) => {
     const colors: { [key: string]: string } = {
@@ -240,26 +289,38 @@ export default function InvestmentsPage() {
       real_estate: "bg-orange-100 text-orange-800",
       crypto: "bg-yellow-100 text-yellow-800",
       other: "bg-gray-100 text-gray-800",
-    }
-    return colors[type] || "bg-gray-100 text-gray-800"
-  }
+    };
+    return colors[type] || "bg-gray-100 text-gray-800";
+  };
 
   // Totais
-  const totalCurrentValue = investments.reduce((sum, inv) => sum + inv.currentAmount, 0)
-  const totalMonthlyContribution = investments.reduce((sum, inv) => sum + inv.monthlyContribution, 0)
-  const totalInitialValue = investments.reduce((sum, inv) => sum + inv.initialAmount, 0)
-  const totalReturns = totalCurrentValue - totalInitialValue
-  const averageReturn = totalInitialValue > 0 ? (totalReturns / totalInitialValue) * 100 : 0
+  const totalCurrentValue = investments.reduce(
+    (sum, inv) => sum + inv.currentAmount,
+    0
+  );
+  const totalMonthlyContribution = investments.reduce(
+    (sum, inv) => sum + inv.monthlyContribution,
+    0
+  );
+  const totalInitialValue = investments.reduce(
+    (sum, inv) => sum + inv.initialAmount,
+    0
+  );
+  const totalReturns = totalCurrentValue - totalInitialValue;
+  const averageReturn =
+    totalInitialValue > 0 ? (totalReturns / totalInitialValue) * 100 : 0;
 
   if (authLoading || isDataLoading || !session || !teamId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Carregando investimentos...</h1>
+          <h1 className="text-2xl font-bold mb-4">
+            Carregando investimentos...
+          </h1>
           <Loader2 className="animate-spin h-8 w-8 text-gray-900 mx-auto" />
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -267,14 +328,20 @@ export default function InvestmentsPage() {
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => router.push("/dashboard")}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => router.push("/dashboard")}
+          >
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-gray-900">Investimentos</h1>
-            <p className="text-gray-600">Gerencie seus investimentos e veja projeções futuras</p>
+            <p className="text-gray-600">
+              Gerencie seus investimentos e veja projeções futuras
+            </p>
           </div>
-          
+
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => setEditingInvestment(null)}>
@@ -284,9 +351,15 @@ export default function InvestmentsPage() {
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>{editingInvestment ? "Editar Investimento" : "Novo Investimento"}</DialogTitle>
+                <DialogTitle>
+                  {editingInvestment
+                    ? "Editar Investimento"
+                    : "Novo Investimento"}
+                </DialogTitle>
                 <DialogDescription>
-                  {editingInvestment ? "Atualize os dados do investimento" : "Adicione um novo investimento"}
+                  {editingInvestment
+                    ? "Atualize os dados do investimento"
+                    : "Adicione um novo investimento"}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -303,7 +376,11 @@ export default function InvestmentsPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="type">Tipo</Label>
-                  <Select name="type" defaultValue={editingInvestment?.type || ""} required>
+                  <Select
+                    name="type"
+                    defaultValue={editingInvestment?.type || ""}
+                    required
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
@@ -347,7 +424,9 @@ export default function InvestmentsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="monthlyContribution">Aporte Mensal (R$)</Label>
+                  <Label htmlFor="monthlyContribution">
+                    Aporte Mensal (R$)
+                  </Label>
                   <Input
                     id="monthlyContribution"
                     name="monthlyContribution"
@@ -379,17 +458,31 @@ export default function InvestmentsPage() {
                     id="startDate"
                     name="startDate"
                     type="date"
-                    defaultValue={editingInvestment?.startDate || new Date().toISOString().split("T")[0]}
+                    defaultValue={
+                      editingInvestment?.startDate ||
+                      new Date().toISOString().split("T")[0]
+                    }
                     required
                   />
                 </div>
 
                 <div className="flex gap-4">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsDialogOpen(false)}
+                    className="flex-1"
+                  >
                     Cancelar
                   </Button>
                   <Button type="submit" disabled={isLoading} className="flex-1">
-                    {isLoading ? <Loader2 className="animate-spin"/> : editingInvestment ? "Atualizar" : "Adicionar"}
+                    {isLoading ? (
+                      <Loader2 className="animate-spin" />
+                    ) : editingInvestment ? (
+                      "Atualizar"
+                    ) : (
+                      "Adicionar"
+                    )}
                   </Button>
                 </div>
               </form>
@@ -406,39 +499,60 @@ export default function InvestmentsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                R$ {totalCurrentValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                R${" "}
+                {totalCurrentValue.toLocaleString("pt-BR", {
+                  minimumFractionDigits: 2,
+                })}
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Retorno Total</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Retorno Total
+              </CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${totalReturns >= 0 ? "text-green-600" : "text-red-600"}`}>
-                R$ {totalReturns.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              <div
+                className={`text-2xl font-bold ${
+                  totalReturns >= 0 ? "text-green-600" : "text-red-600"
+                }`}
+              >
+                R${" "}
+                {totalReturns.toLocaleString("pt-BR", {
+                  minimumFractionDigits: 2,
+                })}
               </div>
-              <p className="text-xs text-muted-foreground">{averageReturn.toFixed(2)}% de retorno</p>
+              <p className="text-xs text-muted-foreground">
+                {averageReturn.toFixed(2)}% de retorno
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Aporte Mensal</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Aporte Mensal
+              </CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                R$ {totalMonthlyContribution.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                R${" "}
+                {totalMonthlyContribution.toLocaleString("pt-BR", {
+                  minimumFractionDigits: 2,
+                })}
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Investimentos</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Investimentos
+              </CardTitle>
               <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -454,11 +568,15 @@ export default function InvestmentsPage() {
               <div className="flex justify-between items-center">
                 <div>
                   <CardTitle>Projeção de Crescimento</CardTitle>
-                  <CardDescription>Evolução dos investimentos ao longo do tempo</CardDescription>
+                  <CardDescription>
+                    Evolução dos investimentos ao longo do tempo
+                  </CardDescription>
                 </div>
                 <Select
                   value={projectionYears.toString()}
-                  onValueChange={(value) => setProjectionYears(Number.parseInt(value))}
+                  onValueChange={(value) =>
+                    setProjectionYears(Number.parseInt(value))
+                  }
                 >
                   <SelectTrigger className="w-32">
                     <SelectValue />
@@ -482,11 +600,23 @@ export default function InvestmentsPage() {
                     <YAxis />
                     <Tooltip
                       formatter={(value: number, name: string) => [
-                        `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-                        name === "value" ? "Valor Total" : name === "contributions" ? "Aportes" : "Rendimentos",
+                        `R$ ${value.toLocaleString("pt-BR", {
+                          minimumFractionDigits: 2,
+                        })}`,
+                        name === "value"
+                          ? "Valor Total"
+                          : name === "contributions"
+                          ? "Aportes"
+                          : "Rendimentos",
                       ]}
                     />
-                    <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} name="value" />
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#3b82f6"
+                      strokeWidth={2}
+                      name="value"
+                    />
                     <Line
                       type="monotone"
                       dataKey="contributions"
@@ -494,7 +624,13 @@ export default function InvestmentsPage() {
                       strokeWidth={2}
                       name="contributions"
                     />
-                    <Line type="monotone" dataKey="returns" stroke="#f59e0b" strokeWidth={2} name="returns" />
+                    <Line
+                      type="monotone"
+                      dataKey="returns"
+                      stroke="#f59e0b"
+                      strokeWidth={2}
+                      name="returns"
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -521,7 +657,9 @@ export default function InvestmentsPage() {
           {investments.length === 0 ? (
             <Card>
               <CardContent className="pt-6 text-center">
-                <p className="text-gray-500 mb-4">Nenhum investimento encontrado.</p>
+                <p className="text-gray-500 mb-4">
+                  Nenhum investimento encontrado.
+                </p>
                 <Button onClick={() => setIsDialogOpen(true)}>
                   <Plus className="w-4 h-4 mr-2" />
                   Adicionar Primeiro Investimento
@@ -530,8 +668,12 @@ export default function InvestmentsPage() {
             </Card>
           ) : (
             investments.map((investment) => {
-              const returns = investment.currentAmount - investment.initialAmount
-              const returnPercentage = investment.initialAmount > 0 ? (returns / investment.initialAmount) * 100 : 0
+              const returns =
+                investment.currentAmount - investment.initialAmount;
+              const returnPercentage =
+                investment.initialAmount > 0
+                  ? (returns / investment.initialAmount) * 100
+                  : 0;
 
               return (
                 <Card key={investment.id}>
@@ -539,11 +681,17 @@ export default function InvestmentsPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold text-lg">{investment.name}</h3>
-                          <Badge className={getInvestmentTypeColor(investment.type)}>
+                          <h3 className="font-semibold text-lg">
+                            {investment.name}
+                          </h3>
+                          <Badge
+                            className={getInvestmentTypeColor(investment.type)}
+                          >
                             {getInvestmentTypeLabel(investment.type)}
                           </Badge>
-                          <Badge variant={returns >= 0 ? "default" : "destructive"}>
+                          <Badge
+                            variant={returns >= 0 ? "default" : "destructive"}
+                          >
                             {returnPercentage >= 0 ? "+" : ""}
                             {returnPercentage.toFixed(2)}%
                           </Badge>
@@ -553,24 +701,41 @@ export default function InvestmentsPage() {
                           <div>
                             <p className="text-gray-500">Valor Atual</p>
                             <p className="font-medium">
-                              R$ {investment.currentAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                              R${" "}
+                              {investment.currentAmount.toLocaleString(
+                                "pt-BR",
+                                { minimumFractionDigits: 2 }
+                              )}
                             </p>
                           </div>
                           <div>
                             <p className="text-gray-500">Retorno</p>
-                            <p className={`font-medium ${returns >= 0 ? "text-green-600" : "text-red-600"}`}>
-                              R$ {returns.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                            <p
+                              className={`font-medium ${
+                                returns >= 0 ? "text-green-600" : "text-red-600"
+                              }`}
+                            >
+                              R${" "}
+                              {returns.toLocaleString("pt-BR", {
+                                minimumFractionDigits: 2,
+                              })}
                             </p>
                           </div>
                           <div>
                             <p className="text-gray-500">Aporte Mensal</p>
                             <p className="font-medium">
-                              R$ {investment.monthlyContribution.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                              R${" "}
+                              {investment.monthlyContribution.toLocaleString(
+                                "pt-BR",
+                                { minimumFractionDigits: 2 }
+                              )}
                             </p>
                           </div>
                           <div>
                             <p className="text-gray-500">Rendimento Anual</p>
-                            <p className="font-medium">{investment.annualReturnRate}%</p>
+                            <p className="font-medium">
+                              {investment.annualReturnRate}%
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -580,8 +745,8 @@ export default function InvestmentsPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            setEditingInvestment(investment)
-                            setIsDialogOpen(true)
+                            setEditingInvestment(investment);
+                            setIsDialogOpen(true);
                           }}
                         >
                           <Edit className="w-4 h-4" />
@@ -597,11 +762,11 @@ export default function InvestmentsPage() {
                     </div>
                   </CardContent>
                 </Card>
-              )
+              );
             })
           )}
         </div>
       </div>
     </div>
-  )
+  );
 }

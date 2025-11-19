@@ -54,6 +54,7 @@ import {
 import type { ExpenseDetailsDTO } from "@/domain/dto/expense.types.d.ts";
 import type { CategoryDetailsDTO } from "@/domain/dto/category.types.d.ts";
 import type { BudgetCategoryDetailsDTO } from "@/domain/dto/budget-category.types.d.ts";
+import { useTeam } from "../team/team-provider";
 
 const BUDGET_CATEGORY_COLORS: Record<string, string> = {
   Necessidades: "bg-green-100 text-green-800",
@@ -63,6 +64,11 @@ const BUDGET_CATEGORY_COLORS: Record<string, string> = {
 
 export default function ExpensesPage() {
   const { session, loading: authLoading } = useAuth();
+  const { currentTeam} = useTeam();
+
+  const teamId = currentTeam?.team.id;
+  const userId = session?.user.id;
+
   const router = useRouter();
 
   const [expenses, setExpenses] = useState<ExpenseDetailsDTO[]>([]);
@@ -84,9 +90,6 @@ export default function ExpensesPage() {
   const [selectedBudgetCategory, setSelectedBudgetCategory] =
     useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("date-desc");
-
-  const teamId = session?.teams?.[0]?.team.id;
-  const userId = session?.user?.id;
 
   useEffect(() => {
     if (authLoading) return;

@@ -48,7 +48,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/app/auth/auth-provider";
 
-// Importar DTOs e Casos de Uso
+// Import DTOs and Use Cases
 import type {
   IncomeDetailsDTO,
   CreateIncomeDTO,
@@ -73,7 +73,7 @@ import {
   // Budget (Snapshot)
   getBudgetUseCase,
   saveBudgetUseCase,
-  // Budget Categories (Pastas)
+  // Budget Categories
   getBudgetCategoriesUseCase,
   createBudgetCategoryUseCase,
   updateBudgetCategoryUseCase,
@@ -81,50 +81,51 @@ import {
   // Summary
   getExpenseSummaryByPeriodUseCase,
 } from "@/infrastructure/dependency-injection";
+import { useTeam } from "../team/team-provider";
 
-// Tipo local para edição na UI
+// Local type for UI editing, tracking original values
 type EditableBudgetCategory = BudgetCategoryDetailsDTO & {
   originalName: string;
   originalPercentage: number;
 };
 
-// Cores fixas para pastas conhecidas (opcional, fallback para cinza)
 const BUDGET_CATEGORY_COLORS: Record<string, string> = {
-  Necessidades: "text-green-700",
-  Desejos: "text-amber-700",
-  Poupança: "text-blue-700",
+  Necessities: "text-green-700",
+  Wants: "text-amber-700",
+  Savings: "text-blue-700",
 };
 
 export default function BudgetPage() {
   const { session, loading: authLoading } = useAuth();
+  const { currentTeam} = useTeam();
+  const teamId = currentTeam?.team.id;
+  const userId = session?.user.id;
+  
   const router = useRouter();
 
-  // --- Estados Globais ---
+  // --- Global State ---
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [isLoading, setIsLoading] = useState(false); // Ações de escrita
-  const [isDataLoading, setIsDataLoading] = useState(true); // Leitura inicial
+  const [isLoading, setIsLoading] = useState(false); // For write actions (forms, buttons)
+  const [isDataLoading, setIsDataLoading] = useState(true); // For initial data fetching
 
-  // --- Estados: Receitas ---
+  // --- State: Incomes ---
   const [incomes, setIncomes] = useState<IncomeDetailsDTO[]>([]);
   const [isIncomeDialogOpen, setIsIncomeDialogOpen] = useState(false);
   const [editingIncome, setEditingIncome] = useState<IncomeDetailsDTO | null>(null);
 
-  // --- Estados: Orçamento & Visão Geral ---
+  // --- State: Budget & Overview ---
   const [currentBudget, setCurrentBudget] = useState<BudgetDetailsDTO | null>(null);
   const [expenseSummary, setExpenseSummary] = useState<ExpenseSummaryByBudgetCategoryDTO[]>([]);
   const [isBudgetDialogOpen, setIsBudgetDialogOpen] = useState(false);
   const [suggestedIncome, setSuggestedIncome] = useState(0);
 
-  // --- Estados: Configuração de Pastas ---
+  // --- State: Category Configuration ---
   const [budgetCategories, setBudgetCategories] = useState<EditableBudgetCategory[]>([]);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryPerc, setNewCategoryPerc] = useState("");
 
-  const teamId = session?.teams?.[0]?.team.id;
-  const userId = session?.user?.id;
-
-  // 1. Autenticação
+  // 1. Authentication check
   useEffect(() => {
     if (authLoading) return;
     if (!session || !userId) {
@@ -137,7 +138,7 @@ export default function BudgetPage() {
     }
   }, [session, authLoading, userId, teamId, router]);
 
-  // 2. Carregamento de Dados
+  // 2. Data Loading on dependency change
   useEffect(() => {
     if (teamId) {
       loadAllData();
@@ -157,7 +158,7 @@ export default function BudgetPage() {
       setIncomes(incomesData);
       setCurrentBudget(budgetData);
       
-      // Prepara estado editável das categorias
+      // Prepare editable state for categories
       setBudgetCategories(
         budgetCategoriesData.map((bc) => ({
           ...bc,
@@ -166,14 +167,14 @@ export default function BudgetPage() {
         }))
       );
 
-      // Calcula sugestão de renda baseada nas receitas cadastradas
+      // Calculate suggested income based on registered incomes for the selected period
       const suggested = calculateSuggestedIncome(incomesData, selectedMonth, selectedYear);
       setSuggestedIncome(suggested);
 
-      // Usa a renda salva (snapshot) ou 0 se não houver orçamento definido
+      // Use the saved income (snapshot) or 0 if no budget is set
       const currentTotalIncome = budgetData?.totalIncome ?? 0;
 
-      // Busca o resumo de gastos comparado com o orçamento definido
+      // Fetch expense summary based on the defined budget
       const expenseSummaryData = await getExpenseSummaryByPeriodUseCase.execute({
         teamId,
         month: selectedMonth,
@@ -185,7 +186,7 @@ export default function BudgetPage() {
     } catch (error: any) {
       console.error(error);
       toast({
-        title: "Erro ao carregar dados",
+        title: "Error loading data",
         description: error.message,
         variant: "destructive",
       });
@@ -194,7 +195,7 @@ export default function BudgetPage() {
     }
   };
 
-  // --- AÇÕES: RECEITAS ---
+  // --- ACTIONS: INCOMES ---
 
   const handleIncomeSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -219,7 +220,7 @@ export default function BudgetPage() {
           frequency: data.type === "recurring" ? data.frequency : undefined,
         };
         await updateIncomeUseCase.execute(dto);
-        toast({ title: "Receita atualizada!" });
+        toast({ title: "Income updated!" });
       } else {
         const dto: CreateIncomeDTO = {
           ...data,
@@ -228,13 +229,13 @@ export default function BudgetPage() {
           frequency: data.type === "recurring" ? data.frequency : undefined,
         };
         await createIncomeUseCase.execute(dto);
-        toast({ title: "Receita adicionada!" });
+        toast({ title: "Income added!" });
       }
       setIsIncomeDialogOpen(false);
       setEditingIncome(null);
       await loadAllData();
     } catch (error: any) {
-      toast({ title: "Erro ao salvar receita", description: error.message, variant: "destructive" });
+      toast({ title: "Error saving income", description: error.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -244,10 +245,10 @@ export default function BudgetPage() {
     if (!teamId) return;
     try {
       await deleteIncomeUseCase.execute({ incomeId: id, teamId });
-      toast({ title: "Receita excluída!" });
+      toast({ title: "Income deleted!" });
       await loadAllData();
     } catch (error: any) {
-      toast({ title: "Erro ao excluir receita", description: error.message, variant: "destructive" });
+      toast({ title: "Error deleting income", description: error.message, variant: "destructive" });
     }
   };
 
@@ -258,12 +259,13 @@ export default function BudgetPage() {
         if (income.type === "one_time") {
           return incomeDate.getMonth() + 1 === month && incomeDate.getFullYear() === year;
         }
+        // For simplicity, we'll count all monthly recurring incomes
         return income.type === "recurring" && income.frequency === "monthly";
       })
       .reduce((total, income) => total + income.amount, 0);
   };
 
-  // --- AÇÕES: ORÇAMENTO (Visão Geral) ---
+  // --- ACTIONS: BUDGET (OVERVIEW) ---
 
   const handleBudgetSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -280,11 +282,11 @@ export default function BudgetPage() {
         year: selectedYear,
         totalIncome,
       });
-      toast({ title: "Orçamento salvo!" });
+      toast({ title: "Budget saved!" });
       setIsBudgetDialogOpen(false);
       await loadAllData();
     } catch (error: any) {
-      toast({ title: "Erro ao salvar orçamento", description: error.message, variant: "destructive" });
+      toast({ title: "Error saving budget", description: error.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -295,7 +297,7 @@ export default function BudgetPage() {
     return Math.min((spent / budgeted) * 100, 100);
   };
 
-  // --- AÇÕES: CONFIGURAR PASTAS ---
+  // --- ACTIONS: CONFIGURE CATEGORIES ---
 
   const handleBudgetCategoryChange = (id: string, field: "name" | "percentage", value: string) => {
     setBudgetCategories((prev) =>
@@ -316,7 +318,7 @@ export default function BudgetPage() {
     if (!teamId) return;
 
     if (category.percentage < 0 || category.percentage > 1) {
-      toast({ title: "Inválido", description: "Percentual deve ser entre 0 e 100.", variant: "destructive" });
+      toast({ title: "Invalid", description: "Percentage must be between 0 and 100.", variant: "destructive" });
       return;
     }
 
@@ -329,10 +331,10 @@ export default function BudgetPage() {
         percentage: category.percentage,
       };
       await updateBudgetCategoryUseCase.execute(dto);
-      toast({ title: "Pasta salva!", description: `"${category.name}" atualizada.` });
+      toast({ title: "Category saved!", description: `"${category.name}" has been updated.` });
       await loadAllData();
     } catch (error: any) {
-      toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
+      toast({ title: "Error saving", description: error.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -343,13 +345,13 @@ export default function BudgetPage() {
 
     const percentage = parseFloat(newCategoryPerc) / 100;
     if (isNaN(percentage) || percentage < 0 || percentage > 1) {
-      toast({ title: "Inválido", description: "Percentual deve ser entre 0 e 100.", variant: "destructive" });
+      toast({ title: "Invalid", description: "Percentage must be between 0 and 100.", variant: "destructive" });
       return;
     }
 
-    // Validação de Soma > 100%
-    if (totalPercentage + percentage > 1.001) {
-       toast({ title: "Total excede 100%", description: "Ajuste as outras pastas antes de adicionar.", variant: "destructive" });
+    // Validate sum > 100%
+    if (totalPercentage + percentage > 1.001) { // Using a small tolerance for float precision
+       toast({ title: "Total exceeds 100%", description: "Adjust other categories before adding a new one.", variant: "destructive" });
        return;
     }
 
@@ -361,12 +363,12 @@ export default function BudgetPage() {
         percentage,
       };
       await createBudgetCategoryUseCase.execute(dto);
-      toast({ title: "Pasta criada!", description: `"${newCategoryName}" adicionada.` });
+      toast({ title: "Category created!", description: `"${newCategoryName}" has been added.` });
       setNewCategoryName("");
       setNewCategoryPerc("");
       await loadAllData();
     } catch (error: any) {
-      toast({ title: "Erro ao criar", description: error.message, variant: "destructive" });
+      toast({ title: "Error creating", description: error.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -374,31 +376,31 @@ export default function BudgetPage() {
 
   const handleDeleteBudgetCategory = async (category: EditableBudgetCategory) => {
     if (!teamId) return;
-    if (!confirm(`Excluir pasta "${category.name}"? Categorias associadas ficarão sem pasta.`)) return;
+    if (!confirm(`Delete category "${category.name}"? Associated expenses will become uncategorized.`)) return;
 
     setIsLoading(true);
     try {
       await deleteBudgetCategoryUseCase.execute(category.id, teamId);
-      toast({ title: "Pasta excluída!" });
+      toast({ title: "Category deleted!" });
       await loadAllData();
     } catch (error: any) {
-      toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
+      toast({ title: "Error deleting", description: error.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // --- Cálculos de UI ---
+  // --- UI Calculations ---
   const totalPercentage = useMemo(() => {
     return budgetCategories.reduce((sum, c) => sum + c.percentage, 0);
   }, [budgetCategories]);
 
   const months = useMemo(() => [
-    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
   ], []);
 
-  // Totais para Visão Geral
+  // Totals for Overview
   const monthlyIncomeFromBudget = currentBudget?.totalIncome ?? 0;
   const totalSpent = expenseSummary.reduce((sum, cat) => sum + cat.spent, 0);
   const balance = monthlyIncomeFromBudget - totalSpent;
@@ -420,8 +422,8 @@ export default function BudgetPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900">Orçamento</h1>
-            <p className="text-gray-600">Gerencie receitas, plano mensal e pastas.</p>
+            <h1 className="text-3xl font-bold text-gray-900">Budget</h1>
+            <p className="text-gray-600">Manage your incomes, monthly plan, and categories.</p>
           </div>
           <div className="flex gap-2">
             <Select
@@ -453,9 +455,9 @@ export default function BudgetPage() {
 
         <Tabs defaultValue="budget" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="budget">Visão Geral</TabsTrigger>
-            <TabsTrigger value="income">Receitas</TabsTrigger>
-            <TabsTrigger value="settings">Configurar Pastas</TabsTrigger>
+            <TabsTrigger value="budget">Overview</TabsTrigger>
+            <TabsTrigger value="income">Incomes</TabsTrigger>
+            <TabsTrigger value="settings">Configure Categories</TabsTrigger>
           </TabsList>
 
           {isDataLoading ? (
@@ -464,53 +466,53 @@ export default function BudgetPage() {
             </div>
           ) : (
             <>
-              {/* --- ABA 1: VISÃO GERAL --- */}
+              {/* --- TAB 1: OVERVIEW --- */}
               <TabsContent value="budget" className="space-y-6">
-                {/* Totais */}
+                {/* Totals */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Receita Planejada</CardTitle></CardHeader>
+                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Planned Income</CardTitle></CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold text-green-600">
-                        R$ {monthlyIncomeFromBudget.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        $ {monthlyIncomeFromBudget.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                       </div>
                     </CardContent>
                   </Card>
                   <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Gasto Real</CardTitle></CardHeader>
+                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Actual Spending</CardTitle></CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        R$ {totalSpent.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        $ {totalSpent.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                       </div>
                     </CardContent>
                   </Card>
                   <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Saldo</CardTitle></CardHeader>
+                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Balance</CardTitle></CardHeader>
                     <CardContent>
                       <div className={`text-2xl font-bold ${balance >= 0 ? "text-green-600" : "text-red-600"}`}>
-                        R$ {balance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        $ {balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                       </div>
                     </CardContent>
                   </Card>
                 </div>
 
-                {/* Botão Definir Orçamento */}
+                {/* Set Budget Button */}
                 <div className="flex justify-center">
                   <Dialog open={isBudgetDialogOpen} onOpenChange={setIsBudgetDialogOpen}>
                     <DialogTrigger asChild>
                       <Button size="lg" variant="outline">
                         <Target className="w-4 h-4 mr-2" />
-                        {currentBudget ? "Atualizar Renda do Mês" : "Definir Renda do Mês"}
+                        {currentBudget ? "Update Monthly Income" : "Set Monthly Income"}
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-md">
                       <DialogHeader>
-                        <DialogTitle>Definir Renda Mensal</DialogTitle>
-                        <DialogDescription>Base para o planejamento de {months[selectedMonth - 1]}/{selectedYear}</DialogDescription>
+                        <DialogTitle>Set Monthly Income</DialogTitle>
+                        <DialogDescription>Base for planning {months[selectedMonth - 1]}/{selectedYear}</DialogDescription>
                       </DialogHeader>
                       <form onSubmit={handleBudgetSubmit} className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="totalIncome">Renda Total (R$)</Label>
+                          <Label htmlFor="totalIncome">Total Income ($)</Label>
                           <Input
                             id="totalIncome"
                             name="totalIncome"
@@ -521,13 +523,13 @@ export default function BudgetPage() {
                             required
                           />
                           <p className="text-xs text-gray-500">
-                            Valor usado para calcular os percentuais das pastas.
+                            This value is used to calculate category percentages.
                           </p>
                         </div>
                         <div className="flex gap-4">
-                          <Button type="button" variant="outline" onClick={() => setIsBudgetDialogOpen(false)} className="flex-1">Cancelar</Button>
+                          <Button type="button" variant="outline" onClick={() => setIsBudgetDialogOpen(false)} className="flex-1">Cancel</Button>
                           <Button type="submit" disabled={isLoading} className="flex-1">
-                            {isLoading ? <Loader2 className="animate-spin" /> : "Salvar"}
+                            {isLoading ? <Loader2 className="animate-spin" /> : "Save"}
                           </Button>
                         </div>
                       </form>
@@ -535,7 +537,7 @@ export default function BudgetPage() {
                   </Dialog>
                 </div>
 
-                {/* Cards Dinâmicos das Pastas */}
+                {/* Dynamic Category Cards */}
                 {currentBudget ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {expenseSummary.map((summary) => (
@@ -545,13 +547,13 @@ export default function BudgetPage() {
                             {summary.name} ({(summary.percentage * 100).toFixed(0)}%)
                           </CardTitle>
                           <CardDescription>
-                            Planejado: R$ {summary.budgeted.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                            Planned: $ {summary.budgeted.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                           </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                           <div className="flex justify-between text-sm font-medium">
-                            <span>Gasto Real:</span>
-                            <span>R$ {summary.spent.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                            <span>Actual Spent:</span>
+                            <span>$ {summary.spent.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
                           </div>
                           <Progress value={getBudgetProgress(summary.spent, summary.budgeted)} />
                         </CardContent>
@@ -560,68 +562,68 @@ export default function BudgetPage() {
                   </div>
                 ) : (
                   <Card className="text-center p-8 border-dashed">
-                    <p className="text-gray-500 mb-2">Nenhum orçamento definido para este mês.</p>
-                    <p className="text-sm text-gray-400">Clique em "Definir Renda do Mês" para começar.</p>
+                    <p className="text-gray-500 mb-2">No budget defined for this month.</p>
+                    <p className="text-sm text-gray-400">Click "Set Monthly Income" to get started.</p>
                   </Card>
                 )}
               </TabsContent>
 
-              {/* --- ABA 2: RECEITAS --- */}
+              {/* --- TAB 2: INCOMES --- */}
               <TabsContent value="income" className="space-y-6">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h2 className="text-2xl font-bold">Receitas</h2>
-                    <p className="text-gray-600">Gerencie suas fontes de renda.</p>
+                    <h2 className="text-2xl font-bold">Incomes</h2>
+                    <p className="text-gray-600">Manage your sources of income.</p>
                   </div>
                   <Dialog open={isIncomeDialogOpen} onOpenChange={setIsIncomeDialogOpen}>
                     <DialogTrigger asChild>
                       <Button onClick={() => setEditingIncome(null)}>
                         <Plus className="w-4 h-4 mr-2" />
-                        Nova Receita
+                        New Income
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>{editingIncome ? "Editar Receita" : "Nova Receita"}</DialogTitle>
+                        <DialogTitle>{editingIncome ? "Edit Income" : "New Income"}</DialogTitle>
                       </DialogHeader>
                       <form onSubmit={handleIncomeSubmit} className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="amount">Valor (R$)</Label>
+                          <Label htmlFor="amount">Amount ($)</Label>
                           <Input id="amount" name="amount" type="number" step="0.01" min="0" defaultValue={editingIncome?.amount || ""} required />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="description">Descrição</Label>
-                          <Input id="description" name="description" placeholder="Ex: Salário..." defaultValue={editingIncome?.description || ""} required />
+                          <Label htmlFor="description">Description</Label>
+                          <Input id="description" name="description" placeholder="Ex: Salary..." defaultValue={editingIncome?.description || ""} required />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="type">Tipo</Label>
+                          <Label htmlFor="type">Type</Label>
                           <Select name="type" defaultValue={editingIncome?.type || "recurring"} required>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="recurring">Recorrente</SelectItem>
-                              <SelectItem value="one_time">Única vez</SelectItem>
+                              <SelectItem value="recurring">Recurring</SelectItem>
+                              <SelectItem value="one_time">One-Time</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="frequency">Frequência (se recorrente)</Label>
+                          <Label htmlFor="frequency">Frequency (if recurring)</Label>
                           <Select name="frequency" defaultValue={editingIncome?.frequency || "monthly"}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="monthly">Mensal</SelectItem>
-                              <SelectItem value="weekly">Semanal</SelectItem>
-                              <SelectItem value="yearly">Anual</SelectItem>
+                              <SelectItem value="monthly">Monthly</SelectItem>
+                              <SelectItem value="weekly">Weekly</SelectItem>
+                              <SelectItem value="yearly">Yearly</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="date">Data</Label>
+                          <Label htmlFor="date">Date</Label>
                           <Input id="date" name="date" type="date" defaultValue={editingIncome?.date || new Date().toISOString().split("T")[0]} required />
                         </div>
                         <div className="flex gap-4">
-                          <Button type="button" variant="outline" onClick={() => setIsIncomeDialogOpen(false)} className="flex-1">Cancelar</Button>
+                          <Button type="button" variant="outline" onClick={() => setIsIncomeDialogOpen(false)} className="flex-1">Cancel</Button>
                           <Button type="submit" disabled={isLoading} className="flex-1">
-                            {isLoading ? <Loader2 className="animate-spin" /> : "Salvar"}
+                            {isLoading ? <Loader2 className="animate-spin" /> : "Save"}
                           </Button>
                         </div>
                       </form>
@@ -631,19 +633,19 @@ export default function BudgetPage() {
 
                 <div className="space-y-4">
                   {incomes.length === 0 ? (
-                    <Card><CardContent className="pt-6 text-center text-gray-500">Nenhuma receita cadastrada.</CardContent></Card>
+                    <Card><CardContent className="pt-6 text-center text-gray-500">No incomes registered yet.</CardContent></Card>
                   ) : (
                     incomes.map((income) => (
                       <Card key={income.id}>
                         <CardContent className="pt-6 flex justify-between items-center">
                           <div>
                             <div className="flex items-center gap-3 mb-1">
-                              <span className="font-bold text-lg">R$ {income.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-                              <Badge variant="secondary">{income.type === "recurring" ? "Recorrente" : "Única"}</Badge>
+                              <span className="font-bold text-lg">$ {income.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                              <Badge variant="secondary">{income.type === "recurring" ? "Recurring" : "One-Time"}</Badge>
                             </div>
                             <p className="text-gray-700">{income.description}</p>
                             <p className="text-xs text-gray-500">
-                              {new Date(income.date).toLocaleDateString("pt-BR")} • {income.owner || "N/A"}
+                              {new Date(income.date).toLocaleDateString("en-US")} • {income.owner || "N/A"}
                             </p>
                           </div>
                           <div className="flex gap-2">
@@ -657,12 +659,12 @@ export default function BudgetPage() {
                 </div>
               </TabsContent>
 
-              {/* --- ABA 3: CONFIGURAR PASTAS --- */}
+              {/* --- TAB 3: CONFIGURE CATEGORIES --- */}
               <TabsContent value="settings" className="space-y-6">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h2 className="text-2xl font-bold">Pastas de Orçamento</h2>
-                    <p className="text-gray-600">Personalize como seu orçamento é dividido.</p>
+                    <h2 className="text-2xl font-bold">Budget Categories</h2>
+                    <p className="text-gray-600">Customize how your budget is divided.</p>
                   </div>
                 </div>
                 
@@ -693,7 +695,7 @@ export default function BudgetPage() {
                             size="icon" variant="ghost" 
                             onClick={() => handleSaveBudgetCategory(category)}
                             disabled={!isChanged || isLoading}
-                            title="Salvar"
+                            title="Save"
                           >
                             <Save className={`w-4 h-4 ${isChanged ? "text-blue-600" : ""}`} />
                           </Button>
@@ -701,7 +703,7 @@ export default function BudgetPage() {
                             size="icon" variant="ghost" 
                             onClick={() => handleDeleteBudgetCategory(category)}
                             disabled={isLoading}
-                            title="Excluir"
+                            title="Delete"
                           >
                             <Trash2 className="w-4 h-4 text-red-500" />
                           </Button>
@@ -709,18 +711,18 @@ export default function BudgetPage() {
                       )
                     })}
                     
-                    {/* Totalizador */}
+                    {/* Total */}
                     <div className={`text-right font-bold ${totalPercentage.toFixed(2) !== '1.00' ? 'text-red-600' : 'text-green-600'}`}>
                       Total: {(totalPercentage * 100).toFixed(0)}%
-                      {totalPercentage.toFixed(2) !== '1.00' && " (A soma deve ser 100%)"}
+                      {totalPercentage.toFixed(2) !== '1.00' && " (Sum must be 100%)"}
                     </div>
 
-                    {/* Criar Nova */}
+                    {/* Create New */}
                     <div className="border-t pt-4 mt-4">
-                      <h4 className="text-sm font-semibold mb-3">Adicionar Nova Pasta</h4>
+                      <h4 className="text-sm font-semibold mb-3">Add New Category</h4>
                       <div className="flex gap-3 items-center">
                          <Input 
-                           placeholder="Nome (ex: Educação)" 
+                           placeholder="Name (e.g., Education)" 
                            value={newCategoryName} 
                            onChange={(e) => setNewCategoryName(e.target.value)} 
                            disabled={isLoading}

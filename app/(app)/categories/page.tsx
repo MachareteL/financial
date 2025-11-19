@@ -51,6 +51,8 @@ import {
   deleteCategoryUseCase,
 } from "@/infrastructure/dependency-injection";
 
+import { useTeam } from "../team/team-provider";
+
 const BUDGET_CATEGORY_COLORS: Record<string, string> = {
   Necessidades: "bg-green-100 text-green-800",
   Desejos: "bg-yellow-100 text-yellow-800",
@@ -59,6 +61,9 @@ const BUDGET_CATEGORY_COLORS: Record<string, string> = {
 
 export default function CategoriesPage() {
   const { session, loading: authLoading } = useAuth();
+  const { currentTeam } = useTeam();
+  const teamId = currentTeam?.team.id;
+  const userId = session?.user.id;
   const [categories, setCategories] = useState<CategoryDetailsDTO[]>([]);
   const [budgetCategories, setBudgetCategories] = useState<
     BudgetCategoryDetailsDTO[]
@@ -71,9 +76,6 @@ export default function CategoriesPage() {
     useState<CategoryDetailsDTO | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const router = useRouter();
-
-  const teamId = session?.teams?.[0]?.team.id;
-  const userId = session?.user?.id;
 
   useEffect(() => {
     if (authLoading) return;

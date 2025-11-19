@@ -91,9 +91,6 @@ export function TeamSwitcher({ isMobile = false }: TeamSwitcherProps) {
       setOpen(false);
       setTeamName("");
 
-      // 4. Força um reload para atualizar o contexto e a lista de times
-      // (O TeamProvider vai pegar o novo time do banco na próxima carga)
-      window.location.reload();
     } catch (error: any) {
       console.error(error);
       toast({
