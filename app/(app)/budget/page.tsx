@@ -45,7 +45,7 @@ import {
   Folder,
   Save,
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+
 import { useAuth } from "@/app/auth/auth-provider";
 
 // Import DTOs and Use Cases
@@ -82,6 +82,7 @@ import {
   getExpenseSummaryByPeriodUseCase,
 } from "@/infrastructure/dependency-injection";
 import { useTeam } from "../team/team-provider";
+import { notify } from "@/lib/notify-helper";
 
 // Local type for UI editing, tracking original values
 type EditableBudgetCategory = BudgetCategoryDetailsDTO & {
@@ -97,10 +98,10 @@ const BUDGET_CATEGORY_COLORS: Record<string, string> = {
 
 export default function BudgetPage() {
   const { session, loading: authLoading } = useAuth();
-  const { currentTeam} = useTeam();
+  const { currentTeam } = useTeam();
   const teamId = currentTeam?.team.id;
   const userId = session?.user.id;
-  
+
   const router = useRouter();
 
   // --- Global State ---
@@ -112,16 +113,24 @@ export default function BudgetPage() {
   // --- State: Incomes ---
   const [incomes, setIncomes] = useState<IncomeDetailsDTO[]>([]);
   const [isIncomeDialogOpen, setIsIncomeDialogOpen] = useState(false);
-  const [editingIncome, setEditingIncome] = useState<IncomeDetailsDTO | null>(null);
+  const [editingIncome, setEditingIncome] = useState<IncomeDetailsDTO | null>(
+    null
+  );
 
   // --- State: Budget & Overview ---
-  const [currentBudget, setCurrentBudget] = useState<BudgetDetailsDTO | null>(null);
-  const [expenseSummary, setExpenseSummary] = useState<ExpenseSummaryByBudgetCategoryDTO[]>([]);
+  const [currentBudget, setCurrentBudget] = useState<BudgetDetailsDTO | null>(
+    null
+  );
+  const [expenseSummary, setExpenseSummary] = useState<
+    ExpenseSummaryByBudgetCategoryDTO[]
+  >([]);
   const [isBudgetDialogOpen, setIsBudgetDialogOpen] = useState(false);
   const [suggestedIncome, setSuggestedIncome] = useState(0);
 
   // --- State: Category Configuration ---
-  const [budgetCategories, setBudgetCategories] = useState<EditableBudgetCategory[]>([]);
+  const [budgetCategories, setBudgetCategories] = useState<
+    EditableBudgetCategory[]
+  >([]);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryPerc, setNewCategoryPerc] = useState("");
 
@@ -149,15 +158,21 @@ export default function BudgetPage() {
     if (!teamId) return;
     setIsDataLoading(true);
     try {
-      const [incomesData, budgetData, budgetCategoriesData] = await Promise.all([
-        getIncomesUseCase.execute(teamId),
-        getBudgetUseCase.execute({ teamId, month: selectedMonth, year: selectedYear }),
-        getBudgetCategoriesUseCase.execute(teamId),
-      ]);
+      const [incomesData, budgetData, budgetCategoriesData] = await Promise.all(
+        [
+          getIncomesUseCase.execute(teamId),
+          getBudgetUseCase.execute({
+            teamId,
+            month: selectedMonth,
+            year: selectedYear,
+          }),
+          getBudgetCategoriesUseCase.execute(teamId),
+        ]
+      );
 
       setIncomes(incomesData);
       setCurrentBudget(budgetData);
-      
+
       // Prepare editable state for categories
       setBudgetCategories(
         budgetCategoriesData.map((bc) => ({
@@ -168,28 +183,29 @@ export default function BudgetPage() {
       );
 
       // Calculate suggested income based on registered incomes for the selected period
-      const suggested = calculateSuggestedIncome(incomesData, selectedMonth, selectedYear);
+      const suggested = calculateSuggestedIncome(
+        incomesData,
+        selectedMonth,
+        selectedYear
+      );
       setSuggestedIncome(suggested);
 
       // Use the saved income (snapshot) or 0 if no budget is set
       const currentTotalIncome = budgetData?.totalIncome ?? 0;
 
       // Fetch expense summary based on the defined budget
-      const expenseSummaryData = await getExpenseSummaryByPeriodUseCase.execute({
-        teamId,
-        month: selectedMonth,
-        year: selectedYear,
-        totalIncome: currentTotalIncome,
-      });
+      const expenseSummaryData = await getExpenseSummaryByPeriodUseCase.execute(
+        {
+          teamId,
+          month: selectedMonth,
+          year: selectedYear,
+          totalIncome: currentTotalIncome,
+        }
+      );
       setExpenseSummary(expenseSummaryData);
-
     } catch (error: any) {
       console.error(error);
-      toast({
-        title: "Error loading data",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify.error(error, "carregar os dados do orçamento.");
     } finally {
       setIsDataLoading(false);
     }
@@ -207,7 +223,11 @@ export default function BudgetPage() {
       amount: Number.parseFloat(formData.get("amount") as string),
       description: formData.get("description") as string,
       type: formData.get("type") as "recurring" | "one_time",
-      frequency: formData.get("frequency") as "monthly" | "weekly" | "yearly" | undefined,
+      frequency: formData.get("frequency") as
+        | "monthly"
+        | "weekly"
+        | "yearly"
+        | undefined,
       date: formData.get("date") as string,
     };
 
@@ -220,7 +240,7 @@ export default function BudgetPage() {
           frequency: data.type === "recurring" ? data.frequency : undefined,
         };
         await updateIncomeUseCase.execute(dto);
-        toast({ title: "Income updated!" });
+        notify.success("Receita atualizada com sucesso");
       } else {
         const dto: CreateIncomeDTO = {
           ...data,
@@ -229,13 +249,13 @@ export default function BudgetPage() {
           frequency: data.type === "recurring" ? data.frequency : undefined,
         };
         await createIncomeUseCase.execute(dto);
-        toast({ title: "Income added!" });
+        notify.success("Nova receita registrada");
       }
       setIsIncomeDialogOpen(false);
       setEditingIncome(null);
       await loadAllData();
     } catch (error: any) {
-      toast({ title: "Error saving income", description: error.message, variant: "destructive" });
+      notify.error(error, "salvar a receita.");
     } finally {
       setIsLoading(false);
     }
@@ -245,21 +265,28 @@ export default function BudgetPage() {
     if (!teamId) return;
     try {
       await deleteIncomeUseCase.execute({ incomeId: id, teamId });
-      toast({ title: "Income deleted!" });
+      notify.success("Receita excluída!");
       await loadAllData();
     } catch (error: any) {
-      toast({ title: "Error deleting income", description: error.message, variant: "destructive" });
+      notify.error(error, "excluir a receita.");
     }
   };
 
-  const calculateSuggestedIncome = (incomesList: IncomeDetailsDTO[], month: number, year: number): number => {
+  const calculateSuggestedIncome = (
+    incomesList: IncomeDetailsDTO[],
+    month: number,
+    year: number
+  ): number => {
     return incomesList
       .filter((income) => {
         const incomeDate = new Date(income.date.replace(/-/g, "/"));
         if (income.type === "one_time") {
-          return incomeDate.getMonth() + 1 === month && incomeDate.getFullYear() === year;
+          return (
+            incomeDate.getMonth() + 1 === month &&
+            incomeDate.getFullYear() === year
+          );
         }
-        // For simplicity, we'll count all monthly recurring incomes
+
         return income.type === "recurring" && income.frequency === "monthly";
       })
       .reduce((total, income) => total + income.amount, 0);
@@ -273,7 +300,9 @@ export default function BudgetPage() {
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const totalIncome = Number.parseFloat(formData.get("totalIncome") as string);
+    const totalIncome = Number.parseFloat(
+      formData.get("totalIncome") as string
+    );
 
     try {
       await saveBudgetUseCase.execute({
@@ -282,11 +311,11 @@ export default function BudgetPage() {
         year: selectedYear,
         totalIncome,
       });
-      toast({ title: "Budget saved!" });
+      notify.success("Orçamento salvo!");
       setIsBudgetDialogOpen(false);
       await loadAllData();
     } catch (error: any) {
-      toast({ title: "Error saving budget", description: error.message, variant: "destructive" });
+      notify.error(error, "salvar o orçamento.");
     } finally {
       setIsLoading(false);
     }
@@ -299,7 +328,11 @@ export default function BudgetPage() {
 
   // --- ACTIONS: CONFIGURE CATEGORIES ---
 
-  const handleBudgetCategoryChange = (id: string, field: "name" | "percentage", value: string) => {
+  const handleBudgetCategoryChange = (
+    id: string,
+    field: "name" | "percentage",
+    value: string
+  ) => {
     setBudgetCategories((prev) =>
       prev.map((cat) => {
         if (cat.id === id) {
@@ -318,7 +351,7 @@ export default function BudgetPage() {
     if (!teamId) return;
 
     if (category.percentage < 0 || category.percentage > 1) {
-      toast({ title: "Invalid", description: "Percentage must be between 0 and 100.", variant: "destructive" });
+      notify.info("Porcentagem inválida", "O valor deve ser entre 0% e 100%.");
       return;
     }
 
@@ -331,10 +364,10 @@ export default function BudgetPage() {
         percentage: category.percentage,
       };
       await updateBudgetCategoryUseCase.execute(dto);
-      toast({ title: "Category saved!", description: `"${category.name}" has been updated.` });
+      notify.success(`Categoria "${category.name}" salva!`);
       await loadAllData();
     } catch (error: any) {
-      toast({ title: "Error saving", description: error.message, variant: "destructive" });
+      notify.error(error, "salvar a categoria.");
     } finally {
       setIsLoading(false);
     }
@@ -345,14 +378,13 @@ export default function BudgetPage() {
 
     const percentage = parseFloat(newCategoryPerc) / 100;
     if (isNaN(percentage) || percentage < 0 || percentage > 1) {
-      toast({ title: "Invalid", description: "Percentage must be between 0 and 100.", variant: "destructive" });
+      notify.info("Porcentagem inválida", "O valor deve ser entre 0% e 100%.");
       return;
     }
 
-    // Validate sum > 100%
-    if (totalPercentage + percentage > 1.001) { // Using a small tolerance for float precision
-       toast({ title: "Total exceeds 100%", description: "Adjust other categories before adding a new one.", variant: "destructive" });
-       return;
+    if (totalPercentage + percentage > 1.001) {
+      notify.info("Total excede 100%", "Ajuste outras categorias antes de adicionar uma nova.");
+      return;
     }
 
     setIsLoading(true);
@@ -363,28 +395,37 @@ export default function BudgetPage() {
         percentage,
       };
       await createBudgetCategoryUseCase.execute(dto);
-      toast({ title: "Category created!", description: `"${newCategoryName}" has been added.` });
+      notify.success(`Categoria criada!`, {
+      description: `"${newCategoryName}" foi adicionada.`,
+      });
       setNewCategoryName("");
       setNewCategoryPerc("");
       await loadAllData();
     } catch (error: any) {
-      toast({ title: "Error creating", description: error.message, variant: "destructive" });
+      notify.error(error, "criar a categoria.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDeleteBudgetCategory = async (category: EditableBudgetCategory) => {
+  const handleDeleteBudgetCategory = async (
+    category: EditableBudgetCategory
+  ) => {
     if (!teamId) return;
-    if (!confirm(`Delete category "${category.name}"? Associated expenses will become uncategorized.`)) return;
+    if (
+      !confirm(
+        `Excluir categoria "${category.name}"? As despesas associadas ficarão sem categoria.`
+      )
+    )
+      return;
 
     setIsLoading(true);
     try {
       await deleteBudgetCategoryUseCase.execute(category.id, teamId);
-      toast({ title: "Category deleted!" });
+      notify.success("Categoria excluída!");
       await loadAllData();
     } catch (error: any) {
-      toast({ title: "Error deleting", description: error.message, variant: "destructive" });
+      notify.error(error, "excluir a categoria.");
     } finally {
       setIsLoading(false);
     }
@@ -395,10 +436,23 @@ export default function BudgetPage() {
     return budgetCategories.reduce((sum, c) => sum + c.percentage, 0);
   }, [budgetCategories]);
 
-  const months = useMemo(() => [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ], []);
+  const months = useMemo(
+    () => [
+      "Janeiro",
+      "Fevereiro",
+      "Março",
+      "Abril",
+      "Maio",
+      "Junho",
+      "Julho",
+      "Agosto",
+      "Setembro",
+      "Outubro",
+      "Novembro",
+      "Dezembro",
+    ],
+    []
+  );
 
   // Totals for Overview
   const monthlyIncomeFromBudget = currentBudget?.totalIncome ?? 0;
@@ -418,23 +472,35 @@ export default function BudgetPage() {
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => router.push("/dashboard")}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => router.push("/dashboard")}
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900">Budget</h1>
-            <p className="text-gray-600">Manage your incomes, monthly plan, and categories.</p>
+            <h1 className="text-3xl font-bold text-gray-900">Orçamento</h1>
+            <p className="text-gray-600">
+              Gerencie suas receitas, plano mensal e categorias.
+            </p>
           </div>
           <div className="flex gap-2">
             <Select
               value={selectedMonth.toString()}
-              onValueChange={(value) => setSelectedMonth(Number.parseInt(value))}
+              onValueChange={(value) =>
+                setSelectedMonth(Number.parseInt(value))
+              }
               disabled={isDataLoading}
             >
-              <SelectTrigger className="w-32" loading={isDataLoading}><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-32" loading={isDataLoading}>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {months.map((month, index) => (
-                  <SelectItem key={index} value={(index + 1).toString()}>{month}</SelectItem>
+                  <SelectItem key={index} value={(index + 1).toString()}>
+                    {month}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -443,10 +509,14 @@ export default function BudgetPage() {
               onValueChange={(value) => setSelectedYear(Number.parseInt(value))}
               disabled={isDataLoading}
             >
-              <SelectTrigger className="w-24" loading={isDataLoading}><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-24" loading={isDataLoading}>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {[2023, 2024, 2025].map((year) => (
-                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -455,9 +525,9 @@ export default function BudgetPage() {
 
         <Tabs defaultValue="budget" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="budget">Overview</TabsTrigger>
-            <TabsTrigger value="income">Incomes</TabsTrigger>
-            <TabsTrigger value="settings">Configure Categories</TabsTrigger>
+            <TabsTrigger value="budget">Visão Geral</TabsTrigger>
+            <TabsTrigger value="income">Receitas</TabsTrigger>
+            <TabsTrigger value="settings">Configurar Categorias</TabsTrigger>
           </TabsList>
 
           {isDataLoading ? (
@@ -471,26 +541,51 @@ export default function BudgetPage() {
                 {/* Totals */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Planned Income</CardTitle></CardHeader>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Receita Planejada
+                      </CardTitle>
+                    </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold text-green-600">
-                        $ {monthlyIncomeFromBudget.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                        R${" "}
+                        {monthlyIncomeFromBudget.toLocaleString("pt-BR", {
+                          minimumFractionDigits: 2,
+                        })}
                       </div>
                     </CardContent>
                   </Card>
                   <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Actual Spending</CardTitle></CardHeader>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Gasto Real
+                      </CardTitle>
+                    </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        $ {totalSpent.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                        R${" "}
+                        {totalSpent.toLocaleString("pt-BR", {
+                          minimumFractionDigits: 2,
+                        })}
                       </div>
                     </CardContent>
                   </Card>
                   <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Balance</CardTitle></CardHeader>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Saldo
+                      </CardTitle>
+                    </CardHeader>
                     <CardContent>
-                      <div className={`text-2xl font-bold ${balance >= 0 ? "text-green-600" : "text-red-600"}`}>
-                        $ {balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                      <div
+                        className={`text-2xl font-bold ${
+                          balance >= 0 ? "text-green-600" : "text-red-600"
+                        }`}
+                      >
+                        R${" "}
+                        {balance.toLocaleString("pt-BR", {
+                          minimumFractionDigits: 2,
+                        })}
                       </div>
                     </CardContent>
                   </Card>
@@ -498,38 +593,66 @@ export default function BudgetPage() {
 
                 {/* Set Budget Button */}
                 <div className="flex justify-center">
-                  <Dialog open={isBudgetDialogOpen} onOpenChange={setIsBudgetDialogOpen}>
+                  <Dialog
+                    open={isBudgetDialogOpen}
+                    onOpenChange={setIsBudgetDialogOpen}
+                  >
                     <DialogTrigger asChild>
                       <Button size="lg" variant="outline">
                         <Target className="w-4 h-4 mr-2" />
-                        {currentBudget ? "Update Monthly Income" : "Set Monthly Income"}
+                        {currentBudget
+                          ? "Atualizar Receita Mensal"
+                          : "Definir Receita Mensal"}
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-md">
                       <DialogHeader>
-                        <DialogTitle>Set Monthly Income</DialogTitle>
-                        <DialogDescription>Base for planning {months[selectedMonth - 1]}/{selectedYear}</DialogDescription>
+                        <DialogTitle>Definir Receita Mensal</DialogTitle>
+                        <DialogDescription>
+                          Base para o planejamento de{" "}
+                          {months[selectedMonth - 1]}/{selectedYear}
+                        </DialogDescription>
                       </DialogHeader>
                       <form onSubmit={handleBudgetSubmit} className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="totalIncome">Total Income ($)</Label>
+                          <Label htmlFor="totalIncome">
+                            Receita Total (R$)
+                          </Label>
                           <Input
                             id="totalIncome"
                             name="totalIncome"
                             type="number"
                             step="0.01"
                             min="0"
-                            defaultValue={currentBudget?.totalIncome ?? suggestedIncome}
+                            defaultValue={
+                              currentBudget?.totalIncome ?? suggestedIncome
+                            }
                             required
                           />
                           <p className="text-xs text-gray-500">
-                            This value is used to calculate category percentages.
+                            Este valor é usado para calcular as porcentagens das
+                            categorias.
                           </p>
                         </div>
                         <div className="flex gap-4">
-                          <Button type="button" variant="outline" onClick={() => setIsBudgetDialogOpen(false)} className="flex-1">Cancel</Button>
-                          <Button type="submit" disabled={isLoading} className="flex-1">
-                            {isLoading ? <Loader2 className="animate-spin" /> : "Save"}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsBudgetDialogOpen(false)}
+                            className="flex-1"
+                          >
+                            Cancelar
+                          </Button>
+                          <Button
+                            type="submit"
+                            disabled={isLoading}
+                            className="flex-1"
+                          >
+                            {isLoading ? (
+                              <Loader2 className="animate-spin" />
+                            ) : (
+                              "Salvar"
+                            )}
                           </Button>
                         </div>
                       </form>
@@ -543,27 +666,50 @@ export default function BudgetPage() {
                     {expenseSummary.map((summary) => (
                       <Card key={summary.id}>
                         <CardHeader>
-                          <CardTitle className={`text-lg ${BUDGET_CATEGORY_COLORS[summary.name] || 'text-gray-900'}`}>
-                            {summary.name} ({(summary.percentage * 100).toFixed(0)}%)
+                          <CardTitle
+                            className={`text-lg ${
+                              BUDGET_CATEGORY_COLORS[summary.name] ||
+                              "text-gray-900"
+                            }`}
+                          >
+                            {summary.name} (
+                            {(summary.percentage * 100).toFixed(0)}%)
                           </CardTitle>
                           <CardDescription>
-                            Planned: $ {summary.budgeted.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                            Planejado: R${" "}
+                            {summary.budgeted.toLocaleString("pt-BR", {
+                              minimumFractionDigits: 2,
+                            })}
                           </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                           <div className="flex justify-between text-sm font-medium">
-                            <span>Actual Spent:</span>
-                            <span>$ {summary.spent.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                            <span>Gasto Real:</span>
+                            <span>
+                              R${" "}
+                              {summary.spent.toLocaleString("pt-BR", {
+                                minimumFractionDigits: 2,
+                              })}
+                            </span>
                           </div>
-                          <Progress value={getBudgetProgress(summary.spent, summary.budgeted)} />
+                          <Progress
+                            value={getBudgetProgress(
+                              summary.spent,
+                              summary.budgeted
+                            )}
+                          />
                         </CardContent>
                       </Card>
                     ))}
                   </div>
                 ) : (
                   <Card className="text-center p-8 border-dashed">
-                    <p className="text-gray-500 mb-2">No budget defined for this month.</p>
-                    <p className="text-sm text-gray-400">Click "Set Monthly Income" to get started.</p>
+                    <p className="text-gray-500 mb-2">
+                      Nenhum orçamento definido para este mês.
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      Clique em "Definir Receita Mensal" para começar.
+                    </p>
                   </Card>
                 )}
               </TabsContent>
@@ -572,58 +718,118 @@ export default function BudgetPage() {
               <TabsContent value="income" className="space-y-6">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h2 className="text-2xl font-bold">Incomes</h2>
-                    <p className="text-gray-600">Manage your sources of income.</p>
+                    <h2 className="text-2xl font-bold">Receitas</h2>
+                    <p className="text-gray-600">
+                      Gerencie suas fontes de receita.
+                    </p>
                   </div>
-                  <Dialog open={isIncomeDialogOpen} onOpenChange={setIsIncomeDialogOpen}>
+                  <Dialog
+                    open={isIncomeDialogOpen}
+                    onOpenChange={setIsIncomeDialogOpen}
+                  >
                     <DialogTrigger asChild>
                       <Button onClick={() => setEditingIncome(null)}>
                         <Plus className="w-4 h-4 mr-2" />
-                        New Income
+                        Nova Receita
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>{editingIncome ? "Edit Income" : "New Income"}</DialogTitle>
+                        <DialogTitle>
+                          {editingIncome ? "Editar Receita" : "Nova Receita"}
+                        </DialogTitle>
                       </DialogHeader>
                       <form onSubmit={handleIncomeSubmit} className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="amount">Amount ($)</Label>
-                          <Input id="amount" name="amount" type="number" step="0.01" min="0" defaultValue={editingIncome?.amount || ""} required />
+                          <Label htmlFor="amount">Valor (R$)</Label>
+                          <Input
+                            id="amount"
+                            name="amount"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            defaultValue={editingIncome?.amount || ""}
+                            required
+                          />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="description">Description</Label>
-                          <Input id="description" name="description" placeholder="Ex: Salary..." defaultValue={editingIncome?.description || ""} required />
+                          <Label htmlFor="description">Descrição</Label>
+                          <Input
+                            id="description"
+                            name="description"
+                            placeholder="Ex: Salário..."
+                            defaultValue={editingIncome?.description || ""}
+                            required
+                          />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="type">Type</Label>
-                          <Select name="type" defaultValue={editingIncome?.type || "recurring"} required>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
+                          <Label htmlFor="type">Tipo</Label>
+                          <Select
+                            name="type"
+                            defaultValue={editingIncome?.type || "recurring"}
+                            required
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="recurring">Recurring</SelectItem>
-                              <SelectItem value="one_time">One-Time</SelectItem>
+                              <SelectItem value="recurring">
+                                Recorrente
+                              </SelectItem>
+                              <SelectItem value="one_time">Única</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="frequency">Frequency (if recurring)</Label>
-                          <Select name="frequency" defaultValue={editingIncome?.frequency || "monthly"}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
+                          <Label htmlFor="frequency">
+                            Frequência (se recorrente)
+                          </Label>
+                          <Select
+                            name="frequency"
+                            defaultValue={editingIncome?.frequency || "monthly"}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="monthly">Monthly</SelectItem>
-                              <SelectItem value="weekly">Weekly</SelectItem>
-                              <SelectItem value="yearly">Yearly</SelectItem>
+                              <SelectItem value="monthly">Mensal</SelectItem>
+                              <SelectItem value="weekly">Semanal</SelectItem>
+                              <SelectItem value="yearly">Anual</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="date">Date</Label>
-                          <Input id="date" name="date" type="date" defaultValue={editingIncome?.date || new Date().toISOString().split("T")[0]} required />
+                          <Label htmlFor="date">Data</Label>
+                          <Input
+                            id="date"
+                            name="date"
+                            type="date"
+                            defaultValue={
+                              editingIncome?.date ||
+                              new Date().toISOString().split("T")[0]
+                            }
+                            required
+                          />
                         </div>
                         <div className="flex gap-4">
-                          <Button type="button" variant="outline" onClick={() => setIsIncomeDialogOpen(false)} className="flex-1">Cancel</Button>
-                          <Button type="submit" disabled={isLoading} className="flex-1">
-                            {isLoading ? <Loader2 className="animate-spin" /> : "Save"}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsIncomeDialogOpen(false)}
+                            className="flex-1"
+                          >
+                            Cancelar
+                          </Button>
+                          <Button
+                            type="submit"
+                            disabled={isLoading}
+                            className="flex-1"
+                          >
+                            {isLoading ? (
+                              <Loader2 className="animate-spin" />
+                            ) : (
+                              "Salvar"
+                            )}
                           </Button>
                         </div>
                       </form>
@@ -633,24 +839,57 @@ export default function BudgetPage() {
 
                 <div className="space-y-4">
                   {incomes.length === 0 ? (
-                    <Card><CardContent className="pt-6 text-center text-gray-500">No incomes registered yet.</CardContent></Card>
+                    <Card>
+                      <CardContent className="pt-6 text-center text-gray-500">
+                        Nenhuma receita registrada ainda.
+                      </CardContent>
+                    </Card>
                   ) : (
                     incomes.map((income) => (
                       <Card key={income.id}>
                         <CardContent className="pt-6 flex justify-between items-center">
                           <div>
                             <div className="flex items-center gap-3 mb-1">
-                              <span className="font-bold text-lg">$ {income.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
-                              <Badge variant="secondary">{income.type === "recurring" ? "Recurring" : "One-Time"}</Badge>
+                              <span className="font-bold text-lg">
+                                R${" "}
+                                {income.amount.toLocaleString("pt-BR", {
+                                  minimumFractionDigits: 2,
+                                })}
+                              </span>
+                              <Badge variant="secondary">
+                                {income.type === "recurring"
+                                  ? "Recorrente"
+                                  : "Única"}
+                              </Badge>
                             </div>
-                            <p className="text-gray-700">{income.description}</p>
+                            <p className="text-gray-700">
+                              {income.description}
+                            </p>
                             <p className="text-xs text-gray-500">
-                              {new Date(income.date).toLocaleDateString("en-US")} • {income.owner || "N/A"}
+                              {new Date(income.date).toLocaleDateString(
+                                "pt-BR"
+                              )}{" "}
+                              • {income.owner || "N/A"}
                             </p>
                           </div>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={() => { setEditingIncome(income); setIsIncomeDialogOpen(true); }}><Edit className="w-4 h-4" /></Button>
-                            <Button size="sm" variant="destructive" onClick={() => deleteIncome(income.id)}><Trash2 className="w-4 h-4" /></Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingIncome(income);
+                                setIsIncomeDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => deleteIncome(income.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </div>
                         </CardContent>
                       </Card>
@@ -663,21 +902,36 @@ export default function BudgetPage() {
               <TabsContent value="settings" className="space-y-6">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h2 className="text-2xl font-bold">Budget Categories</h2>
-                    <p className="text-gray-600">Customize how your budget is divided.</p>
+                    <h2 className="text-2xl font-bold">
+                      Categorias do Orçamento
+                    </h2>
+                    <p className="text-gray-600">
+                      Personalize como seu orçamento é dividido.
+                    </p>
                   </div>
                 </div>
-                
+
                 <Card>
                   <CardContent className="pt-6 space-y-4">
                     {budgetCategories.map((category) => {
-                      const isChanged = category.name !== category.originalName || category.percentage !== category.originalPercentage;
+                      const isChanged =
+                        category.name !== category.originalName ||
+                        category.percentage !== category.originalPercentage;
                       return (
-                        <div key={category.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                        <div
+                          key={category.id}
+                          className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg"
+                        >
                           <Folder className="h-5 w-5 text-gray-500" />
                           <Input
                             value={category.name}
-                            onChange={(e) => handleBudgetCategoryChange(category.id, 'name', e.target.value)}
+                            onChange={(e) =>
+                              handleBudgetCategoryChange(
+                                category.id,
+                                "name",
+                                e.target.value
+                              )
+                            }
                             className="font-medium flex-1"
                             disabled={isLoading}
                           />
@@ -685,62 +939,94 @@ export default function BudgetPage() {
                             <Input
                               type="number"
                               value={(category.percentage * 100).toFixed(0)}
-                              onChange={(e) => handleBudgetCategoryChange(category.id, 'percentage', e.target.value)}
+                              onChange={(e) =>
+                                handleBudgetCategoryChange(
+                                  category.id,
+                                  "percentage",
+                                  e.target.value
+                                )
+                              }
                               className="pr-6 text-right"
                               disabled={isLoading}
                             />
-                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-gray-500">%</span>
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+                              %
+                            </span>
                           </div>
-                          <Button 
-                            size="icon" variant="ghost" 
+                          <Button
+                            size="icon"
+                            variant="ghost"
                             onClick={() => handleSaveBudgetCategory(category)}
                             disabled={!isChanged || isLoading}
-                            title="Save"
+                            title="Salvar"
                           >
-                            <Save className={`w-4 h-4 ${isChanged ? "text-blue-600" : ""}`} />
+                            <Save
+                              className={`w-4 h-4 ${
+                                isChanged ? "text-blue-600" : ""
+                              }`}
+                            />
                           </Button>
-                          <Button 
-                            size="icon" variant="ghost" 
+                          <Button
+                            size="icon"
+                            variant="ghost"
                             onClick={() => handleDeleteBudgetCategory(category)}
                             disabled={isLoading}
-                            title="Delete"
+                            title="Excluir"
                           >
                             <Trash2 className="w-4 h-4 text-red-500" />
                           </Button>
                         </div>
-                      )
+                      );
                     })}
-                    
+
                     {/* Total */}
-                    <div className={`text-right font-bold ${totalPercentage.toFixed(2) !== '1.00' ? 'text-red-600' : 'text-green-600'}`}>
+                    <div
+                      className={`text-right font-bold ${
+                        totalPercentage.toFixed(2) !== "1.00"
+                          ? "text-red-600"
+                          : "text-green-600"
+                      }`}
+                    >
                       Total: {(totalPercentage * 100).toFixed(0)}%
-                      {totalPercentage.toFixed(2) !== '1.00' && " (Sum must be 100%)"}
+                      {totalPercentage.toFixed(2) !== "1.00" &&
+                        " (A soma deve ser 100%)"}
                     </div>
 
                     {/* Create New */}
                     <div className="border-t pt-4 mt-4">
-                      <h4 className="text-sm font-semibold mb-3">Add New Category</h4>
+                      <h4 className="text-sm font-semibold mb-3">
+                        Adicionar Nova Categoria
+                      </h4>
                       <div className="flex gap-3 items-center">
-                         <Input 
-                           placeholder="Name (e.g., Education)" 
-                           value={newCategoryName} 
-                           onChange={(e) => setNewCategoryName(e.target.value)} 
-                           disabled={isLoading}
-                         />
-                         <div className="relative w-24">
-                            <Input 
-                              type="number" 
-                              placeholder="0" 
-                              value={newCategoryPerc} 
-                              onChange={(e) => setNewCategoryPerc(e.target.value)} 
-                              className="pr-6 text-right"
-                              disabled={isLoading}
-                            />
-                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-gray-500">%</span>
-                         </div>
-                         <Button onClick={handleCreateBudgetCategory} disabled={isLoading}>
-                           {isLoading ? <Loader2 className="animate-spin" /> : <Plus className="w-4 h-4" />}
-                         </Button>
+                        <Input
+                          placeholder="Nome (ex: Educação)"
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          disabled={isLoading}
+                        />
+                        <div className="relative w-24">
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            value={newCategoryPerc}
+                            onChange={(e) => setNewCategoryPerc(e.target.value)}
+                            className="pr-6 text-right"
+                            disabled={isLoading}
+                          />
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+                            %
+                          </span>
+                        </div>
+                        <Button
+                          onClick={handleCreateBudgetCategory}
+                          disabled={isLoading}
+                        >
+                          {isLoading ? (
+                            <Loader2 className="animate-spin" />
+                          ) : (
+                            <Plus className="w-4 h-4" />
+                          )}
+                        </Button>
                       </div>
                     </div>
                   </CardContent>

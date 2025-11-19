@@ -1,18 +1,18 @@
 "use client"
 
 import type React from "react"
-import { use, useState } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { toast } from "@/hooks/use-toast"
 import { SignUpInputDTO } from "@/domain/dto/sign-up.dto"
 import { SignInInputDTO } from "@/domain/dto/sign-in.dto"
 import { signInUseCase, signUpUseCase } from "@/infrastructure/dependency-injection"
 import { useAuth } from "./auth-provider"
+import { notify } from "@/lib/notify-helper"
 
 export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -30,10 +30,10 @@ export default function AuthPage() {
 
   try {
     auth.session = await signInUseCase.execute(input)
-    toast({ title: "Login realizado!", description: "Redirecionando..." })
+    notify.success("Login realizado! Redirecionando...")
     router.push("/dashboard")
   } catch (err: any) {
-    toast({ title: "Erro no login", description: err.message, variant: "destructive" })
+    notify.error(err, "fazer login")
   } finally {
     setIsLoading(false)
   }
@@ -51,9 +51,11 @@ const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
 
   try {
     await signUpUseCase.execute(input)
-    toast({ title: "Conta criada!", description: "Verifique seu email." })
+    notify.success("Seu cadastro realizado com sucesso!", {
+      description: "Verifique seu email para ativar sua conta.",
+    })
   } catch (err: any) {
-    toast({ title: "Erro no cadastro", description: err.message, variant: "destructive" })
+    notify.error(err, "cadastrar a conta")
   } finally {
     setIsLoading(false)
   }

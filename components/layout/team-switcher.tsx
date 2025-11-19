@@ -12,7 +12,6 @@ import { cn } from "@/lib/utils";
 import { useTeam } from "@/app/(app)/team/team-provider";
 import { useAuth } from "@/app/auth/auth-provider";
 import { useRouter } from "next/navigation";
-import { toast } from "@/hooks/use-toast";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -43,6 +42,7 @@ import {
 } from "@/components/ui/popover";
 
 import { createTeamUseCase } from "@/infrastructure/dependency-injection";
+import { notify } from "@/lib/notify-helper";
 
 interface TeamSwitcherProps {
   isMobile?: boolean;
@@ -64,11 +64,7 @@ export function TeamSwitcher({ isMobile = false }: TeamSwitcherProps) {
     e.preventDefault();
     if (!session?.user) return;
     if (!teamName.trim()) {
-      toast({
-        title: "Nome inválido",
-        description: "O nome da equipe não pode ser vazio.",
-        variant: "destructive",
-      });
+      notify.error("O nome da equipe não pode ser vazio.", "criar a equipe");
       return;
     }
 
@@ -81,9 +77,8 @@ export function TeamSwitcher({ isMobile = false }: TeamSwitcherProps) {
       });
 
       // 2. Feedback
-      toast({
-        title: "Equipe criada!",
-        description: `Você agora está no comando de "${newTeam.name}".`,
+      notify.success("Equipe criada com sucesso!", {
+        description: `A equipe "${newTeam.name}" foi criada.`,
       });
 
       // 3. Fecha modais e limpa form
@@ -93,11 +88,7 @@ export function TeamSwitcher({ isMobile = false }: TeamSwitcherProps) {
 
     } catch (error: any) {
       console.error(error);
-      toast({
-        title: "Erro ao criar equipe",
-        description: error.message || "Tente novamente mais tarde.",
-        variant: "destructive",
-      });
+      notify.error(error, "criar a equipe");
     } finally {
       setIsLoading(false);
     }

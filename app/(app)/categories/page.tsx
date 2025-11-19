@@ -38,7 +38,6 @@ import {
   Tag,
   Folder,
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/app/auth/auth-provider";
 
 import type { CategoryDetailsDTO } from "@/domain/dto/category.types.d.ts";
@@ -52,6 +51,7 @@ import {
 } from "@/infrastructure/dependency-injection";
 
 import { useTeam } from "../team/team-provider";
+import { notify } from "@/lib/notify-helper";
 
 const BUDGET_CATEGORY_COLORS: Record<string, string> = {
   Necessidades: "bg-green-100 text-green-800",
@@ -106,11 +106,7 @@ export default function CategoriesPage() {
       setCategories(categoriesData);
       setBudgetCategories(budgetCategoriesData);
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar dados",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify.error(error, "carregar as categorias.");
     } finally {
       setIsLoadingData(false);
     }
@@ -134,25 +130,28 @@ export default function CategoriesPage() {
           name,
           budgetCategoryId,
         });
-        toast({ title: "Categoria atualizada com sucesso!" });
+        notify.success("Categoria atualizada", {
+          description: `"${name}" foi alterada com sucesso.`,
+        });
       } else {
         await createCategoryUseCase.execute({
           name,
           budgetCategoryId,
           teamId,
         });
-        toast({ title: "Categoria criada com sucesso!" });
+        notify.success("Categoria criada", {
+          description: `"${name}" está pronta para uso.`,
+        });
       }
 
       setIsDialogOpen(false);
       setEditingCategory(null);
       await loadData(teamId);
     } catch (error: any) {
-      toast({
-        title: editingCategory ? "Erro ao atualizar" : "Erro ao criar",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify.error(
+        error,
+        editingCategory ? "atualizar a categoria." : "criar a categoria."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -160,9 +159,7 @@ export default function CategoriesPage() {
 
   const handleDelete = async (category: CategoryDetailsDTO) => {
     if (!teamId) return;
-    if (
-      !confirm(`Tem certeza que deseja excluir a categoria "${category.name}"?`)
-    )
+    if (!confirm(`Deseja realmente excluir a categoria "${category.name}"?`))
       return;
 
     setIsLoading(true);
@@ -171,14 +168,10 @@ export default function CategoriesPage() {
         categoryId: category.id,
         teamId: teamId,
       });
-      toast({ title: "Categoria excluída com sucesso!" });
+      notify.success("Categoria excluída com sucesso!");
       await loadData(teamId);
     } catch (error: any) {
-      toast({
-        title: "Erro ao excluir categoria",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify.error(error, "excluir a categoria.");
     } finally {
       setIsLoading(false);
     }

@@ -36,10 +36,11 @@ import {
   Shield,
   Crown,
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/app/auth/auth-provider";
 import { useTeam } from "@/app/(app)/team/team-provider";
 import { usePermission } from "@/hooks/use-permission";
+
+import { notify } from "@/lib/notify-helper";
 
 // DTOs e Entidades
 import type { TeamMemberProfileDTO } from "@/domain/dto/team.types.d.ts";
@@ -124,11 +125,7 @@ export default function TeamPage() {
       setRoles(data.roles);
       setInvites(data.invites);
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar dados",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify.error(error, "carregar os dados da equipe");
     } finally {
       setIsLoading(false);
     }
@@ -184,17 +181,17 @@ export default function TeamPage() {
         roleId: inviteRoleId === "default" ? null : inviteRoleId,
         invitedBy: session.user.id,
       });
-      toast({ title: "Convite enviado!" });
+
+      notify.success("Convite enviado!", {
+        description: `Um email foi enviado para ${inviteEmail}.`,
+      });
+
       setInviteEmail("");
       setInviteRoleId("");
       setIsInviteOpen(false);
       await loadTeamData();
     } catch (error: any) {
-      toast({
-        title: "Erro ao convidar",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify.error(error, "enviar o convite");
     } finally {
       setIsActionLoading(false);
     }
@@ -208,32 +205,27 @@ export default function TeamPage() {
         memberId,
         roleId: roleId === "default" ? null : roleId,
       });
-      toast({ title: "Cargo atualizado com sucesso" });
+      notify.success("Cargo atualizado com sucesso!");
       await loadTeamData();
     } catch (error: any) {
-      toast({
-        title: "Erro ao atualizar",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify.error(error, "atualizar o cargo");
     }
   };
 
   const handleRemoveMember = async (memberId: string) => {
     if (!currentTeam) return;
-    if (!confirm("Tem certeza que deseja remover este membro?")) return;
+    if (!confirm("Remover este membro da equipe? Ele perderá acesso a equipe."))
+      return;
 
     setIsActionLoading(true);
     try {
       await manageMembersUseCase.removeMember(currentTeam.team.id, memberId);
-      toast({ title: "Membro removido." });
+      notify.success("Membro removido", {
+        description: "A lista de acesso foi atualizada.",
+      });
       await loadTeamData();
     } catch (error: any) {
-      toast({
-        title: "Erro ao remover",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify.error(error, "remover o membro");
     } finally {
       setIsActionLoading(false);
     }
@@ -243,14 +235,10 @@ export default function TeamPage() {
     if (!currentTeam) return;
     try {
       await manageMembersUseCase.cancelInvite(inviteId, currentTeam.team.id);
-      toast({ title: "Convite cancelado" });
+      notify.success("Convite cancelado");
       await loadTeamData();
     } catch (error: any) {
-      toast({
-        title: "Erro ao cancelar",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify.error(error, "cancelar o convite");
     }
   };
 
@@ -270,7 +258,7 @@ export default function TeamPage() {
           color: newRoleColor,
           permissions: newRolePermissions,
         });
-        toast({ title: "Cargo atualizado!" });
+        notify.success("Cargo atualizado!");
       } else {
         await manageRolesUseCase.createRole({
           teamId: currentTeam.team.id,
@@ -278,16 +266,12 @@ export default function TeamPage() {
           color: newRoleColor,
           permissions: newRolePermissions,
         });
-        toast({ title: "Cargo criado!" });
+        notify.success("Cargo criado!");
       }
       setIsRoleModalOpen(false);
       await loadTeamData();
     } catch (error: any) {
-      toast({
-        title: "Erro ao salvar cargo",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify.error(error, "salvar o cargo");
     } finally {
       setIsActionLoading(false);
     }
@@ -300,14 +284,10 @@ export default function TeamPage() {
     setIsActionLoading(true);
     try {
       await manageRolesUseCase.deleteRole(roleId, currentTeam.team.id);
-      toast({ title: "Cargo excluído!" });
+      notify.success("Cargo excluído!");
       await loadTeamData();
     } catch (error: any) {
-      toast({
-        title: "Erro ao excluir",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify.error(error, "excluir o cargo");
     } finally {
       setIsActionLoading(false);
     }

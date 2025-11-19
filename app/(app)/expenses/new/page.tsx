@@ -32,7 +32,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/app/auth/auth-provider";
-import { toast } from "@/hooks/use-toast";
+import { notify } from "@/lib/notify-helper";
 
 import {
   createExpenseUseCase,
@@ -91,11 +91,7 @@ export default function NewExpensePage() {
           setCategoryId(data[0].id);
         }
       } catch (error: any) {
-        toast({
-          title: "Erro ao carregar categorias",
-          description: error.message,
-          variant: "destructive",
-        });
+        notify.error(error, "carregar categorias");
       } finally {
         setIsLoadingCategories(false);
       }
@@ -109,11 +105,7 @@ export default function NewExpensePage() {
     if (!file) return;
 
     if (file.size > 10 * 1024 * 1024) {
-      toast({
-        title: "Arquivo muito grande",
-        description: "O limite é 10MB.",
-        variant: "destructive",
-      });
+      notify.error(new Error("Arquivo muito grande"), "selecionar o arquivo");
       return;
     }
 
@@ -152,21 +144,18 @@ export default function NewExpensePage() {
         }
 
         if (fieldsUpdated > 0) {
-          toast({
-            title: "Nota Fiscal lida!",
-            description: "Dados preenchidos automaticamente pela IA.",
-            // Pode adicionar um ícone ou cor especial aqui
+          notify.success("Nota fiscal lida!", {
+            description: "Preenchemos os dados automaticamente para você.",
           });
         }
       }
     } catch (error) {
       console.error("Erro ao ler nota:", error);
-      // Falha silenciosa ou toast discreto, para não bloquear o usuário
-      toast({
-        title: "Não foi possível ler os dados",
-        description: "Você pode preencher manualmente.",
-        variant: "destructive", // ou default
-      });
+
+      notify.info(
+        "Leitura automática indisponível",
+        "Não conseguimos ler o arquivo. Por favor, preencha manualmente."
+      );
     } finally {
       setIsParsingReceipt(false);
     }
@@ -214,22 +203,15 @@ export default function NewExpensePage() {
 
       await createExpenseUseCase.execute(dto);
 
-      toast({
-        title: "Gasto adicionado com sucesso!",
-        description: isInstallment
-          ? `Criadas ${installments} parcelas de R$ ${calculateInstallmentAmount().toFixed(
-              2
-            )}`
-          : "Gasto registrado",
-      });
+      const message = isInstallment 
+        ? `Lançamento parcelado em ${installments}x criado com sucesso.`
+        : "Despesa registrada com sucesso.";
+
+      notify.success("Sucesso!", { description: message });
 
       router.push("/expenses");
     } catch (error: any) {
-      toast({
-        title: "Erro ao adicionar gasto",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify.error(error, "registrar a despesa");
     } finally {
       setIsLoading(false);
     }

@@ -6,7 +6,7 @@ export class GeminiAiService implements IAiService {
   private model;
   constructor(
     apiKey: string,
-    modelName: string = process.env.GOOGLE_GEMINI_MODEL!
+    modelName: string = "gemini-2.5-flash"
   ) {
     const genAI = new GoogleGenerativeAI(apiKey);
     this.model = genAI.getGenerativeModel({

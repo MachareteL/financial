@@ -43,7 +43,6 @@ import {
   Folder,
 } from "lucide-react";
 import { useAuth } from "@/app/auth/auth-provider";
-import { toast } from "@/hooks/use-toast";
 
 import {
   getExpensesUseCase,
@@ -55,6 +54,7 @@ import type { ExpenseDetailsDTO } from "@/domain/dto/expense.types.d.ts";
 import type { CategoryDetailsDTO } from "@/domain/dto/category.types.d.ts";
 import type { BudgetCategoryDetailsDTO } from "@/domain/dto/budget-category.types.d.ts";
 import { useTeam } from "../team/team-provider";
+import { notify } from "@/lib/notify-helper";
 
 const BUDGET_CATEGORY_COLORS: Record<string, string> = {
   Necessidades: "bg-green-100 text-green-800",
@@ -136,11 +136,7 @@ export default function ExpensesPage() {
       setCategories(categoriesData);
       setBudgetCategories(budgetCategoriesData);
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar dados",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify.error(error, "carregar os dados");
     } finally {
       setIsLoading(false);
     }
@@ -227,21 +223,14 @@ export default function ExpensesPage() {
 
   const deleteExpense = async (id: string) => {
     if (!teamId) return;
-    if (!confirm("Tem certeza que deseja excluir este gasto?")) return;
+    if (!confirm("Tem certeza que deseja excluir esta despesa?")) return;
 
     try {
       await deleteExpenseUseCase.execute({ expenseId: id, teamId: teamId });
       setExpenses(expenses.filter((expense) => expense.id !== id));
-      toast({
-        title: "Gasto excluído",
-        description: "O gasto foi excluído com sucesso.",
-      });
+      notify.success("Despesa excluída com sucesso!");
     } catch (error: any) {
-      toast({
-        title: "Erro ao excluir gasto",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify.error(error, "excluir a despesa");
     }
   };
 

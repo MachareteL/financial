@@ -14,10 +14,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Users, Plus, UserPlus } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
 
 import { useAuth } from "@/app/auth/auth-provider";
 import { createTeamUseCase } from "@/infrastructure/dependency-injection";
+import { notify } from "@/lib/notify-helper";
 
 export default function OnboardingPage() {
   const { session, loading } = useAuth();
@@ -55,20 +55,14 @@ export default function OnboardingPage() {
         userId: session.user.id,
       });
 
-      toast({
-        title: "Time criado com sucesso!",
-        description: `O time "${teamName}" foi criado.`,
+      notify.success("Equipe criada com sucesso!", {
+        description: `A equipe "${teamName}" foi criada.`,
       });
-
 
       router.refresh();
       
     } catch (error: any) {
-      toast({
-        title: "Erro ao criar time",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify.error(error, "criar a equipe");
     } finally {
       setIsLoading(false);
     }

@@ -33,7 +33,6 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/app/auth/auth-provider";
 
 import {
@@ -48,11 +47,12 @@ import type {
   UpdateExpenseDTO,
 } from "@/domain/dto/expense.types.d.ts";
 import { useTeam } from "@/app/(app)/team/team-provider";
+import { notify } from "@/lib/notify-helper";
 
 export default function EditExpensePage() {
   const { session, loading: authLoading } = useAuth();
-  const { currentTeam} = useTeam();
-  
+  const { currentTeam } = useTeam();
+
   const teamId = currentTeam?.team.id;
   const userId = session?.user.id;
 
@@ -110,15 +110,14 @@ export default function EditExpensePage() {
           setDate(expenseData.date);
           setExistingReceiptUrl(expenseData.receiptUrl || null); // Salva a URL original
         } else {
-          toast({ title: "Gasto não encontrado", variant: "destructive" });
+          notify.error(
+            new Error("Gasto não encontrado"),
+            "carregar os dados do gasto"
+          );
           router.push("/expenses");
         }
       } catch (error: any) {
-        toast({
-          title: "Erro ao carregar dados",
-          description: error.message,
-          variant: "destructive",
-        });
+        notify.error(error, "carregar os dados do gasto");
         router.push("/expenses");
       } finally {
         setIsLoadingData(false);
@@ -132,11 +131,7 @@ export default function EditExpensePage() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        toast({
-          title: "Arquivo muito grande",
-          description: "O limite é 10MB.",
-          variant: "destructive",
-        });
+        notify.error(new Error("Arquivo muito grande"), "selecionar o arquivo");
         return;
       }
       setSelectedFile(file);
@@ -186,17 +181,12 @@ export default function EditExpensePage() {
 
       await updateExpenseUseCase.execute(dto);
 
-      toast({
-        title: "Gasto atualizado!",
-        description: "As alterações foram salvas.",
+      notify.success("Gasto atualizado!", {
+        description: "As alterações foram salvas com sucesso.",
       });
       router.push("/expenses");
     } catch (error: any) {
-      toast({
-        title: "Erro ao salvar",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify.error(error, "salvar o gasto");
     } finally {
       setIsSaving(false);
     }
@@ -213,14 +203,12 @@ export default function EditExpensePage() {
     setIsDeleting(true);
     try {
       await deleteExpenseUseCase.execute({ expenseId: expense.id, teamId });
-      toast({ title: "Gasto excluído!" });
+      notify.success("Gasto excluído!", {
+        description: "O gasto foi removido com sucesso.",
+      });
       router.push("/expenses");
     } catch (error: any) {
-      toast({
-        title: "Erro ao excluir",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify.error(error, "excluir o gasto");
     } finally {
       setIsDeleting(false);
     }

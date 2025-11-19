@@ -49,7 +49,6 @@ import {
   Calendar,
   Loader2,
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/app/auth/auth-provider";
 
 // 1. Importar Casos de Uso e DTOs
@@ -65,6 +64,7 @@ import type {
   UpdateInvestmentDTO,
 } from "@/domain/dto/investment.types.d.ts";
 import { useTeam } from "../team/team-provider";
+import { notify } from "@/lib/notify-helper";
 
 // Tipo auxiliar para o gráfico
 interface ProjectionData {
@@ -130,11 +130,7 @@ export default function InvestmentsPage() {
       const data = await getInvestmentsUseCase.execute(teamId);
       setInvestments(data);
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar investimentos",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify.error(error, "carregar os investimentos");
     } finally {
       setIsDataLoading(false);
     }
@@ -225,7 +221,8 @@ export default function InvestmentsPage() {
           teamId,
         };
         await updateInvestmentUseCase.execute(dto);
-        toast({ title: "Investimento atualizado com sucesso!" });
+        notify.success("Investimento atualizado com sucesso!");
+        
       } else {
         // 6. Chama Create Use Case
         const dto: CreateInvestmentDTO = {
@@ -233,18 +230,14 @@ export default function InvestmentsPage() {
           teamId,
         };
         await createInvestmentUseCase.execute(dto);
-        toast({ title: "Investimento adicionado com sucesso!" });
+        notify.success("Investimento adicionado com sucesso!");
       }
 
       setIsDialogOpen(false);
       setEditingInvestment(null);
       await loadInvestments(); // Recarrega a lista
     } catch (error: any) {
-      toast({
-        title: "Erro ao salvar investimento",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify.error(error, "salvar o investimento");
     } finally {
       setIsLoading(false);
     }
@@ -257,14 +250,10 @@ export default function InvestmentsPage() {
     try {
       // 7. Chama Delete Use Case
       await deleteInvestmentUseCase.execute(id, teamId);
-      toast({ title: "Investimento excluído com sucesso!" });
+      notify.success("Investimento excluído com sucesso!");
       await loadInvestments();
     } catch (error: any) {
-      toast({
-        title: "Erro ao excluir investimento",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify.error(error, "excluir o investimento");
     }
   };
 

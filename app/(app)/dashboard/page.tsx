@@ -17,13 +17,13 @@ import {
   Plus, LogOut, TrendingUp, TrendingDown, Wallet, 
   Loader2, ArrowRight, CalendarDays, AlertCircle 
 } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
 
 // Charts
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   BarChart, Bar, Cell 
 } from "recharts"
+import { notify } from "@/lib/notify-helper"
 
 // Cores
 const COLORS = {
@@ -66,7 +66,7 @@ export default function DashboardPage() {
         setData(result)
       } catch (error: any) {
         console.error("Dashboard error:", error)
-        toast({ title: "Erro ao carregar", description: "Não foi possível obter os dados.", variant: "destructive" })
+        notify.error(error, "carregar os dados do painel")
       } finally {
         setIsLoadingData(false)
       }
