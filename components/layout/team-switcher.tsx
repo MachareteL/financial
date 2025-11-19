@@ -42,7 +42,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-import { createTeamAction } from "@/app/(app)/team/_actions/_team_actions";
+import { createTeamUseCase } from "@/infrastructure/dependency-injection";
 
 interface TeamSwitcherProps {
   isMobile?: boolean;
@@ -75,7 +75,7 @@ export function TeamSwitcher({ isMobile = false }: TeamSwitcherProps) {
     setIsLoading(true);
     try {
       // 1. Cria o time usando a arquitetura limpa
-      const newTeam = await createTeamAction({
+      const newTeam = await createTeamUseCase.execute({
         teamName: teamName,
         userId: session.user.id,
       });
