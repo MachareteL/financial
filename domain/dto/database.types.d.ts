@@ -71,7 +71,15 @@ export type Database = {
           total_income?: number
           year?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "budgets_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       categories: {
         Row: {
@@ -211,7 +219,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          amount: number
+          amount?: number
           created_at?: string
           date: string
           description?: string | null
@@ -286,7 +294,15 @@ export type Database = {
           team_id?: string | null
           type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "investments_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -339,10 +355,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "team_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "team_invites_role_id_fkey"
             columns: ["role_id"]
             isOneToOne: false
             referencedRelation: "team_roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_invites_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
             referencedColumns: ["id"]
           },
         ]
