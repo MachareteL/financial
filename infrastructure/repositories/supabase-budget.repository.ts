@@ -31,7 +31,7 @@ export class BudgetRepository implements IBudgetRepository {
 
   async create(budget: Budget): Promise<Budget> {
     const row = this.mapEntityToRow(budget)
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('budgets')
       .insert({
@@ -48,7 +48,7 @@ export class BudgetRepository implements IBudgetRepository {
 
   async update(budget: Budget): Promise<Budget> {
     const row = this.mapEntityToRow(budget)
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('budgets')
       .update(row) // Só atualiza o total_income
@@ -62,7 +62,7 @@ export class BudgetRepository implements IBudgetRepository {
   }
 
   async findByTeamAndPeriod(teamId: string, month: number, year: number): Promise<Budget | null> {
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('budgets')
       .select('*')

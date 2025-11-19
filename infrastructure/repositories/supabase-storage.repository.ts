@@ -3,7 +3,7 @@ import { getSupabaseClient } from '../database/supabase.client';
 
 export class StorageRepository implements IStorageRepository {
   async upload(file: File, path: string, bucket: string): Promise<string> {
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { error: uploadError } = await supabase.storage
       .from(bucket)
       .upload(path, file, {

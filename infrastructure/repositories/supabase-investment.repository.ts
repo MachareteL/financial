@@ -37,7 +37,7 @@ export class InvestmentRepository implements IInvestmentRepository {
   }
 
   async findByTeamId(teamId: string): Promise<Investment[]> {
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from("investments")
       .select("*")
@@ -49,7 +49,7 @@ export class InvestmentRepository implements IInvestmentRepository {
   }
 
   async findById(id: string, teamId: string): Promise<Investment | null> {
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from("investments")
       .select("*")
@@ -63,7 +63,7 @@ export class InvestmentRepository implements IInvestmentRepository {
 
   async create(investment: Investment): Promise<Investment> {
     const row = this.mapEntityToRow(investment);
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from("investments")
       .insert({
@@ -80,7 +80,7 @@ export class InvestmentRepository implements IInvestmentRepository {
 
   async update(investment: Investment): Promise<Investment> {
     const row = this.mapEntityToRow(investment);
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from("investments")
       .update(row)
@@ -94,7 +94,7 @@ export class InvestmentRepository implements IInvestmentRepository {
   }
 
   async delete(id: string, teamId: string): Promise<void> {
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { error } = await supabase
       .from("investments")
       .delete()

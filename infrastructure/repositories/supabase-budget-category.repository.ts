@@ -28,7 +28,7 @@ export class BudgetCategoryRepository implements IBudgetCategoryRepository {
   }
 
   async findByTeamId(teamId: string): Promise<BudgetCategory[]> {
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
 
     const { data, error } = await supabase
       .from("budget_categories")
@@ -41,7 +41,7 @@ export class BudgetCategoryRepository implements IBudgetCategoryRepository {
   }
 
   async findById(id: string, teamId: string): Promise<BudgetCategory | null> {
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
 
     const { data, error } = await supabase
       .from("budget_categories")
@@ -57,7 +57,7 @@ export class BudgetCategoryRepository implements IBudgetCategoryRepository {
   }
 
   async create(category: BudgetCategory): Promise<BudgetCategory> {
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const row = this.mapEntityToRow(category);
 
     const { data, error } = await supabase
@@ -76,7 +76,7 @@ export class BudgetCategoryRepository implements IBudgetCategoryRepository {
 
   async update(category: BudgetCategory): Promise<BudgetCategory> {
     const row = this.mapEntityToRow(category);
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from("budget_categories")
       .update(row)
@@ -90,7 +90,7 @@ export class BudgetCategoryRepository implements IBudgetCategoryRepository {
   }
 
   async delete(id: string, teamId: string): Promise<void> {
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { error } = await supabase
       .from("budget_categories")
       .delete()
@@ -125,7 +125,7 @@ export class BudgetCategoryRepository implements IBudgetCategoryRepository {
       },
     ];
 
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from("budget_categories")
       .insert(defaults)

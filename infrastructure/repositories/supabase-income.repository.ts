@@ -41,7 +41,7 @@ export class IncomeRepository implements IIncomeRepository {
 
   async create(income: Income): Promise<Income> {
     const row = this.mapEntityToRow(income);
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from("incomes")
       .insert({
@@ -58,7 +58,7 @@ export class IncomeRepository implements IIncomeRepository {
   async update(income: Income): Promise<Income> {
     const row = this.mapEntityToRow(income);
 
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from("incomes")
       .update(row)
@@ -72,7 +72,7 @@ export class IncomeRepository implements IIncomeRepository {
   }
 
   async delete(id: string, teamId: string): Promise<void> {
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { error } = await supabase
       .from("incomes")
       .delete()
@@ -83,7 +83,7 @@ export class IncomeRepository implements IIncomeRepository {
   }
 
   async findById(id: string, teamId: string): Promise<Income | null> {
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from("incomes")
       .select(`*, profiles ( name )`)
@@ -98,7 +98,7 @@ export class IncomeRepository implements IIncomeRepository {
   }
 
   async findByTeamId(teamId: string): Promise<Income[]> {
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from("incomes")
       .select(`*, profiles ( name )`)

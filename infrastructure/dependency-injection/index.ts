@@ -8,6 +8,7 @@ import {
   StorageRepository,
   IncomeRepository,
   InvestmentRepository,
+  BudgetCategoryRepository,
 } from "../repositories";
 
 // Auth
@@ -35,7 +36,6 @@ import { DeleteIncomeUseCase } from "@/app/(app)/income/_use_case/delete-income.
 // Budget
 import { GetBudgetUseCase } from "@/app/(app)/budget/_use-case/get-budget.use-case";
 import { SaveBudgetUseCase } from "@/app/(app)/budget/_use-case/save-budget.use-case";
-import { BudgetCategoryRepository } from "../repositories/budget-category.repository";
 import { GetBudgetCategoriesUseCase } from "@/app/(app)/budget/_use-case/get-budget-categories.use-case";
 
 // Categories

@@ -51,7 +51,7 @@ export class CategoryRepository implements ICategoryRepository {
   }
 
   async findByTeamId(teamId: string): Promise<Category[]> {
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('categories')
       .select(CATEGORY_SELECT_QUERY)
@@ -63,7 +63,7 @@ export class CategoryRepository implements ICategoryRepository {
   }
 
   async findById(categoryId: string, teamId: string): Promise<Category | null> {
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('categories')
       .select(CATEGORY_SELECT_QUERY)
@@ -77,7 +77,7 @@ export class CategoryRepository implements ICategoryRepository {
 
   async create(category: Category): Promise<Category> {
     const row = this.mapEntityToRow(category)
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('categories')
       .insert({
@@ -94,7 +94,7 @@ export class CategoryRepository implements ICategoryRepository {
 
   async update(category: Category): Promise<Category> {
     const row = this.mapEntityToRow(category)
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('categories')
       .update(row)
@@ -108,7 +108,7 @@ export class CategoryRepository implements ICategoryRepository {
   }
 
   async delete(categoryId: string, teamId: string): Promise<void> {
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { error } = await supabase
       .from('categories')
       .delete()
@@ -147,7 +147,7 @@ export class CategoryRepository implements ICategoryRepository {
       created_at: new Date().toISOString(),
     }))
 
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('categories')
       .insert(categoriesToInsert)

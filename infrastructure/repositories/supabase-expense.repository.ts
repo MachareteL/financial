@@ -113,7 +113,7 @@ export class ExpenseRepository implements IExpenseRepository {
       created_at: entity.createdAt.toISOString(),
     }));
 
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('expenses')
       .insert(rows)
@@ -131,7 +131,7 @@ export class ExpenseRepository implements IExpenseRepository {
     const row = this.mapEntityToRow(expense)
     const { id, ...updateData } = row;
 
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('expenses')
       .update(updateData)
@@ -148,7 +148,7 @@ export class ExpenseRepository implements IExpenseRepository {
   }
 
   async delete(id: string, teamId: string): Promise<void> {
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { error } = await supabase
       .from('expenses')
       .delete()
@@ -162,7 +162,7 @@ export class ExpenseRepository implements IExpenseRepository {
   }
 
   async findById(id: string, teamId: string): Promise<Expense | null> {
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('expenses')
       .select(EXPENSE_SELECT_QUERY)
@@ -179,7 +179,7 @@ export class ExpenseRepository implements IExpenseRepository {
   }
 
   async findByTeamId(teamId: string): Promise<Expense[]> {
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('expenses')
       .select(EXPENSE_SELECT_QUERY)
@@ -194,7 +194,7 @@ export class ExpenseRepository implements IExpenseRepository {
   }
 
   async findByDateRange(teamId: string, startDate: Date, endDate: Date): Promise<Expense[]> {
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('expenses')
       .select(EXPENSE_SELECT_QUERY)
