@@ -1,20 +1,26 @@
-import { createClient } from "@supabase/supabase-js"
-import type { Database } from "@/domain/dto/database.types.d.ts"
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import type { Database } from "@/domain/dto/database.types.d.ts";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+export const getSupabaseClient = async () => {
+  const cookieStore = await cookies();
 
-
-let supabaseInstance: ReturnType<typeof createClient<Database>> | null = null
-
-export function getSupabaseClient() {
-  if (!supabaseInstance) {
-    supabaseInstance = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {}
+        },
       },
-    })
-  }
-  return supabaseInstance
-}
+    }
+  );
+};

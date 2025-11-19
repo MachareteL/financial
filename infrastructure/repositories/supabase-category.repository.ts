@@ -51,7 +51,8 @@ export class CategoryRepository implements ICategoryRepository {
   }
 
   async findByTeamId(teamId: string): Promise<Category[]> {
-    const { data, error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { data, error } = await supabase
       .from('categories')
       .select(CATEGORY_SELECT_QUERY)
       .eq('team_id', teamId)
@@ -62,7 +63,8 @@ export class CategoryRepository implements ICategoryRepository {
   }
 
   async findById(categoryId: string, teamId: string): Promise<Category | null> {
-    const { data, error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { data, error } = await supabase
       .from('categories')
       .select(CATEGORY_SELECT_QUERY)
       .eq('id', categoryId)
@@ -75,7 +77,8 @@ export class CategoryRepository implements ICategoryRepository {
 
   async create(category: Category): Promise<Category> {
     const row = this.mapEntityToRow(category)
-    const { data, error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { data, error } = await supabase
       .from('categories')
       .insert({
         ...row,
@@ -91,7 +94,8 @@ export class CategoryRepository implements ICategoryRepository {
 
   async update(category: Category): Promise<Category> {
     const row = this.mapEntityToRow(category)
-    const { data, error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { data, error } = await supabase
       .from('categories')
       .update(row)
       .eq('id', category.id)
@@ -104,7 +108,8 @@ export class CategoryRepository implements ICategoryRepository {
   }
 
   async delete(categoryId: string, teamId: string): Promise<void> {
-    const { error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { error } = await supabase
       .from('categories')
       .delete()
       .eq('id', categoryId)
@@ -142,7 +147,8 @@ export class CategoryRepository implements ICategoryRepository {
       created_at: new Date().toISOString(),
     }))
 
-    const { data, error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { data, error } = await supabase
       .from('categories')
       .insert(categoriesToInsert)
       .select(CATEGORY_SELECT_QUERY);

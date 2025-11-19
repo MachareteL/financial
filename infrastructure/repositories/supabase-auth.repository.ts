@@ -6,7 +6,7 @@ import { getSupabaseClient } from "../database/supabase.client"
 
 export class AuthSupabaseRepository implements IAuthRepository {
   private async getProfileAndTeams(userId: string): Promise<UserSession | null> {
-    const supabase = getSupabaseClient()
+    const supabase = await getSupabaseClient()
     
     const { data: profile, error } = await supabase
       .from("profiles")
@@ -56,7 +56,7 @@ export class AuthSupabaseRepository implements IAuthRepository {
   }
 
   async getCurrentAuthUser(): Promise<UserSession | null> {
-    const supabase = getSupabaseClient()
+    const supabase = await getSupabaseClient()
     const { data } = await supabase.auth.getSession()
     if (!data.session?.user) return null
 
@@ -64,7 +64,7 @@ export class AuthSupabaseRepository implements IAuthRepository {
   }
 
   async signIn(email: string, password: string): Promise<UserSession> {
-    const supabase = getSupabaseClient()
+    const supabase = await getSupabaseClient()
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error || !data.user) throw error
 
@@ -75,7 +75,7 @@ export class AuthSupabaseRepository implements IAuthRepository {
   }
 
   async signUp(email: string, password: string, name: string): Promise<User> {
-    const supabase = getSupabaseClient()
+    const supabase = await getSupabaseClient()
     
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
@@ -104,7 +104,7 @@ export class AuthSupabaseRepository implements IAuthRepository {
   }
 
   async signOut(): Promise<void> {
-    const supabase = getSupabaseClient()
+    const supabase = await getSupabaseClient()
     await supabase.auth.signOut()
   }
 }

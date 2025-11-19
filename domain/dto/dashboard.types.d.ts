@@ -4,6 +4,7 @@ export type DashboardFolderData = {
   percentage: number;
   budgeted: number;
   spent: number;
+  status: "good" | "warning" | "danger";
 };
 
 export type DashboardExpenseChartData = {
@@ -12,9 +13,26 @@ export type DashboardExpenseChartData = {
   budCategoryName: string;
 };
 
+export type DashboardTransactionDTO = {
+  id: string;
+  description: string | null | undefined;
+  amount: number;
+  date: string;
+  categoryName: string;
+};
+
+export type DashboardDailyData = {
+  day: number;
+  spent: number;
+  projected: number;
+};
+
 export type DashboardDataDTO = {
   totalIncome: number;
   totalSpent: number;
+  balance: number;
   folders: DashboardFolderData[];
   expenseChartData: DashboardExpenseChartData[];
+  recentTransactions: DashboardTransactionDTO[];
+  dailySpending: DashboardDailyData[];
 };

@@ -28,7 +28,6 @@ const EXPENSE_SELECT_QUERY = `
 `
 
 export class ExpenseRepository implements IExpenseRepository {
-  private supabase = getSupabaseClient()
 
   // 1. MAPEAMENTO: DO BANCO (Row) PARA A ENTIDADE
   private mapRowToEntity(row: ExpenseRowWithRelations): Expense {
@@ -114,7 +113,8 @@ export class ExpenseRepository implements IExpenseRepository {
       created_at: entity.createdAt.toISOString(),
     }));
 
-    const { data, error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { data, error } = await supabase
       .from('expenses')
       .insert(rows)
       .select(EXPENSE_SELECT_QUERY);
@@ -131,7 +131,8 @@ export class ExpenseRepository implements IExpenseRepository {
     const row = this.mapEntityToRow(expense)
     const { id, ...updateData } = row;
 
-    const { data, error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { data, error } = await supabase
       .from('expenses')
       .update(updateData)
       .eq('id', expense.id)
@@ -147,7 +148,8 @@ export class ExpenseRepository implements IExpenseRepository {
   }
 
   async delete(id: string, teamId: string): Promise<void> {
-    const { error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { error } = await supabase
       .from('expenses')
       .delete()
       .eq('id', id)
@@ -160,7 +162,8 @@ export class ExpenseRepository implements IExpenseRepository {
   }
 
   async findById(id: string, teamId: string): Promise<Expense | null> {
-    const { data, error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { data, error } = await supabase
       .from('expenses')
       .select(EXPENSE_SELECT_QUERY)
       .eq('id', id)
@@ -176,7 +179,8 @@ export class ExpenseRepository implements IExpenseRepository {
   }
 
   async findByTeamId(teamId: string): Promise<Expense[]> {
-    const { data, error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { data, error } = await supabase
       .from('expenses')
       .select(EXPENSE_SELECT_QUERY)
       .eq('team_id', teamId)
@@ -190,7 +194,8 @@ export class ExpenseRepository implements IExpenseRepository {
   }
 
   async findByDateRange(teamId: string, startDate: Date, endDate: Date): Promise<Expense[]> {
-    const { data, error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { data, error } = await supabase
       .from('expenses')
       .select(EXPENSE_SELECT_QUERY)
       .eq('team_id', teamId)

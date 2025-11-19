@@ -2,10 +2,9 @@ import type { IStorageRepository } from '@/domain/interfaces/storage.repository.
 import { getSupabaseClient } from '../database/supabase.client';
 
 export class StorageRepository implements IStorageRepository {
-  private supabase = getSupabaseClient();
-
   async upload(file: File, path: string, bucket: string): Promise<string> {
-    const { error: uploadError } = await this.supabase.storage
+    const supabase = await getSupabaseClient();
+    const { error: uploadError } = await supabase.storage
       .from(bucket)
       .upload(path, file, {
         cacheControl: '3600',
@@ -17,7 +16,7 @@ export class StorageRepository implements IStorageRepository {
       throw new Error(`Erro no upload: ${uploadError.message}`);
     }
 
-    const { data } = this.supabase.storage
+    const { data } = supabase.storage
       .from(bucket)
       .getPublicUrl(path);
 

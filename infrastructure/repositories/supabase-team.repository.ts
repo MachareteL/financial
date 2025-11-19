@@ -10,10 +10,9 @@ import { getSupabaseClient } from "../database/supabase.client";
 import type { Database } from "@/domain/dto/database.types.d.ts";
 
 export class TeamRepository implements ITeamRepository {
-  private supabase = getSupabaseClient();
-
   async createTeam(teamName: string, adminUserId: string): Promise<Team> {
-    const { data: teamData, error: teamError } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { data: teamData, error: teamError } = await supabase
       .from("teams")
       .insert({ name: teamName })
       .select()
@@ -56,14 +55,14 @@ export class TeamRepository implements ITeamRepository {
         description: "Dono do time. Acesso total e irrestrito.",
       };
 
-    const { data: ownerRole, error: ownerError } = await this.supabase
+    const { data: ownerRole, error: ownerError } = await supabase
       .from("team_roles")
       .insert(ownerRoleData)
       .select("id")
       .single();
 
     if (ownerError) {
-      await this.supabase.from("teams").delete().eq("id", teamData.id);
+      await supabase.from("teams").delete().eq("id", teamData.id);
       throw new Error(ownerError.message);
     }
 
@@ -77,10 +76,10 @@ export class TeamRepository implements ITeamRepository {
         description: "Acesso básico para visualização e criação.",
       };
 
-    await this.supabase.from("team_roles").insert(memberRoleData);
+    await supabase.from("team_roles").insert(memberRoleData);
 
     // Associar o criador como "Proprietário"
-    const { error: memberError } = await this.supabase
+    const { error: memberError } = await supabase
       .from("team_members")
       .insert({
         profile_id: adminUserId,
@@ -89,7 +88,7 @@ export class TeamRepository implements ITeamRepository {
       });
 
     if (memberError) {
-      await this.supabase.from("teams").delete().eq("id", teamData.id);
+      await supabase.from("teams").delete().eq("id", teamData.id);
       throw new Error(memberError.message);
     }
 
@@ -101,7 +100,8 @@ export class TeamRepository implements ITeamRepository {
   }
 
   async getTeamMembers(teamId: string): Promise<TeamMemberProfileDTO[]> {
-    const { data, error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { data, error } = await supabase
       .from("team_members")
       .select(
         `
@@ -137,7 +137,8 @@ export class TeamRepository implements ITeamRepository {
   ): Promise<void> {
     if (!roleId) throw new Error("É necessário definir um cargo.");
 
-    const { error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { error } = await supabase
       .from("team_members")
       .update({ role_id: roleId })
       .eq("team_id", teamId)
@@ -147,7 +148,8 @@ export class TeamRepository implements ITeamRepository {
   }
 
   async removeMember(teamId: string, memberId: string): Promise<void> {
-    const { error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { error } = await supabase
       .from("team_members")
       .delete()
       .eq("team_id", teamId)
@@ -157,7 +159,8 @@ export class TeamRepository implements ITeamRepository {
   }
 
   async getTeamRoles(teamId: string): Promise<TeamRole[]> {
-    const { data, error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { data, error } = await supabase
       .from("team_roles")
       .select("*")
       .eq("team_id", teamId)
@@ -183,7 +186,8 @@ export class TeamRepository implements ITeamRepository {
   async createTeamRole(
     role: Omit<TeamRoleProps, "id" | "createdAt" | "updatedAt">
   ): Promise<TeamRole> {
-    const { data, error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { data, error } = await supabase
       .from("team_roles")
       .insert({
         team_id: role.teamId,
@@ -222,8 +226,8 @@ export class TeamRepository implements ITeamRepository {
       permissions: data.permissions,
       description: data.description,
     };
-
-    const { data: updated, error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { data: updated, error } = await supabase
       .from("team_roles")
       .update(updateData)
       .eq("id", roleId)
@@ -246,7 +250,9 @@ export class TeamRepository implements ITeamRepository {
   }
 
   async deleteTeamRole(roleId: string, teamId: string): Promise<void> {
-    const { error } = await this.supabase
+
+    const supabase = await getSupabaseClient();
+    const { error } = await supabase
       .from("team_roles")
       .delete()
       .eq("id", roleId)
@@ -256,7 +262,8 @@ export class TeamRepository implements ITeamRepository {
   }
 
   async getTeamInvites(teamId: string): Promise<TeamInvite[]> {
-    const { data, error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { data, error } = await supabase
       .from("team_invites")
       .select("*")
       .eq("team_id", teamId)
@@ -282,7 +289,8 @@ export class TeamRepository implements ITeamRepository {
   async createTeamInvite(
     invite: Omit<TeamInviteProps, "id" | "createdAt">
   ): Promise<TeamInvite> {
-    const { data, error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { data, error } = await supabase
       .from("team_invites")
       .insert({
         team_id: invite.teamId,
@@ -309,7 +317,8 @@ export class TeamRepository implements ITeamRepository {
   }
 
   async deleteTeamInvite(inviteId: string, teamId: string): Promise<void> {
-    const { error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { error } = await supabase
       .from("team_invites")
       .delete()
       .eq("id", inviteId)

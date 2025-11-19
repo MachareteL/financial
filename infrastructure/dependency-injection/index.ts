@@ -1,7 +1,6 @@
 import { Container } from "./container";
 import {
   AuthSupabaseRepository,
-  UserRepository,
   CategoryRepository,
   TeamRepository,
   ExpenseRepository,
@@ -66,10 +65,6 @@ const container = Container.getInstance();
 const authRepository = container.get(
   "authRepository",
   () => new AuthSupabaseRepository()
-);
-const userRepository = container.get(
-  "userRepository",
-  () => new UserRepository()
 );
 const categoryRepository = container.get(
   "categoryRepository",

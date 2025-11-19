@@ -6,7 +6,6 @@ import type { Database } from '@/domain/dto/database.types.d.ts'
 type BudgetRow = Database['public']['Tables']['budgets']['Row']
 
 export class BudgetRepository implements IBudgetRepository {
-  private supabase = getSupabaseClient()
 
   // 1. MAPEAMENTO: DO BANCO (Row) PARA A ENTIDADE
   private mapRowToEntity(row: BudgetRow): Budget {
@@ -32,7 +31,8 @@ export class BudgetRepository implements IBudgetRepository {
 
   async create(budget: Budget): Promise<Budget> {
     const row = this.mapEntityToRow(budget)
-    const { data, error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { data, error } = await supabase
       .from('budgets')
       .insert({
         ...row,
@@ -48,7 +48,8 @@ export class BudgetRepository implements IBudgetRepository {
 
   async update(budget: Budget): Promise<Budget> {
     const row = this.mapEntityToRow(budget)
-    const { data, error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { data, error } = await supabase
       .from('budgets')
       .update(row) // Só atualiza o total_income
       .eq('id', budget.id)
@@ -61,7 +62,8 @@ export class BudgetRepository implements IBudgetRepository {
   }
 
   async findByTeamAndPeriod(teamId: string, month: number, year: number): Promise<Budget | null> {
-    const { data, error } = await this.supabase
+    const supabase = await getSupabaseClient();
+    const { data, error } = await supabase
       .from('budgets')
       .select('*')
       .eq('team_id', teamId)
