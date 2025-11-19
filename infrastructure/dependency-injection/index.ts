@@ -60,6 +60,12 @@ import { ManageMembersUseCase } from "@/app/(app)/team/_use-case/manage-members.
 import { GetExpenseByIdUseCase } from "@/app/(app)/expenses/_use-case/get-expense-by-id.use-case";
 import { UpdateExpenseUseCase } from "@/app/(app)/expenses/_use-case/update-expense.use-case";
 
+// Services
+import { GeminiAiService } from "../services/gemini-ai.service";
+
+// AI Use Cases
+import { ParseReceiptUseCase } from "@/app/(app)/expenses/_use-case/parse-receipt.use-case";
+
 const container = Container.getInstance();
 
 const authRepository = container.get(
@@ -97,6 +103,12 @@ const budgetCategoryRepository = container.get(
 const investmentRepository = container.get(
   "investmentRepository",
   () => new InvestmentRepository()
+);
+
+// Services
+const aiService = container.get(
+  "aiService",
+  () => new GeminiAiService(process.env.GOOGLE_API_KEY!, process.env.GOOGLE_GEMINI_MODEL)
 );
 
 // Auth
@@ -265,4 +277,10 @@ export const manageRolesUseCase = container.get(
 export const manageMembersUseCase = container.get(
   "manageMembersUseCase",
   () => new ManageMembersUseCase(teamRepository)
+);
+
+// AI
+export const parseReceiptUseCase = container.get(
+  "parseReceiptUseCase",
+  () => new ParseReceiptUseCase(aiService)
 );
