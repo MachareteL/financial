@@ -464,16 +464,19 @@ export type Database = {
       teams: {
         Row: {
           created_at: string
+          created_by: string | null
           id: string
           name: string
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           id?: string
           name: string
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           id?: string
           name?: string
         }
@@ -484,7 +487,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_auth_user_teams: { Args: never; Returns: string[] }
     }
     Enums: {
       [_ in never]: never

@@ -10,11 +10,11 @@ import { getSupabaseClient } from "../database/supabase.client";
 import type { Database } from "@/domain/dto/database.types.d.ts";
 
 export class TeamRepository implements ITeamRepository {
-  async createTeam(teamName: string, adminUserId: string): Promise<Team> {
+  async createTeam(teamName: string, createdBy: string): Promise<Team> {
     const supabase = getSupabaseClient();
     const { data: teamData, error: teamError } = await supabase
       .from("teams")
-      .insert({ name: teamName })
+      .insert({ name: teamName, created_by: createdBy })
       .select()
       .single();
 
@@ -82,7 +82,7 @@ export class TeamRepository implements ITeamRepository {
     const { error: memberError } = await supabase
       .from("team_members")
       .insert({
-        profile_id: adminUserId,
+        profile_id: createdBy,
         team_id: teamData.id,
         role_id: ownerRole.id,
       });
@@ -96,6 +96,7 @@ export class TeamRepository implements ITeamRepository {
       id: teamData.id,
       name: teamData.name,
       createdAt: new Date(teamData.created_at),
+      createdBy: teamData.created_by!,
     });
   }
 

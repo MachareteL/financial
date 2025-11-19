@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const TeamSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(2),
+  createdBy: z.string().uuid(),
   createdAt: z.date()
 });
 
@@ -18,6 +19,7 @@ export class Team {
 
   get id(): string { return this.props.id }
   get name(): string { return this.props.name }
+  get createdBy(): string { return this.props.createdBy }
   get createdAt(): Date { return this.props.createdAt }
 
   rename(newName: string) {

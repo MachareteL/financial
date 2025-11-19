@@ -18,7 +18,8 @@ export class AuthSupabaseRepository implements IAuthRepository {
           teams (
             id,
             name,
-            created_at
+            created_at,
+            created_by
           ),
           team_roles (
             name,
@@ -44,6 +45,7 @@ export class AuthSupabaseRepository implements IAuthRepository {
         id: membership.teams.id,
         name: membership.teams.name,
         createdAt: new Date(membership.teams.created_at),
+        createdBy: membership.teams.created_by!
       }),
       role: membership.team_roles.name,
       permissions: membership.team_roles.permissions || [],

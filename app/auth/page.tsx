@@ -75,7 +75,6 @@ const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
 
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
-                <button onClick={() => { console.log(auth.session)}}>Lucas</button>
                 <div className="space-y-2">
                   <Label htmlFor="signin-email">Email</Label>
                   <Input id="signin-email" name="email" type="email" placeholder="seu@email.com" required />
