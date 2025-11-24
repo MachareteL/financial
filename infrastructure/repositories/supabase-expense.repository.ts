@@ -178,23 +178,36 @@ export class ExpenseRepository implements IExpenseRepository {
     return this.mapRowToEntity(data as ExpenseRowWithRelations)
   }
 
-  async findByTeamId(teamId: string): Promise<Expense[]> {
+  async findByTeamId(teamId: string, page: number = 1, limit: number = 20): Promise<Expense[]> {
     const supabase = getSupabaseClient();
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
     const { data, error } = await supabase
       .from('expenses')
       .select(EXPENSE_SELECT_QUERY)
       .eq('team_id', teamId)
       .order('date', { ascending: false })
+      .range(from, to);
 
     if (error) {
-      console.error("Supabase error finding expenses by team:", error.message)
+      console.error("Supabase error finding expenses:", error.message)
       throw new Error(error.message)
     }
     return (data || []).map(row => this.mapRowToEntity(row as ExpenseRowWithRelations))
   }
 
-  async findByDateRange(teamId: string, startDate: Date, endDate: Date): Promise<Expense[]> {
+  async findByDateRange(
+    teamId: string, 
+    startDate: Date, 
+    endDate: Date,
+    page: number = 1, 
+    limit: number = 20
+  ): Promise<Expense[]> {
     const supabase = getSupabaseClient();
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
     const { data, error } = await supabase
       .from('expenses')
       .select(EXPENSE_SELECT_QUERY)
@@ -202,9 +215,10 @@ export class ExpenseRepository implements IExpenseRepository {
       .gte('date', startDate.toISOString())
       .lte('date', endDate.toISOString())
       .order('date', { ascending: false })
+      .range(from, to);
 
     if (error) {
-       console.error("Supabase error finding expenses by date range:", error.message)
+       console.error("Supabase error finding expenses by range:", error.message)
       throw new Error(error.message)
     }
     return (data || []).map(row => this.mapRowToEntity(row as ExpenseRowWithRelations))

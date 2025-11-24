@@ -1,8 +1,21 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/auth/auth-provider";
+import { notify } from "@/lib/notify-helper";
+
+// Use Cases e Actions
+import {
+  createExpenseUseCase,
+  getCategoriesUseCase,
+} from "@/infrastructure/dependency-injection";
+import { parseReceiptAction } from "@/app/(app)/expenses/_actions/parse-receipt";
+import type { CategoryDetailsDTO } from "@/domain/dto/category.types.d.ts";
+import type { CreateExpenseDTO } from "@/domain/dto/expense.types.d.ts";
+
+// UI Components
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,64 +26,59 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft,
-  Plus,
-  Repeat,
-  CreditCard,
   Loader2,
-  Upload,
-  X,
   Sparkles,
+  ScanLine,
+  Receipt,
+  CalendarIcon,
+  CreditCard,
+  Repeat,
+  CheckCircle2,
+  Trash2,
+  UploadCloud,
+  FileText,
 } from "lucide-react";
-import { useAuth } from "@/app/auth/auth-provider";
-import { notify } from "@/lib/notify-helper";
-
-import {
-  createExpenseUseCase,
-  getCategoriesUseCase,
-} from "@/infrastructure/dependency-injection";
-import type { CategoryDetailsDTO } from "@/domain/dto/category.types.d.ts";
-import type { CreateExpenseDTO } from "@/domain/dto/expense.types.d.ts";
-
-import { parseReceiptAction } from "@/app/(app)/expenses/_actions/parse-receipt";
 
 export default function NewExpensePage() {
   const { session, loading: authLoading } = useAuth();
   const router = useRouter();
 
+  // Referência para o input de arquivo invisível
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Dados
   const [categories, setCategories] = useState<CategoryDetailsDTO[]>([]);
+
+  // Estados de Loading
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
-
-  // Estado para o loading da IA
   const [isParsingReceipt, setIsParsingReceipt] = useState(false);
 
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [isInstallment, setIsInstallment] = useState(false);
-
+  // Formulário
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-  const [recurrenceType, setRecurrenceType] =
-    useState<CreateExpenseDTO["recurrenceType"]>("monthly");
+
+  // Configurações Avançadas (Tabs: Único, Recorrente, Parcelado)
+  const [expenseType, setExpenseType] = useState<"single" | "recurring" | "installment">("single");
+
+  // Detalhes específicos
+  const [recurrenceType, setRecurrenceType] = useState<CreateExpenseDTO["recurrenceType"]>("monthly");
   const [installments, setInstallments] = useState("2");
 
+  // Arquivo
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const teamId = session?.teams?.[0]?.team.id;
   const userId = session?.user?.id;
 
+  // --- 1. Inicialização ---
   useEffect(() => {
     if (authLoading) return;
     if (!session || !userId) {
@@ -88,7 +96,9 @@ export default function NewExpensePage() {
         const data = await getCategoriesUseCase.execute(teamId);
         setCategories(data);
         if (data.length > 0 && !categoryId) {
-          setCategoryId(data[0].id);
+          // Tenta achar uma categoria "Outros" ou pega a primeira
+          const defaultCat = data.find((c) => c.name === "Outros") || data[0];
+          setCategoryId(defaultCat.id);
         }
       } catch (error: any) {
         notify.error(error, "carregar categorias");
@@ -97,64 +107,55 @@ export default function NewExpensePage() {
       }
     };
     loadCategories();
-  }, [session, authLoading, userId, teamId, router, categoryId]);
+  }, [session, authLoading, userId, teamId, router]);
 
-  // --- Lógica de Upload e OCR Inteligente ---
+  // --- 2. Upload Inteligente (IA) ---
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > 8 * 1024 * 1024) {
+      // 8MB
       notify.error(new Error("Arquivo muito grande"), "selecionar o arquivo");
       return;
     }
 
-    // 1. Define preview imediatamente
     setSelectedFile(file);
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
 
-    // 2. Inicia o processamento inteligente
     setIsParsingReceipt(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
 
-      // Chama a Server Action
       const data = await parseReceiptAction(formData);
 
       if (data) {
-        let fieldsUpdated = 0;
+        if (data.amount) setAmount(data.amount.toString());
+        if (data.description) setDescription(data.description);
+        if (data.date) setDate(data.date);
 
-        // Preenche APENAS se os campos estiverem vazios
-        if (!amount && data.amount) {
-          setAmount(data.amount.toString());
-          fieldsUpdated++;
-        }
-        if (!description && data.description) {
-          setDescription(data.description);
-          fieldsUpdated++;
-        }
-        // A data sempre vem válida da IA ou null
-        if (data.date) {
-          // Opcional: Você pode decidir se sobrescreve a data padrão (hoje) ou não.
-          // Aqui vou sobrescrever pois a data da nota é mais relevante que "hoje".
-          setDate(data.date);
-          fieldsUpdated++;
+        if (data.category) {
+          const matchedCategory = categories.find(
+            (c) =>
+              c.name.toLowerCase().includes(data.category!.toLowerCase()) ||
+              data.category!.toLowerCase().includes(c.name.toLowerCase())
+          );
+          if (matchedCategory) {
+            setCategoryId(matchedCategory.id);
+          }
         }
 
-        if (fieldsUpdated > 0) {
-          notify.success("Nota fiscal lida!", {
-            description: "Preenchemos os dados automaticamente para você.",
-          });
-        }
+        notify.success("Nota fiscal lida!", {
+          description: "Os dados foram preenchidos automaticamente.",
+        });
       }
     } catch (error) {
-      console.error("Erro ao ler nota:", error);
-
+      console.error("Erro na leitura:", error);
       notify.info(
-        "Leitura automática indisponível",
-        "Não conseguimos ler o arquivo. Por favor, preencha manualmente."
+        "Leitura automática falhou",
+        "Por favor, preencha os dados manualmente."
       );
     } finally {
       setIsParsingReceipt(false);
@@ -163,24 +164,34 @@ export default function NewExpensePage() {
 
   const removeFile = () => {
     setSelectedFile(null);
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-    }
-    const fileInput = document.getElementById("receipt") as HTMLInputElement;
-    if (fileInput) fileInput.value = "";
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const calculateInstallmentAmount = () => {
+  // --- 3. Cálculos Auxiliares ---
+  const calculateInstallmentValue = () => {
     const total = Number.parseFloat(amount) || 0;
     const count = Number.parseInt(installments) || 1;
-    if (total === 0 || count <= 0) return 0;
-    return total / count;
+    return count > 0 ? total / count : 0;
   };
 
+  // --- 4. Submissão ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!teamId || !userId) return;
+
+    if (!amount || Number.parseFloat(amount) <= 0) {
+      notify.error("Valor inválido", "O valor deve ser maior que zero.");
+      return;
+    }
+    if (!description.trim()) {
+      notify.error(
+        "Descrição obrigatória",
+        "Informe uma descrição para o gasto."
+      );
+      return;
+    }
 
     setIsLoading(true);
 
@@ -193,21 +204,24 @@ export default function NewExpensePage() {
         teamId,
         userId,
         receiptFile: selectedFile,
-        isRecurring,
-        recurrenceType: isRecurring ? recurrenceType : undefined,
-        isInstallment,
-        totalInstallments: isInstallment
-          ? Number.parseInt(installments)
-          : undefined,
+        isRecurring: expenseType === "recurring",
+        recurrenceType:
+          expenseType === "recurring" ? recurrenceType : undefined,
+        isInstallment: expenseType === "installment",
+        totalInstallments:
+          expenseType === "installment"
+            ? Number.parseInt(installments)
+            : undefined,
       };
 
       await createExpenseUseCase.execute(dto);
 
-      const message = isInstallment 
-        ? `Lançamento parcelado em ${installments}x criado com sucesso.`
-        : "Despesa registrada com sucesso.";
-
-      notify.success("Sucesso!", { description: message });
+      notify.success("Gasto registrado!", {
+        description:
+          expenseType === "installment"
+            ? `Parcelamento em ${installments}x criado.`
+            : "Sua despesa foi salva com sucesso.",
+      });
 
       router.push("/expenses");
     } catch (error: any) {
@@ -217,338 +231,358 @@ export default function NewExpensePage() {
     }
   };
 
-  if (authLoading || isLoadingCategories || !session || !teamId) {
+  if (authLoading || isLoadingCategories || !session) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Carregando...</h1>
-          <Loader2 className="animate-spin h-8 w-8 text-gray-900 mx-auto" />
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="animate-spin h-10 w-10 text-blue-600" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4" />
+    <div className="min-h-screen bg-gray-50 pb-20 animate-in fade-in duration-500">
+      <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 lg:py-8">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.back()}
+            className="hover:bg-white rounded-full"
+          >
+            <ArrowLeft className="h-5 w-5 text-slate-600" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Novo Gasto</h1>
-            <p className="text-gray-600">
-              Adicionar ao time "{session.teams[0].team.name}"
+            <h1 className="text-2xl font-bold text-slate-900">Novo Gasto</h1>
+            <p className="text-slate-500 text-sm">
+              Adicione uma despesa manual ou via comprovante.
             </p>
           </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5" />
-              Informações do Gasto
-            </CardTitle>
-            <CardDescription>
-              Preencha os dados ou faça upload da nota fiscal para preenchimento
-              automático.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <Label>Nota Fiscal (opcional)</Label>
-                  {isParsingReceipt && (
-                    <span className="text-xs text-blue-600 flex items-center gap-1 animate-pulse">
-                      <Sparkles className="w-3 h-3" /> Lendo dados com IA...
-                    </span>
-                  )}
+        <div className="grid gap-6">
+          {/* --- MAGIC UPLOAD (IA) --- */}
+          {/* Correção: Quando tem arquivo, removemos o input gigante para não bloquear o botão de remover */}
+          <div
+            className={`relative overflow-hidden rounded-2xl border-2 border-dashed transition-all duration-300 ${
+              previewUrl
+                ? "border-blue-200 bg-blue-50/40"
+                : "border-slate-200 hover:border-blue-400 hover:bg-white bg-white group"
+            }`}
+          >
+            {/* Input cobre tudo APENAS se não tiver preview */}
+            {!previewUrl && !isParsingReceipt && (
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                accept="image/png, image/jpeg, application/pdf"
+                onChange={handleFileSelect}
+              />
+            )}
+
+            <div className="p-6 flex flex-col items-center justify-center text-center min-h-[140px]">
+              {isParsingReceipt ? (
+                <div className="flex flex-col items-center animate-pulse">
+                  <div className="bg-blue-100 p-3 rounded-full mb-3">
+                    <Sparkles className="w-6 h-6 text-blue-600 animate-spin-slow" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-blue-700">
+                    Lendo nota fiscal...
+                  </h3>
+                  <p className="text-xs text-blue-500 mt-1">
+                    Nossa IA está extraindo os dados.
+                  </p>
                 </div>
-                <div
-                  className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
-                    isParsingReceipt
-                      ? "border-blue-300 bg-blue-50"
-                      : "border-gray-300"
-                  }`}
-                >
-                  {previewUrl ? (
-                    <div className="space-y-4">
-                      <div className="relative">
+              ) : previewUrl ? (
+                <div className="w-full flex items-center justify-between relative z-10">
+                  <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 rounded-lg overflow-hidden border border-slate-200 bg-white shadow-sm flex items-center justify-center">
+                      {selectedFile?.type === "application/pdf" ? (
+                        <FileText className="w-8 h-8 text-red-500" />
+                      ) : (
                         <img
                           src={previewUrl}
-                          alt="Preview da nota fiscal"
-                          className="max-w-full h-48 object-contain mx-auto rounded"
+                          alt="Preview"
+                          className="w-full h-full object-cover"
                         />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                          onClick={removeFile}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <p className="text-sm text-gray-600 text-center truncate">
+                      )}
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium text-slate-900 flex items-center gap-2 text-sm">
+                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                        Anexado
+                      </p>
+                      <p className="text-xs text-slate-500 truncate max-w-[180px]">
                         {selectedFile?.name}
                       </p>
                     </div>
-                  ) : (
-                    <div className="text-center">
-                      <Upload
-                        className={`mx-auto h-12 w-12 ${
-                          isParsingReceipt ? "text-blue-400" : "text-gray-400"
-                        }`}
-                      />
-                      <div className="mt-4">
-                        <label
-                          htmlFor="receipt"
-                          className="cursor-pointer font-medium text-blue-600 hover:text-blue-500"
-                        >
-                          Clique para fazer upload
-                          <input
-                            id="receipt"
-                            name="receipt"
-                            type="file"
-                            className="sr-only"
-                            accept="image/png, image/jpeg, application/pdf"
-                            onChange={handleFileSelect}
-                            disabled={isParsingReceipt}
-                          />
-                        </label>
-                        <p className="mt-1 block text-sm text-gray-500">
-                          PNG, JPG, PDF (Max 10MB)
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-500 hover:text-red-600 hover:bg-red-50 relative z-50"
+                    onClick={removeFile}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Remover
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <div className="bg-slate-50 p-3 rounded-full mb-3 group-hover:scale-110 transition-transform group-hover:bg-blue-50">
+                    <UploadCloud className="w-8 h-8 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                  </div>
+                  <h3 className="text-base font-semibold text-slate-700 group-hover:text-blue-700 transition-colors">
+                    Toque para ler Nota Fiscal
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1 max-w-xs">
+                    Use nossa IA para preencher tudo automaticamente. Suporta
+                    Imagens e PDF.
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* --- FORMULÁRIO --- */}
+          <Card className="border-none shadow-md bg-white rounded-2xl overflow-hidden">
+            <CardContent className="p-6 space-y-6">
+              {/* Valor */}
+              <div>
+                <Label className="text-slate-500 text-xs uppercase font-bold tracking-wide mb-2 block">
+                  Valor Total
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-2xl pl-3">
+                    R$
+                  </span>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0,00"
+                    className="pl-12 h-14 text-3xl font-bold text-slate-900 placeholder:text-slate-200 border-slate-200 focus-visible:ring-0 focus-visible:border-blue-500 rounded-xl bg-slate-50/50 focus:bg-white transition-colors"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    disabled={isParsingReceipt || isLoading}
+                  />
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="description">Descrição</Label>
+              {/* Descrição e Data */}
+              <div className="grid sm:grid-cols-2 gap-5">
+                <div className="space-y-2">
+                  <Label className="text-slate-500 text-xs uppercase font-bold tracking-wide">
+                    Descrição
+                  </Label>
+                  <Input
+                    placeholder="Ex: Mercado, Uber..."
+                    className="h-11 border-slate-200 focus-visible:ring-blue-500 bg-slate-50/50 focus:bg-white"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    disabled={isParsingReceipt || isLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-slate-500 text-xs uppercase font-bold tracking-wide">
+                    Data
+                  </Label>
                   <div className="relative">
                     <Input
-                      id="description"
-                      placeholder="Ex: Supermercado, Gasolina..."
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      className={isParsingReceipt ? "opacity-50" : ""}
-                      required
+                      type="date"
+                      className="h-11 border-slate-200 focus-visible:ring-blue-500 bg-slate-50/50 focus:bg-white"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      disabled={isParsingReceipt || isLoading}
                     />
-                    {isParsingReceipt && (
-                      <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-gray-400" />
-                    )}
+                    <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                   </div>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="amount">Valor (R$)</Label>
-                    <div className="relative">
-                      <Input
-                        id="amount"
-                        type="number"
-                        step="0.01"
-                        min="0.01"
-                        placeholder="0,00"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        className={isParsingReceipt ? "opacity-50" : ""}
-                        required
-                      />
-                      {isParsingReceipt && (
-                        <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-gray-400" />
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="date">Data</Label>
-                    <div className="relative">
-                      <Input
-                        id="date"
-                        type="date"
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                        className={isParsingReceipt ? "opacity-50" : ""}
-                        required
-                      />
-                      {isParsingReceipt && (
-                        <Loader2 className="absolute right-8 top-3 h-4 w-4 animate-spin text-gray-400" />
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Categoria */}
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <Label htmlFor="category">Categoria</Label>
-                    <Select
-                      value={categoryId}
-                      onValueChange={setCategoryId}
-                      required
-                    >
-                      <SelectTrigger loading={isLoadingCategories}>
-                        <SelectValue placeholder="Selecione uma categoria" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name} (
-                            {category.budgetCategoryName || "Sem Pasta"})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Parcelamento */}
-                {!isInstallment ? (
-                  <div className="hidden" />
-                ) : (
-                  <div className="space-y-4 rounded-lg border p-4 bg-gray-50">
-                    <h4 className="font-medium text-sm text-gray-900">
-                      Detalhes do Parcelamento
-                    </h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="totalAmount">Valor Total</Label>
-                        <Input
-                          value={amount}
-                          disabled
-                          className="bg-gray-100"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="installments">Parcelas</Label>
-                        <Select
-                          value={installments}
-                          onValueChange={setInstallments}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Array.from({ length: 23 }, (_, i) => i + 2).map(
-                              (num) => (
-                                <SelectItem key={num} value={num.toString()}>
-                                  {num}x
-                                </SelectItem>
-                              )
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    {amount && installments && (
-                      <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded flex items-center gap-2">
-                        <CreditCard className="w-4 h-4" />
-                        <span>
-                          Serão criadas <strong>{installments} despesas</strong>{" "}
-                          de{" "}
-                          <strong>
-                            R$ {calculateInstallmentAmount().toFixed(2)}
-                          </strong>
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
 
-              {/* Opções Avançadas */}
-              <div className="space-y-4 border-t pt-6">
-                <div className="flex items-start space-x-3">
-                  <Checkbox
-                    id="recurring"
-                    checked={isRecurring}
-                    onCheckedChange={(checked) => {
-                      setIsRecurring(checked as boolean);
-                      if (checked) setIsInstallment(false);
-                    }}
-                  />
-                  <div className="space-y-2 flex-1">
-                    <Label
-                      htmlFor="recurring"
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <Repeat className="h-4 w-4 text-green-600" />
-                      Gasto Recorrente
-                    </Label>
-                    <p className="text-sm text-gray-600">
-                      Para assinaturas, aluguel, etc.
-                    </p>
-                    {isRecurring && (
-                      <Select
-                        value={recurrenceType}
-                        onValueChange={(value) =>
-                          setRecurrenceType(value as any)
-                        }
+              {/* Categoria */}
+              <div className="space-y-2">
+                <Label className="text-slate-500 text-xs uppercase font-bold tracking-wide">
+                  Categoria
+                </Label>
+                <Select
+                  value={categoryId}
+                  onValueChange={setCategoryId}
+                  disabled={isParsingReceipt || isLoading}
+                >
+                  <SelectTrigger className="h-11 border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-blue-500">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem
+                        key={category.id}
+                        value={category.id}
+                        className="cursor-pointer"
                       >
-                        <SelectTrigger className="w-48 mt-2">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="monthly">Mensal</SelectItem>
-                          <SelectItem value="weekly">Semanal</SelectItem>
-                          <SelectItem value="yearly">Anual</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
-                </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-blue-500" />
+                          {category.name}
+                          {category.budgetCategoryName && (
+                            <span className="text-xs text-slate-400 ml-1">
+                              ({category.budgetCategoryName})
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                <div className="flex items-start space-x-3">
-                  <Checkbox
-                    id="installment"
-                    checked={isInstallment}
-                    onCheckedChange={(checked) => {
-                      setIsInstallment(checked as boolean);
-                      if (checked) setIsRecurring(false);
-                    }}
-                  />
-                  <div className="space-y-2 flex-1">
-                    <Label
-                      htmlFor="installment"
-                      className="flex items-center gap-2 cursor-pointer"
+              {/* Tipo de Gasto (Abas Modernas) */}
+              <div className="pt-2">
+                <Label className="text-slate-500 text-xs uppercase font-bold tracking-wide mb-3 block">
+                  Detalhes do Lançamento
+                </Label>
+                <Tabs
+                  defaultValue="single"
+                  value={expenseType}
+                  onValueChange={(v) => setExpenseType(v as any)}
+                  className="w-full"
+                >
+                  <TabsList className="grid w-full grid-cols-3 h-10 p-1 bg-slate-100 rounded-lg">
+                    <TabsTrigger
+                      value="single"
+                      className="rounded-md text-xs font-medium data-[state=active]:shadow-sm"
                     >
-                      <CreditCard className="h-4 w-4 text-blue-600" />
-                      Gasto Parcelado
-                    </Label>
-                    <p className="text-sm text-gray-600">
-                      Para compras no cartão de crédito.
-                    </p>
+                      Único
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="recurring"
+                      className="rounded-md text-xs font-medium data-[state=active]:shadow-sm"
+                    >
+                      Recorrente
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="installment"
+                      className="rounded-md text-xs font-medium data-[state=active]:shadow-sm"
+                    >
+                      Parcelado
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <div className="mt-4">
+                    <TabsContent value="single" className="mt-0">
+                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                        <div className="p-2 bg-white rounded-full shadow-sm">
+                          <Receipt className="w-4 h-4 text-slate-400" />
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          Gasto pontual. Não se repete nos próximos meses.
+                        </p>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="recurring" className="mt-0 space-y-4">
+                      <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100 space-y-3">
+                        <div className="flex items-center gap-2 text-blue-700 text-sm font-medium">
+                          <Repeat className="w-4 h-4" /> Frequência da cobrança
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {(["weekly", "monthly", "yearly"] as const).map(
+                            (t) => (
+                              <button
+                                key={t}
+                                type="button"
+                                onClick={() => setRecurrenceType(t)}
+                                className={`py-1.5 px-2 rounded-md text-xs font-medium transition-all ${
+                                  recurrenceType === t
+                                    ? "bg-blue-600 text-white shadow-md"
+                                    : "bg-white text-slate-600 border border-slate-200 hover:border-blue-300"
+                                }`}
+                              >
+                                {t === "weekly"
+                                  ? "Semanal"
+                                  : t === "monthly"
+                                  ? "Mensal"
+                                  : "Anual"}
+                              </button>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="installment" className="mt-0 space-y-4">
+                      <div className="p-4 bg-purple-50/50 rounded-xl border border-purple-100 space-y-4">
+                        <div className="flex items-center gap-2 text-purple-700 text-sm font-medium">
+                          <CreditCard className="w-4 h-4" /> Parcelamento no
+                          Cartão
+                        </div>
+                        <div className="flex gap-4">
+                          <div className="flex-1">
+                            <Label className="text-[10px] uppercase text-slate-500 font-bold mb-1.5 block">
+                              Qtd. Parcelas
+                            </Label>
+                            <Select
+                              value={installments}
+                              onValueChange={setInstallments}
+                            >
+                              <SelectTrigger className="h-9 bg-white border-purple-200 text-sm">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Array.from(
+                                  { length: 23 },
+                                  (_, i) => i + 2
+                                ).map((num) => (
+                                  <SelectItem
+                                    key={num}
+                                    value={num.toString()}
+                                    className="text-sm"
+                                  >
+                                    {num}x
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex-1">
+                            <Label className="text-[10px] uppercase text-slate-500 font-bold mb-1.5 block">
+                              Valor Parcela
+                            </Label>
+                            <div className="h-9 px-3 bg-purple-100/50 border border-purple-200 rounded-md flex items-center text-sm font-bold text-purple-900">
+                              R${" "}
+                              {calculateInstallmentValue().toLocaleString(
+                                "pt-BR",
+                                { minimumFractionDigits: 2 }
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </TabsContent>
                   </div>
-                </div>
+                </Tabs>
               </div>
 
-              <div className="flex gap-4 pt-6">
+              {/* Botão Salvar */}
+              <div className="pt-4">
                 <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => router.back()}
-                  className="flex-1"
+                  onClick={handleSubmit}
+                  disabled={isLoading || isParsingReceipt}
+                  className="w-full h-12 text-base font-semibold shadow-lg shadow-blue-500/20 bg-blue-600 hover:bg-blue-700 transition-all active:scale-[0.98]"
                 >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={
-                    isLoading || isLoadingCategories || isParsingReceipt
-                  }
-                  className="flex-1"
-                >
-                  {isLoading ? <Loader2 className="animate-spin" /> : "Salvar"}
+                  {isLoading ? (
+                    <Loader2 className="animate-spin mr-2" />
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2 text-blue-200" />
+                      Confirmar Gasto
+                    </>
+                  )}
                 </Button>
               </div>
-            </form>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

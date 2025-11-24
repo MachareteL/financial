@@ -6,6 +6,6 @@ export interface IExpenseRepository {
   update(expense: Expense): Promise<Expense>
   delete(id: string, teamId: string): Promise<void>
   findById(id: string, teamId: string): Promise<Expense | null>
-  findByTeamId(teamId: string): Promise<Expense[]>
-  findByDateRange(teamId: string, startDate: Date, endDate: Date): Promise<Expense[]>
+  findByTeamId(teamId: string, page?: number, limit?: number): Promise<Expense[]>
+  findByDateRange(teamId: string, startDate: Date, endDate: Date, page?: number, limit?: number): Promise<Expense[]>
 }

@@ -6,22 +6,27 @@ export interface GetExpensesDTO {
   teamId: string;
   startDate?: Date;
   endDate?: Date;
+  page?: number;
+  limit?: number;
 }
-
 export class GetExpensesUseCase {
   constructor(private expenseRepository: IExpenseRepository) {}
 
   async execute(dto: GetExpensesDTO): Promise<ExpenseDetailsDTO[]> {
     let expenses: Expense[] = [];
+    const page = dto.page || 1;
+    const limit = dto.limit || 20;
 
     if (dto.startDate && dto.endDate) {
       expenses = await this.expenseRepository.findByDateRange(
         dto.teamId,
         dto.startDate,
-        dto.endDate
+        dto.endDate,
+        page,
+        limit
       );
     } else {
-      expenses = await this.expenseRepository.findByTeamId(dto.teamId);
+      expenses = await this.expenseRepository.findByTeamId(dto.teamId, page, limit);
     }
 
     return expenses.map(this.mapEntityToDTO);
