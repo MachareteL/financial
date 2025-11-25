@@ -86,22 +86,23 @@ export class AuthSupabaseRepository implements IAuthRepository {
     })
     if (authError || !authData.user) throw authError || new Error("Falha no cadastro")
 
-    const { data: profile, error: profileError } = await supabase
+    const { error: profileError } = await supabase
       .from("profiles")
       .insert({
         id: authData.user.id,
         email: authData.user.email!,
         name: name,
       })
-      .select()
-      .single()
-    if (profileError || !profile) throw profileError || new Error("Falha ao criar perfil")
+
+    if (profileError) {
+      throw new Error(`Falha ao criar perfil: ${profileError.message}`)
+    }
 
     return new User({
-      id: profile.id,
-      email: profile.email,
-      name: profile.name,
-      createdAt: new Date(profile.created_at),
+      id: authData.user.id,
+      email: authData.user.email!,
+      name: name,
+      createdAt: new Date(),
     })
   }
 
