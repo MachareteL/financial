@@ -25,17 +25,11 @@ export default function OnboardingPage() {
   const router = useRouter();
 
   useEffect(() => {
-
-    if (!loading && !session) {
-      router.push("/auth");
-      return;
-    }
-
+    // Auth check is handled by middleware
     if (session?.teams && session.teams.length > 0) {
       router.push("/dashboard");
     }
   }, [session, loading, router]);
-
 
   const handleCreateTeam = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -60,14 +54,12 @@ export default function OnboardingPage() {
       });
 
       router.refresh();
-      
     } catch (error: any) {
       notify.error(error, "criar a equipe");
     } finally {
       setIsLoading(false);
     }
   };
-
 
   if (loading || !session || (session.teams && session.teams.length > 0)) {
     return (
@@ -138,11 +130,13 @@ export default function OnboardingPage() {
                 <p className="text-sm text-gray-600 mb-2">
                   Seu email para convite:
                 </p>
-                <p className="font-medium text-gray-900">{session.user.email}</p>
+                <p className="font-medium text-gray-900">
+                  {session.user.email}
+                </p>
               </div>
               <p className="text-sm text-gray-500 text-center">
-                Quando receber o convite, você será automaticamente adicionado ao
-                time.
+                Quando receber o convite, você será automaticamente adicionado
+                ao time.
               </p>
             </CardContent>
           </Card>
@@ -160,10 +154,14 @@ export default function OnboardingPage() {
                 <span className="text-xs font-bold text-blue-600">1</span>
               </div>
               <div>
-                <h4 className="font-medium">Cada pessoa tem um Time ou uma Equipe</h4>
+                <h4 className="font-medium">
+                  Cada pessoa tem um Time ou uma Equipe
+                </h4>
                 <p className="text-sm text-gray-600">
-                  Um "time" é o espaço compartilhado onde vocês organizam a vida financeira em conjunto.
-                  Pode ser um time de trabalho, uma família ou qualquer grupo que queira gerenciar finanças em comum.
+                  Um "time" é o espaço compartilhado onde vocês organizam a vida
+                  financeira em conjunto. Pode ser um time de trabalho, uma
+                  família ou qualquer grupo que queira gerenciar finanças em
+                  comum.
                 </p>
               </div>
             </div>
@@ -173,9 +171,13 @@ export default function OnboardingPage() {
                 <span className="text-xs font-bold text-blue-600">2</span>
               </div>
               <div>
-                <h4 className="font-medium">Compartilhe gastos, categorias e orçamentos</h4>
+                <h4 className="font-medium">
+                  Compartilhe gastos, categorias e orçamentos
+                </h4>
                 <p className="text-sm text-gray-600">
-                  Membros do time podem ver e adicionar despesas, criar categorias e definir orçamentos. Tudo é centralizado no time para facilitar acompanhamento e planejamento.
+                  Membros do time podem ver e adicionar despesas, criar
+                  categorias e definir orçamentos. Tudo é centralizado no time
+                  para facilitar acompanhamento e planejamento.
                 </p>
               </div>
             </div>
@@ -187,7 +189,9 @@ export default function OnboardingPage() {
               <div>
                 <h4 className="font-medium">Convide e gerencie membros</h4>
                 <p className="text-sm text-gray-600">
-                  Você pode criar um time e convidar outras pessoas por e-mail. O criador do time pode gerenciar membros e permissões, garantindo privacidade e controle sobre quem vê os dados.
+                  Você pode criar um time e convidar outras pessoas por e-mail.
+                  O criador do time pode gerenciar membros e permissões,
+                  garantindo privacidade e controle sobre quem vê os dados.
                 </p>
               </div>
             </div>
