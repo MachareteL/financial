@@ -130,9 +130,6 @@ export class AuthSupabaseRepository implements IAuthRepository {
       redirectTo: `${baseUrl}/auth/callback?next=/account/update-password`,
     });
 
-    console.log("supabase error:");
-    console.log(error);
-
     if (error) throw new Error(error.message);
   }
 
