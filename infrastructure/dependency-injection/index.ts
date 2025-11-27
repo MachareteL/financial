@@ -17,6 +17,8 @@ import { SignUpUseCase } from "@/app/auth/_use-case/sign-up.use-case";
 import { GetCurrentAuthUserUseCase } from "@/app/auth/_use-case/get-current-user.use-case";
 import { SignOutUseCase } from "@/app/auth/_use-case/sign-out.use-case";
 import { CreateTeamUseCase } from "@/app/(app)/team/_use-case/create-team.use-case";
+import { ResetPasswordUseCase } from "@/app/auth/_use-case/reset-password.use-case";
+import { UpdatePasswordUseCase } from "@/app/auth/_use-case/update-password.use-case";
 
 // Dashboard
 import { GetDashboardDataUseCase } from "@/app/(app)/dashboard/_use-case/get-dashboard-data.use-case";
@@ -127,6 +129,14 @@ export const signUpUseCase = container.get(
 export const signOutUseCase = container.get(
   "signOutUseCase",
   () => new SignOutUseCase(authRepository)
+);
+export const resetPasswordUseCase = container.get(
+  "resetPasswordUseCase",
+  () => new ResetPasswordUseCase(authRepository)
+);
+export const updatePasswordUseCase = container.get(
+  "updatePasswordUseCase",
+  () => new UpdatePasswordUseCase(authRepository)
 );
 
 // Team
