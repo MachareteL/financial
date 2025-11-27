@@ -79,13 +79,11 @@ export class TeamRepository implements ITeamRepository {
     await supabase.from("team_roles").insert(memberRoleData);
 
     // Associar o criador como "Proprietário"
-    const { error: memberError } = await supabase
-      .from("team_members")
-      .insert({
-        profile_id: createdBy,
-        team_id: teamData.id,
-        role_id: ownerRole.id,
-      });
+    const { error: memberError } = await supabase.from("team_members").insert({
+      profile_id: createdBy,
+      team_id: teamData.id,
+      role_id: ownerRole.id,
+    });
 
     if (memberError) {
       await supabase.from("teams").delete().eq("id", teamData.id);
@@ -251,7 +249,6 @@ export class TeamRepository implements ITeamRepository {
   }
 
   async deleteTeamRole(roleId: string, teamId: string): Promise<void> {
-
     const supabase = getSupabaseClient();
     const { error } = await supabase
       .from("team_roles")
@@ -324,6 +321,80 @@ export class TeamRepository implements ITeamRepository {
       .delete()
       .eq("id", inviteId)
       .eq("team_id", teamId);
+
+    if (error) throw new Error(error.message);
+  }
+
+  async getPendingInvitesByEmail(email: string): Promise<TeamInvite[]> {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
+      .from("team_invites")
+      .select(
+        `
+        *,
+        teams (name),
+        invited_by_profile:invited_by (name),
+        team_roles (name)
+      `
+      )
+      .eq("email", email)
+      .eq("status", "pending");
+
+    if (error) throw new Error(error.message);
+
+    return (data || []).map((item: any) => {
+      return new TeamInvite({
+        id: item.id,
+        email: item.email,
+        status: item.status,
+        teamId: item.team_id,
+        roleId: item.role_id,
+        invitedBy: item.invited_by,
+        createdBy: item.invited_by,
+        createdAt: new Date(item.created_at),
+        // Propriedades extras para UI (não salvas no banco, mas úteis)
+        teamName: item.teams?.name,
+        invitedByName: item.invited_by_profile?.name,
+        roleName: item.team_roles?.name,
+      } as any);
+    });
+  }
+
+  async acceptInvite(inviteId: string, userId: string): Promise<void> {
+    const supabase = getSupabaseClient();
+
+    // 1. Buscar convite
+    const { data: invite, error: inviteError } = await supabase
+      .from("team_invites")
+      .select("*")
+      .eq("id", inviteId)
+      .single();
+
+    if (inviteError || !invite) throw new Error("Convite não encontrado.");
+    if (invite.status !== "pending") throw new Error("Convite inválido.");
+
+    // 2. Inserir membro
+    const { error: memberError } = await supabase.from("team_members").insert({
+      team_id: invite.team_id!,
+      profile_id: userId,
+      role_id: invite.role_id!, // role_id can be null in invite but required in member, assuming invite always has role_id if valid
+    });
+
+    if (memberError) throw new Error(memberError.message);
+
+    // 3. Atualizar convite para aceito
+    await supabase
+      .from("team_invites")
+      .update({ status: "accepted" })
+      .eq("id", inviteId);
+  }
+
+  async declineInvite(inviteId: string): Promise<void> {
+    const supabase = getSupabaseClient();
+    const { error } = await supabase
+      .from("team_invites")
+      .update({ status: "declined" })
+      .eq("id", inviteId);
 
     if (error) throw new Error(error.message);
   }

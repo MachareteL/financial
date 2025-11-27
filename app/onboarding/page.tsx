@@ -16,12 +16,20 @@ import {
 import { Users, Plus, UserPlus } from "lucide-react";
 
 import { useAuth } from "@/app/auth/auth-provider";
-import { createTeamUseCase } from "@/infrastructure/dependency-injection";
+import {
+  createTeamUseCase,
+  getPendingInvitesUseCase,
+  acceptInviteUseCase,
+  declineInviteUseCase,
+} from "@/infrastructure/dependency-injection";
 import { notify } from "@/lib/notify-helper";
+import type { TeamInvite } from "@/domain/entities/team-invite";
 
 export default function OnboardingPage() {
-  const { session, loading } = useAuth();
+  const { session, loading, setSession } = useAuth(); // Added setSession
   const [isLoading, setIsLoading] = useState(false);
+  const [invites, setInvites] = useState<TeamInvite[]>([]);
+  const [loadingInvites, setLoadingInvites] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -31,6 +39,24 @@ export default function OnboardingPage() {
     }
   }, [session, loading, router]);
 
+  useEffect(() => {
+    const fetchInvites = async () => {
+      if (!session?.user?.email) return;
+      try {
+        const data = await getPendingInvitesUseCase.execute(session.user.email);
+        setInvites(data);
+      } catch (error) {
+        console.error("Erro ao buscar convites:", error);
+      } finally {
+        setLoadingInvites(false);
+      }
+    };
+
+    if (session?.user?.email) {
+      fetchInvites();
+    }
+  }, [session]);
+
   const handleCreateTeam = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -39,11 +65,9 @@ export default function OnboardingPage() {
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
-
     const teamName = formData.get("teamName") as string;
 
     try {
-      // 8. Chamar o UseCase limpo
       await createTeamUseCase.execute({
         teamName,
         userId: session.user.id,
@@ -53,9 +77,39 @@ export default function OnboardingPage() {
         description: `A equipe "${teamName}" foi criada.`,
       });
 
-      router.refresh();
+      // Força recarregamento da sessão para atualizar os times
+      window.location.reload();
     } catch (error: any) {
       notify.error(error, "criar a equipe");
+      setIsLoading(false);
+    }
+  };
+
+  const handleAcceptInvite = async (inviteId: string) => {
+    if (!session?.user) return;
+    setIsLoading(true);
+    try {
+      await acceptInviteUseCase.execute(inviteId, session.user.id);
+      notify.success("Convite aceito!", {
+        description: "Você entrou para a equipe.",
+      });
+      // Força recarregamento da sessão
+      window.location.reload();
+    } catch (error: any) {
+      notify.error(error, "aceitar convite");
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeclineInvite = async (inviteId: string) => {
+    setIsLoading(true);
+    try {
+      await declineInviteUseCase.execute(inviteId);
+      notify.success("Convite recusado.");
+      // Atualiza lista
+      setInvites((prev) => prev.filter((i) => i.id !== inviteId));
+    } catch (error: any) {
+      notify.error(error, "recusar convite");
     } finally {
       setIsLoading(false);
     }
@@ -74,18 +128,20 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full space-y-6">
+      <div className="max-w-4xl w-full space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Bem-vindo, {session.user.name}!
           </h1>
           <p className="text-gray-600">
-            Para começar, você precisa criar um time/equipe ou ser convidado para um(a).
+            Para começar, você precisa criar um time/equipe ou ser convidado
+            para um(a).
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
+          {/* Criar Time */}
+          <Card className="h-full">
             <CardHeader className="text-center">
               <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                 <Plus className="w-6 h-6 text-blue-600" />
@@ -114,33 +170,79 @@ export default function OnboardingPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          {/* Convites */}
+          <Card className="h-full flex flex-col">
             <CardHeader className="text-center">
               <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
                 <UserPlus className="w-6 h-6 text-green-600" />
               </div>
-              <CardTitle>Aguardar Convite</CardTitle>
+              <CardTitle>Convites Pendentes</CardTitle>
               <CardDescription>
-                Se alguém da sua equipe já tem uma conta, peça para te convidar
-                pelo seu email
+                Veja se alguém te convidou para um time
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600 mb-2">
-                  Seu email para convite:
-                </p>
-                <p className="font-medium text-gray-900">
-                  {session.user.email}
-                </p>
-              </div>
-              <p className="text-sm text-gray-500 text-center">
-                Quando receber o convite, você será automaticamente adicionado
-                ao time.
-              </p>
+            <CardContent className="flex-1">
+              {loadingInvites ? (
+                <div className="text-center py-4">Carregando convites...</div>
+              ) : invites.length > 0 ? (
+                <div className="space-y-4">
+                  {invites.map((invite) => (
+                    <div
+                      key={invite.id}
+                      className="bg-white border rounded-lg p-4 shadow-sm flex flex-col gap-3"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          Time: {(invite as any).teamName}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Convidado por: {(invite as any).invitedByName}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Cargo: {(invite as any).roleName}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="flex-1 bg-green-600 hover:bg-green-700"
+                          onClick={() => handleAcceptInvite(invite.id)}
+                          disabled={isLoading}
+                        >
+                          Aceitar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleDeclineInvite(invite.id)}
+                          disabled={isLoading}
+                        >
+                          Recusar
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center space-y-4">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-600 mb-2">
+                      Seu email para convite:
+                    </p>
+                    <p className="font-medium text-gray-900">
+                      {session.user.email}
+                    </p>
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    Nenhum convite pendente no momento.
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -159,39 +261,7 @@ export default function OnboardingPage() {
                 </h4>
                 <p className="text-sm text-gray-600">
                   Um "time" é o espaço compartilhado onde vocês organizam a vida
-                  financeira em conjunto. Pode ser um time de trabalho, uma
-                  família ou qualquer grupo que queira gerenciar finanças em
-                  comum.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-xs font-bold text-blue-600">2</span>
-              </div>
-              <div>
-                <h4 className="font-medium">
-                  Compartilhe gastos, categorias e orçamentos
-                </h4>
-                <p className="text-sm text-gray-600">
-                  Membros do time podem ver e adicionar despesas, criar
-                  categorias e definir orçamentos. Tudo é centralizado no time
-                  para facilitar acompanhamento e planejamento.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-xs font-bold text-blue-600">3</span>
-              </div>
-              <div>
-                <h4 className="font-medium">Convide e gerencie membros</h4>
-                <p className="text-sm text-gray-600">
-                  Você pode criar um time e convidar outras pessoas por e-mail.
-                  O criador do time pode gerenciar membros e permissões,
-                  garantindo privacidade e controle sobre quem vê os dados.
+                  financeira em conjunto.
                 </p>
               </div>
             </div>

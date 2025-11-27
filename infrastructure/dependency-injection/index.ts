@@ -303,3 +303,23 @@ export const parseReceiptUseCase = container.get(
   "parseReceiptUseCase",
   () => new ParseReceiptUseCase(aiService)
 );
+
+// Team Invites (Onboarding)
+import { GetPendingInvitesUseCase } from "@/app/(app)/team/_use-case/get-pending-invites.use-case";
+import { AcceptInviteUseCase } from "@/app/(app)/team/_use-case/accept-invite.use-case";
+import { DeclineInviteUseCase } from "@/app/(app)/team/_use-case/decline-invite.use-case";
+
+export const getPendingInvitesUseCase = container.get(
+  "getPendingInvitesUseCase",
+  () => new GetPendingInvitesUseCase(teamRepository)
+);
+
+export const acceptInviteUseCase = container.get(
+  "acceptInviteUseCase",
+  () => new AcceptInviteUseCase(teamRepository)
+);
+
+export const declineInviteUseCase = container.get(
+  "declineInviteUseCase",
+  () => new DeclineInviteUseCase(teamRepository)
+);
