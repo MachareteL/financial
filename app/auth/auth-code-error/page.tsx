@@ -5,12 +5,29 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AlertTriangle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, useState, useEffect } from "react";
 
 function AuthCodeErrorContent() {
   const searchParams = useSearchParams();
-  const error = searchParams.get("error");
-  const errorDescription = searchParams.get("error_description");
+  const [error, setError] = useState(searchParams.get("error"));
+  const [errorDescription, setErrorDescription] = useState(searchParams.get("error_description"));
+
+  useEffect(() => {
+    // Check if there are error details in the hash (Supabase sometimes returns them there)
+    if (typeof window !== "undefined" && window.location.hash) {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const hashError = hashParams.get("error");
+      const hashErrorDescription = hashParams.get("error_description");
+
+      if (hashError) {
+        setError(hashError);
+      }
+      if (hashErrorDescription) {
+        // Translate common Supabase errors if needed, or just show the message
+        setErrorDescription(hashErrorDescription.replace(/\+/g, " "));
+      }
+    }
+  }, []);
 
   return (
     <Card className="w-full max-w-md border-red-200 shadow-lg">
