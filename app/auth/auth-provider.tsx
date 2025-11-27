@@ -1,31 +1,48 @@
-"use client"
-import { createContext, useContext, useEffect, useState, ReactNode } from "react"
-import type { UserSession } from "@/domain/dto/user.types.d.ts"
-import { getCurrentAuthUserUseCase } from "@/infrastructure/dependency-injection"
+"use client";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
+import type { UserSession } from "@/domain/dto/user.types.d.ts";
+import { getCurrentAuthUserUseCase } from "@/infrastructure/dependency-injection";
 
-const AuthContext = createContext<{ session: UserSession | null; loading: boolean }>({ session: null, loading: true })
+const AuthContext = createContext<{
+  session: UserSession | null;
+  loading: boolean;
+  setSession: (session: UserSession | null) => void;
+}>({
+  session: null,
+  loading: true,
+  setSession: () => {},
+});
 
-export const useAuth = () => useContext(AuthContext)
+export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-
-  const [session, setSession] = useState<UserSession | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [session, setSession] = useState<UserSession | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const sessionData = await getCurrentAuthUserUseCase.execute()
-        setSession(sessionData)
+        const sessionData = await getCurrentAuthUserUseCase.execute();
+        setSession(sessionData);
       } catch (err) {
-        setSession(null)
+        setSession(null);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchUser()
-  }, [])
+    fetchUser();
+  }, []);
 
-  return <AuthContext.Provider value={{ session, loading }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{ session, loading, setSession }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }

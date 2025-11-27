@@ -51,7 +51,8 @@ export default function AuthPage() {
     };
 
     try {
-      auth.session = await signInUseCase.execute(input);
+      const session = await signInUseCase.execute(input);
+      auth.setSession(session);
       notify.success("Bem-vindo de volta!", {
         description: "Login realizado com sucesso.",
       });
