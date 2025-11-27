@@ -19,6 +19,7 @@ import { SignOutUseCase } from "@/app/auth/_use-case/sign-out.use-case";
 import { CreateTeamUseCase } from "@/app/(app)/team/_use-case/create-team.use-case";
 import { ResetPasswordUseCase } from "@/app/auth/_use-case/reset-password.use-case";
 import { UpdatePasswordUseCase } from "@/app/auth/_use-case/update-password.use-case";
+import { VerifyRecoveryCodeUseCase } from "@/app/auth/_use-case/verify-recovery-code.use-case";
 
 // Dashboard
 import { GetDashboardDataUseCase } from "@/app/(app)/dashboard/_use-case/get-dashboard-data.use-case";
@@ -110,7 +111,11 @@ const investmentRepository = container.get(
 // Services
 const aiService = container.get(
   "aiService",
-  () => new GeminiAiService(process.env.GOOGLE_API_KEY!, process.env.GOOGLE_GEMINI_MODEL)
+  () =>
+    new GeminiAiService(
+      process.env.GOOGLE_API_KEY!,
+      process.env.GOOGLE_GEMINI_MODEL
+    )
 );
 
 // Auth
@@ -137,6 +142,10 @@ export const resetPasswordUseCase = container.get(
 export const updatePasswordUseCase = container.get(
   "updatePasswordUseCase",
   () => new UpdatePasswordUseCase(authRepository)
+);
+export const verifyRecoveryCodeUseCase = container.get(
+  "verifyRecoveryCodeUseCase",
+  () => new VerifyRecoveryCodeUseCase(authRepository)
 );
 
 // Team

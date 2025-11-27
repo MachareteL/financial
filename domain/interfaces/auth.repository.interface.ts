@@ -7,4 +7,6 @@ export interface IAuthRepository {
   signUp(email: string, password: string, name: string): Promise<User>;
   resetPassword(email: string): Promise<void>;
   updatePassword(password: string): Promise<void>;
+  sendRecoveryCode(email: string): Promise<void>;
+  verifyRecoveryCode(email: string, code: string): Promise<UserSession>;
 }

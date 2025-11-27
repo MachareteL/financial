@@ -9,6 +9,6 @@ export class ResetPasswordUseCase {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) throw new Error("Formato de email inválido.");
 
-    await this.authRepository.resetPassword(email);
+    await this.authRepository.sendRecoveryCode(email);
   }
 }
