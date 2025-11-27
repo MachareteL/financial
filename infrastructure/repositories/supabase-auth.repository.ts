@@ -114,9 +114,17 @@ export class AuthSupabaseRepository implements IAuthRepository {
   async resetPassword(email: string): Promise<void> {
     const supabase = getSupabaseClient()
     
+    const baseUrl = typeof window !== 'undefined' 
+      ? window.location.origin 
+      : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback?next=/account/update-password`,
+      redirectTo: `${baseUrl}/auth/callback?next=/account/update-password`,
     })
+
+    console.log("supabase error:");
+    console.log(error);
+    
 
     if (error) throw new Error(error.message)
   }

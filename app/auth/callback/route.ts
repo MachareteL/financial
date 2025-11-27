@@ -8,11 +8,12 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get("type") as EmailOtpType | null;
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/dashboard";
+
   const error = searchParams.get("error");
   const error_description = searchParams.get("error_description");
-
-  // Handle errors returned from Supabase
   if (error) {
+    console.log(error);
+    console.log(error_description);
     const errorUrl = request.nextUrl.clone();
     errorUrl.pathname = "/auth/auth-code-error";
     errorUrl.searchParams.set("error", error);
@@ -24,19 +25,21 @@ export async function GET(request: NextRequest) {
 
   const supabase = await getSupabaseClient();
 
-  // Handle PKCE flow (code exchange)
   if (code) {
-    const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
-    
+    const { error: sessionError } = await supabase.auth.exchangeCodeForSession(
+      code
+    );
+
     if (!sessionError) {
       const redirectTo = request.nextUrl.clone();
       redirectTo.pathname = next;
       redirectTo.searchParams.delete("code");
       redirectTo.searchParams.delete("next");
+      redirectTo.searchParams.delete("token_hash");
+      redirectTo.searchParams.delete("type");
       return NextResponse.redirect(redirectTo);
     }
-    
-    // Fallback to error page if exchange fails
+
     const errorUrl = request.nextUrl.clone();
     errorUrl.pathname = "/auth/auth-code-error";
     errorUrl.searchParams.set("error", "invalid_code");
@@ -44,7 +47,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(errorUrl);
   }
 
-  // Handle Implicit/Magic Link flow (token_hash)
   if (token_hash && type) {
     const { error: otpError } = await supabase.auth.verifyOtp({
       type,
@@ -60,7 +62,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(redirectTo);
     }
 
-    // Fallback to error page if verify fails
     const errorUrl = request.nextUrl.clone();
     errorUrl.pathname = "/auth/auth-code-error";
     errorUrl.searchParams.set("error", "invalid_token");
@@ -68,10 +69,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(errorUrl);
   }
 
-  // No valid params found
   const errorUrl = request.nextUrl.clone();
   errorUrl.pathname = "/auth/auth-code-error";
   errorUrl.searchParams.set("error", "missing_params");
-  errorUrl.searchParams.set("error_description", "Parâmetros de autenticação não encontrados.");
+  errorUrl.searchParams.set(
+    "error_description",
+    "Link inválido ou expirado. Tente solicitar novamente."
+  );
   return NextResponse.redirect(errorUrl);
 }
