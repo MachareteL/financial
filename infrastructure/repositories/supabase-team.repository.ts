@@ -98,6 +98,16 @@ export class TeamRepository implements ITeamRepository {
     });
   }
 
+  async updateTeam(teamId: string, name: string): Promise<void> {
+    const supabase = getSupabaseClient();
+    const { error } = await supabase
+      .from("teams")
+      .update({ name })
+      .eq("id", teamId);
+
+    if (error) throw new Error(error.message);
+  }
+
   async getTeamMembers(teamId: string): Promise<TeamMemberProfileDTO[]> {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase
