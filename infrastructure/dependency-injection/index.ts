@@ -30,6 +30,7 @@ import { CreateExpenseUseCase } from "@/app/(app)/expenses/_use-case/create-expe
 import { GetExpensesUseCase } from "@/app/(app)/expenses/_use-case/get-expenses.use-case";
 import { DeleteExpenseUseCase } from "@/app/(app)/expenses/_use-case/delete-expense.use-case";
 import { GetExpenseSummaryByPeriodUseCase } from "@/app/(app)/expenses/_use-case/get-expense-summary-by-period.use-case";
+import { GetExpensesSummaryUseCase } from "@/app/(app)/expenses/_use-case/get-expenses-summary.use-case";
 
 // Incomes
 import { GetIncomesUseCase } from "@/app/(app)/income/_use_case/get-income.use-case";
@@ -217,6 +218,11 @@ export const getExpenseSummaryByPeriodUseCase = container.get(
       expenseRepository,
       budgetCategoryRepository
     )
+);
+
+export const getExpensesSummaryUseCase = container.get(
+  "getExpensesSummaryUseCase",
+  () => new GetExpensesSummaryUseCase(expenseRepository)
 );
 
 // Categories

@@ -239,4 +239,40 @@ export class ExpenseRepository implements IExpenseRepository {
       this.mapRowToEntity(row as ExpenseRowWithRelations)
     );
   }
+
+  async getSummary(
+    teamId: string,
+    startDate?: Date,
+    endDate?: Date,
+    categoryId?: string
+  ): Promise<{ total: number; count: number }> {
+    const supabase = getSupabaseClient();
+    let query = supabase.from("expenses").select("amount", { count: "exact" });
+
+    query = query.eq("team_id", teamId);
+
+    if (startDate) {
+      query = query.gte("date", startDate.toISOString());
+    }
+    if (endDate) {
+      query = query.lte("date", endDate.toISOString());
+    }
+    if (categoryId && categoryId !== "all") {
+      query = query.eq("category_id", categoryId);
+    }
+
+    const { data, count, error } = await query;
+
+    if (error) {
+      console.error("Supabase error getting summary:", error.message);
+      throw new Error(error.message);
+    }
+
+    const total = (data || []).reduce((sum, item) => sum + item.amount, 0);
+
+    return {
+      total,
+      count: count || 0,
+    };
+  }
 }
