@@ -253,6 +253,7 @@ export default function BudgetPage() {
     try {
       await saveBudgetUseCase.execute({
         teamId,
+        userId: userId!,
         month: selectedMonth,
         year: selectedYear,
         totalIncome: numericIncome,
@@ -264,6 +265,7 @@ export default function BudgetPage() {
           if (!isNaN(newPerc) && newPerc !== bc.percentage * 100) {
             return updateBudgetCategoryUseCase.execute({
               teamId,
+              userId: userId!,
               budgetCategoryId: bc.id,
               name: bc.name,
               percentage: newPerc / 100,
@@ -310,6 +312,7 @@ export default function BudgetPage() {
           ...data,
           incomeId: editingIncome.id,
           teamId,
+          userId,
         });
         notify.success("Receita atualizada!");
       } else {
@@ -327,10 +330,10 @@ export default function BudgetPage() {
   };
 
   const handleDeleteIncome = async (id: string) => {
-    if (!teamId) return;
+    if (!teamId || !userId) return;
     if (!confirm("Excluir esta receita?")) return;
     try {
-      await deleteIncomeUseCase.execute({ incomeId: id, teamId });
+      await deleteIncomeUseCase.execute({ incomeId: id, teamId, userId });
       notify.success("Receita excluída.");
       loadData();
     } catch (e: any) {

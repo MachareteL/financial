@@ -7,6 +7,7 @@ export type BudgetDetailsDTO = Pick<
 
 export type SaveBudgetDTO = {
   teamId: string;
+  userId: string;
   month: number;
   year: number;
   totalIncome: number;

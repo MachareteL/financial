@@ -197,7 +197,12 @@ export const getExpenseByIdUseCase = container.get(
 );
 export const createExpenseUseCase = container.get(
   "createExpenseUseCase",
-  () => new CreateExpenseUseCase(expenseRepository, storageRepository)
+  () =>
+    new CreateExpenseUseCase(
+      expenseRepository,
+      storageRepository,
+      teamRepository
+    )
 );
 export const getExpensesUseCase = container.get(
   "getExpensesUseCase",
@@ -205,11 +210,16 @@ export const getExpensesUseCase = container.get(
 );
 export const deleteExpenseUseCase = container.get(
   "deleteExpenseUseCase",
-  () => new DeleteExpenseUseCase(expenseRepository)
+  () => new DeleteExpenseUseCase(expenseRepository, teamRepository)
 );
 export const updateExpenseUseCase = container.get(
   "updateExpenseUseCase",
-  () => new UpdateExpenseUseCase(expenseRepository, storageRepository)
+  () =>
+    new UpdateExpenseUseCase(
+      expenseRepository,
+      storageRepository,
+      teamRepository
+    )
 );
 export const getExpenseSummaryByPeriodUseCase = container.get(
   "getExpenseSummaryByPeriodUseCase",
@@ -232,15 +242,15 @@ export const getCategoriesUseCase = container.get(
 );
 export const createCategoryUseCase = container.get(
   "createCategoryUseCase",
-  () => new CreateCategoryUseCase(categoryRepository)
+  () => new CreateCategoryUseCase(categoryRepository, teamRepository)
 );
 export const updateCategoryUseCase = container.get(
   "updateCategoryUseCase",
-  () => new UpdateCategoryUseCase(categoryRepository)
+  () => new UpdateCategoryUseCase(categoryRepository, teamRepository)
 );
 export const deleteCategoryUseCase = container.get(
   "deleteCategoryUseCase",
-  () => new DeleteCategoryUseCase(categoryRepository)
+  () => new DeleteCategoryUseCase(categoryRepository, teamRepository)
 );
 
 // Incomes
@@ -250,17 +260,17 @@ export const getIncomesUseCase = container.get(
 );
 export const createIncomeUseCase = container.get(
   "createIncomeUseCase",
-  () => new CreateIncomeUseCase(incomeRepository)
+  () => new CreateIncomeUseCase(incomeRepository, teamRepository)
 );
 
 export const updateIncomeUseCase = container.get(
   "updateIncomeUseCase",
-  () => new UpdateIncomeUseCase(incomeRepository)
+  () => new UpdateIncomeUseCase(incomeRepository, teamRepository)
 );
 
 export const deleteIncomeUseCase = container.get(
   "deleteIncomeUseCase",
-  () => new DeleteIncomeUseCase(incomeRepository)
+  () => new DeleteIncomeUseCase(incomeRepository, teamRepository)
 );
 
 // Budget
@@ -270,7 +280,7 @@ export const getBudgetUseCase = container.get(
 );
 export const saveBudgetUseCase = container.get(
   "saveBudgetUseCase",
-  () => new SaveBudgetUseCase(budgetRepository)
+  () => new SaveBudgetUseCase(budgetRepository, teamRepository)
 );
 export const getBudgetCategoriesUseCase = container.get(
   "getBudgetCategoriesUseCase",
@@ -278,15 +288,18 @@ export const getBudgetCategoriesUseCase = container.get(
 );
 export const createBudgetCategoryUseCase = container.get(
   "createBudgetCategoryUseCase",
-  () => new CreateBudgetCategoryUseCase(budgetCategoryRepository)
+  () =>
+    new CreateBudgetCategoryUseCase(budgetCategoryRepository, teamRepository)
 );
 export const updateBudgetCategoryUseCase = container.get(
   "updateBudgetCategoryUseCase",
-  () => new UpdateBudgetCategoryUseCase(budgetCategoryRepository)
+  () =>
+    new UpdateBudgetCategoryUseCase(budgetCategoryRepository, teamRepository)
 );
 export const deleteBudgetCategoryUseCase = container.get(
   "deleteBudgetCategoryUseCase",
-  () => new DeleteBudgetCategoryUseCase(budgetCategoryRepository)
+  () =>
+    new DeleteBudgetCategoryUseCase(budgetCategoryRepository, teamRepository)
 );
 
 // Investments
@@ -296,15 +309,15 @@ export const getInvestmentsUseCase = container.get(
 );
 export const createInvestmentUseCase = container.get(
   "createInvestmentUseCase",
-  () => new CreateInvestmentUseCase(investmentRepository)
+  () => new CreateInvestmentUseCase(investmentRepository, teamRepository)
 );
 export const updateInvestmentUseCase = container.get(
   "updateInvestmentUseCase",
-  () => new UpdateInvestmentUseCase(investmentRepository)
+  () => new UpdateInvestmentUseCase(investmentRepository, teamRepository)
 );
 export const deleteInvestmentUseCase = container.get(
   "deleteInvestmentUseCase",
-  () => new DeleteInvestmentUseCase(investmentRepository)
+  () => new DeleteInvestmentUseCase(investmentRepository, teamRepository)
 );
 
 // Team Management

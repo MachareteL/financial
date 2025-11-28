@@ -195,7 +195,7 @@ export default function CategoriesPage() {
   // 4. Event Handlers
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!teamId) return;
+    if (!teamId || !userId) return;
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
@@ -207,6 +207,7 @@ export default function CategoriesPage() {
         await updateCategoryUseCase.execute({
           categoryId: editingCategory.id,
           teamId,
+          userId,
           name,
           budgetCategoryId,
         });
@@ -216,6 +217,7 @@ export default function CategoriesPage() {
           name,
           budgetCategoryId,
           teamId,
+          userId,
         });
         notify.success("Categoria criada!");
       }
@@ -230,10 +232,10 @@ export default function CategoriesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!teamId || !confirm("Excluir esta categoria?")) return;
+    if (!teamId || !userId || !confirm("Excluir esta categoria?")) return;
     setIsLoading(true);
     try {
-      await deleteCategoryUseCase.execute({ categoryId: id, teamId });
+      await deleteCategoryUseCase.execute({ categoryId: id, teamId, userId });
       notify.success("Categoria excluída.");
       await loadData();
     } catch (error: any) {

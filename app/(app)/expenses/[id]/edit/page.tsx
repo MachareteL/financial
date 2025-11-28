@@ -177,6 +177,7 @@ export default function EditExpensePage() {
         // 3. Se ambos são null, mandamos null (remove o recibo).
         receiptFile: selectedFile,
         receiptUrl: selectedFile ? undefined : existingReceiptUrl,
+        userId: userId!,
       };
 
       await updateExpenseUseCase.execute(dto);
@@ -202,7 +203,11 @@ export default function EditExpensePage() {
 
     setIsDeleting(true);
     try {
-      await deleteExpenseUseCase.execute({ expenseId: expense.id, teamId });
+      await deleteExpenseUseCase.execute({
+        expenseId: expense.id,
+        teamId,
+        userId: userId!,
+      });
       notify.success("Gasto excluído!", {
         description: "O gasto foi removido com sucesso.",
       });

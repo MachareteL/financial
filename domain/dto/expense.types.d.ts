@@ -44,6 +44,7 @@ export type CreateExpenseDTO = {
 export type UpdateExpenseDTO = {
   expenseId: string;
   teamId: string;
+  userId: string;
   amount?: number;
   description?: string;
   date?: string;
@@ -56,4 +57,5 @@ export type UpdateExpenseDTO = {
 export type DeleteExpenseDTO = {
   expenseId: string;
   teamId: string;
+  userId: string;
 };

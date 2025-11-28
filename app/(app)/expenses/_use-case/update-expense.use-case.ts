@@ -2,13 +2,25 @@ import type { IExpenseRepository } from "@/domain/interfaces/expense.repository.
 import type { IStorageRepository } from "@/domain/interfaces/storage.repository.interface"; // <-- Importar
 import type { UpdateExpenseDTO } from "@/domain/dto/expense.types.d.ts";
 
+import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
+
 export class UpdateExpenseUseCase {
   constructor(
     private expenseRepository: IExpenseRepository,
-    private storageRepository: IStorageRepository
+    private storageRepository: IStorageRepository,
+    private teamRepository: ITeamRepository
   ) {}
 
   async execute(dto: UpdateExpenseDTO): Promise<void> {
+    const hasPermission = await this.teamRepository.verifyPermission(
+      dto.userId,
+      dto.teamId,
+      "MANAGE_EXPENSES"
+    );
+
+    if (!hasPermission) {
+      throw new Error("Permissão negada: Você não pode editar despesas.");
+    }
     const existingExpense = await this.expenseRepository.findById(
       dto.expenseId,
       dto.teamId

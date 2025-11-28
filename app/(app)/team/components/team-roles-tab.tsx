@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Edit, Trash2, Plus, Loader2, Shield, Crown } from "lucide-react";
+import { useAuth } from "@/app/auth/auth-provider";
 import { useTeam } from "@/app/(app)/team/team-provider";
 import { usePermission } from "@/hooks/use-permission";
 import { notify } from "@/lib/notify-helper";
@@ -27,19 +28,10 @@ interface TeamRolesTabProps {
 }
 
 const AVAILABLE_PERMISSIONS = [
-  { key: "view_dashboard", label: "Ver Dashboard" },
-  { key: "view_expenses", label: "Ver Gastos" },
-  { key: "create_expenses", label: "Criar Gastos" },
-  { key: "edit_expenses", label: "Editar Gastos" },
-  { key: "delete_expenses", label: "Excluir Gastos" },
-  { key: "view_budget", label: "Ver Orçamento" },
-  { key: "edit_budget", label: "Editar Orçamento" },
-  { key: "view_investments", label: "Ver Investimentos" },
-  { key: "edit_investments", label: "Editar Investimentos" },
-  { key: "view_categories", label: "Ver Categorias" },
-  { key: "edit_categories", label: "Editar Categorias" },
-  { key: "manage_team", label: "Gerenciar Equipe (Membros)" },
-  { key: "manage_roles", label: "Gerenciar Cargos" },
+  { key: "MANAGE_EXPENSES", label: "Gerenciar Gastos" },
+  { key: "MANAGE_BUDGET", label: "Gerenciar Orçamento e Categorias" },
+  { key: "MANAGE_INVESTMENTS", label: "Gerenciar Investimentos" },
+  { key: "MANAGE_TEAM", label: "Gerenciar Equipe e Cargos" },
 ];
 
 const ROLE_COLORS = [
@@ -57,6 +49,7 @@ const ROLE_COLORS = [
 
 export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
   const { currentTeam } = useTeam();
+  const { session } = useAuth();
   const { can } = usePermission();
 
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
@@ -97,7 +90,7 @@ export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
 
   const handleSaveRole = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentTeam) return;
+    if (!currentTeam || !session?.user) return;
 
     setIsActionLoading(true);
     try {
@@ -105,6 +98,7 @@ export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
         await manageRolesUseCase.updateRole({
           roleId: editingRole.id,
           teamId: currentTeam.team.id,
+          userId: session.user.id,
           name: newRoleName,
           color: newRoleColor,
           permissions: newRolePermissions,
@@ -113,6 +107,7 @@ export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
       } else {
         await manageRolesUseCase.createRole({
           teamId: currentTeam.team.id,
+          userId: session.user.id,
           name: newRoleName,
           color: newRoleColor,
           permissions: newRolePermissions,
@@ -129,12 +124,16 @@ export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
   };
 
   const handleDeleteRole = async (roleId: string) => {
-    if (!currentTeam) return;
+    if (!currentTeam || !session?.user) return;
     if (!confirm("Excluir este cargo? Membros perderão suas permissões."))
       return;
     setIsActionLoading(true);
     try {
-      await manageRolesUseCase.deleteRole(roleId, currentTeam.team.id);
+      await manageRolesUseCase.deleteRole(
+        roleId,
+        currentTeam.team.id,
+        session.user.id
+      );
       notify.success("Cargo excluído!");
       await onUpdate();
     } catch (error: any) {
@@ -155,7 +154,7 @@ export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
             Defina o que cada membro pode fazer na equipe.
           </p>
         </div>
-        {can("manage_roles") && (
+        {can("MANAGE_TEAM") && (
           <Button
             onClick={() => openRoleModal()}
             className="w-full sm:w-auto shadow-sm"
@@ -188,7 +187,7 @@ export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
                     )}
                   </CardTitle>
                 </div>
-                {can("manage_roles") && !roleIsOwner && (
+                {can("MANAGE_TEAM") && !roleIsOwner && (
                   <div className="flex gap-1">
                     <Button
                       variant="ghost"

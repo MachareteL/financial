@@ -251,9 +251,9 @@ export default function ExpensesPage() {
   }, [displayedExpenses]);
 
   const handleDelete = async (id: string) => {
-    if (!teamId || !confirm("Excluir este gasto?")) return;
+    if (!teamId || !userId || !confirm("Excluir este gasto?")) return;
     try {
-      await deleteExpenseUseCase.execute({ expenseId: id, teamId });
+      await deleteExpenseUseCase.execute({ expenseId: id, teamId, userId });
       notify.success("Gasto excluído.");
       setExpenses((prev) => prev.filter((e) => e.id !== id));
     } catch (err: any) {

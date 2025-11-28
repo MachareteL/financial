@@ -69,10 +69,16 @@ export default function TeamPage() {
     }
   };
 
+  const { session } = useAuth();
+
   const handleCancelInvite = async (inviteId: string) => {
-    if (!currentTeam) return;
+    if (!currentTeam || !session?.user) return;
     try {
-      await manageMembersUseCase.cancelInvite(inviteId, currentTeam.team.id);
+      await manageMembersUseCase.cancelInvite(
+        inviteId,
+        currentTeam.team.id,
+        session.user.id
+      );
       notify.success("Convite cancelado");
       await loadTeamData();
     } catch (error: any) {
@@ -213,7 +219,7 @@ export default function TeamPage() {
                         >
                           Aguardando
                         </Badge>
-                        {can("manage_team") && (
+                        {can("MANAGE_TEAM") && (
                           <Button
                             variant="ghost"
                             size="sm"

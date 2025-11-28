@@ -24,29 +24,13 @@ export class TeamRepository implements ITeamRepository {
     if (teamError) throw new Error(teamError.message);
 
     const allPermissions = [
-      "view_dashboard",
-      "view_expenses",
-      "create_expenses",
-      "edit_expenses",
-      "delete_expenses",
-      "view_budget",
-      "edit_budget",
-      "view_investments",
-      "edit_investments",
-      "view_categories",
-      "edit_categories",
-      "manage_team",
-      "manage_roles",
+      "MANAGE_EXPENSES",
+      "MANAGE_BUDGET",
+      "MANAGE_INVESTMENTS",
+      "MANAGE_TEAM",
     ];
 
-    const basicPermissions = [
-      "view_dashboard",
-      "view_expenses",
-      "create_expenses",
-      "view_budget",
-      "view_investments",
-      "view_categories",
-    ];
+    const basicPermissions = ["MANAGE_EXPENSES"];
 
     // Criar Cargo "Proprietário" (Owner)
     const ownerRoleData: Database["public"]["Tables"]["team_roles"]["Insert"] =
@@ -406,5 +390,43 @@ export class TeamRepository implements ITeamRepository {
       .eq("id", inviteId);
 
     if (error) throw new Error(error.message);
+  }
+
+  async verifyPermission(
+    userId: string,
+    teamId: string,
+    permission: string
+  ): Promise<boolean> {
+    const supabase = getSupabaseClient();
+
+    // 1. Buscar o membro e seu cargo
+    const { data: member, error } = await supabase
+      .from("team_members")
+      .select(
+        `
+        role_id,
+        team_roles (name, permissions)
+      `
+      )
+      .eq("team_id", teamId)
+      .eq("profile_id", userId)
+      .single();
+
+    if (error || !member || !member.team_roles) return false;
+
+    const roleName = member.team_roles.name;
+    const permissions = (member.team_roles.permissions as string[]) || [];
+
+    // 2. Verificar Super Admin / Owner
+    if (
+      roleName === "Proprietário" ||
+      roleName === "Owner" ||
+      roleName === "Administrador"
+    ) {
+      return true;
+    }
+
+    // 3. Verificar permissão específica
+    return permissions.includes(permission);
   }
 }
