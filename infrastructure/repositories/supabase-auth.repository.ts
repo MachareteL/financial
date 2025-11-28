@@ -174,4 +174,23 @@ export class AuthSupabaseRepository implements IAuthRepository {
 
     return session;
   }
+
+  async updateProfile(
+    userId: string,
+    data: { name: string }
+  ): Promise<UserSession> {
+    const supabase = getSupabaseClient();
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ name: data.name })
+      .eq("id", userId);
+
+    if (error) throw new Error(error.message);
+
+    const session = await this.getProfileAndTeams(userId);
+    if (!session) throw new Error("Erro ao recuperar perfil atualizado.");
+
+    return session;
+  }
 }

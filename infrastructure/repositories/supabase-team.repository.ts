@@ -5,7 +5,10 @@ import {
   TeamInvite,
   type TeamInviteProps,
 } from "@/domain/entities/team-invite";
-import type { TeamMemberProfileDTO } from "@/domain/dto/team.types.d.ts";
+import type {
+  TeamMemberProfileDTO,
+  TeamInviteDetailsDTO,
+} from "@/domain/dto/team.types.d.ts";
 import { getSupabaseClient } from "../database/supabase.client";
 import type { Database } from "@/domain/dto/database.types.d.ts";
 
@@ -96,6 +99,16 @@ export class TeamRepository implements ITeamRepository {
       createdAt: new Date(teamData.created_at),
       createdBy: teamData.created_by!,
     });
+  }
+
+  async updateTeam(teamId: string, name: string): Promise<void> {
+    const supabase = getSupabaseClient();
+    const { error } = await supabase
+      .from("teams")
+      .update({ name })
+      .eq("id", teamId);
+
+    if (error) throw new Error(error.message);
   }
 
   async getTeamMembers(teamId: string): Promise<TeamMemberProfileDTO[]> {
@@ -278,7 +291,6 @@ export class TeamRepository implements ITeamRepository {
           teamId: item.team_id!,
           roleId: item.role_id,
           invitedBy: item.invited_by!,
-          createdBy: item.invited_by!,
           createdAt: new Date(item.created_at),
         })
     );
@@ -309,7 +321,6 @@ export class TeamRepository implements ITeamRepository {
       teamId: data.team_id!,
       roleId: data.role_id,
       invitedBy: data.invited_by!,
-      createdBy: data.invited_by!,
       createdAt: new Date(data.created_at),
     });
   }
@@ -325,7 +336,9 @@ export class TeamRepository implements ITeamRepository {
     if (error) throw new Error(error.message);
   }
 
-  async getPendingInvitesByEmail(email: string): Promise<TeamInvite[]> {
+  async getPendingInvitesByEmail(
+    email: string
+  ): Promise<TeamInviteDetailsDTO[]> {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from("team_invites")
@@ -342,22 +355,18 @@ export class TeamRepository implements ITeamRepository {
 
     if (error) throw new Error(error.message);
 
-    return (data || []).map((item: any) => {
-      return new TeamInvite({
-        id: item.id,
-        email: item.email,
-        status: item.status,
-        teamId: item.team_id,
-        roleId: item.role_id,
-        invitedBy: item.invited_by,
-        createdBy: item.invited_by,
-        createdAt: new Date(item.created_at),
-        // Propriedades extras para UI (não salvas no banco, mas úteis)
-        teamName: item.teams?.name,
-        invitedByName: item.invited_by_profile?.name,
-        roleName: item.team_roles?.name,
-      } as any);
-    });
+    return (data || []).map((item: any) => ({
+      id: item.id,
+      email: item.email,
+      status: item.status as "pending" | "accepted" | "declined",
+      teamId: item.team_id,
+      roleId: item.role_id,
+      invitedBy: item.invited_by,
+      createdAt: new Date(item.created_at),
+      teamName: item.teams?.name,
+      invitedByName: item.invited_by_profile?.name,
+      roleName: item.team_roles?.name,
+    }));
   }
 
   async acceptInvite(inviteId: string, userId: string): Promise<void> {

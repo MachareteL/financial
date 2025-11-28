@@ -22,6 +22,7 @@ export type ExpenseDetailsDTO = {
   recurrenceType: "monthly" | "weekly" | "yearly" | null | undefined;
   isInstallment: boolean;
   installmentNumber: number | null | undefined;
+  installmentValue: number | null | undefined;
   totalInstallments: number | null | undefined;
 };
 
@@ -36,6 +37,7 @@ export type CreateExpenseDTO = {
   isRecurring?: boolean;
   recurrenceType?: "monthly" | "weekly" | "yearly";
   isInstallment?: boolean;
+  installmentValue?: number;
   totalInstallments?: number;
 };
 
@@ -48,6 +50,7 @@ export type UpdateExpenseDTO = {
   categoryId?: string;
   receiptUrl?: string | null; // URL existente ou null para remover
   receiptFile?: File | null;
+  installmentValue?: number;
 };
 
 export type DeleteExpenseDTO = {

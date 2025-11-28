@@ -1,7 +1,7 @@
-import type { IExpenseRepository } from '@/domain/interfaces/expense.repository.interface'
-import type { IStorageRepository } from '@/domain/interfaces/storage.repository.interface'
-import type { CreateExpenseDTO } from '@/domain/dto/expense.types.d.ts'
-import { Expense } from '@/domain/entities/expense'
+import type { IExpenseRepository } from "@/domain/interfaces/expense.repository.interface";
+import type { IStorageRepository } from "@/domain/interfaces/storage.repository.interface";
+import type { CreateExpenseDTO } from "@/domain/dto/expense.types.d.ts";
+import { Expense } from "@/domain/entities/expense";
 
 export class CreateExpenseUseCase {
   constructor(
@@ -15,38 +15,44 @@ export class CreateExpenseUseCase {
     if (dto.receiptFile && dto.userId) {
       try {
         const file = dto.receiptFile;
-        const fileExt = file.name.split('.').pop() || 'png';
+        const fileExt = file.name.split(".").pop() || "png";
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
         const filePath = `${dto.userId}/${fileName}`;
 
         receiptUrl = await this.storageRepository.upload(
           file,
           filePath,
-          'receipts'
+          "receipts"
         );
       } catch (uploadError) {
         console.error("Falha no upload do recibo:", uploadError);
-        receiptUrl = null; 
+        receiptUrl = null;
       }
     }
 
     // 2. Lógica de Negócio (Parcelas ou Único)
-    const baseDate = new Date(dto.date.replace(/-/g, '/'))
-    const expensesToCreate: Expense[] = []
-    
-    if (dto.isInstallment && dto.totalInstallments && dto.totalInstallments > 0) {
-      const totalAmount = dto.amount
-      const installmentAmount = totalAmount / dto.totalInstallments
-      const parentId = crypto.randomUUID() 
+    const baseDate = new Date(dto.date.replace(/-/g, "/"));
+    const expensesToCreate: Expense[] = [];
+
+    if (
+      dto.isInstallment &&
+      dto.totalInstallments &&
+      dto.totalInstallments > 0
+    ) {
+      const totalAmount = dto.amount;
+      const installmentAmount = totalAmount / dto.totalInstallments;
+      const parentId = crypto.randomUUID();
 
       for (let i = 1; i <= dto.totalInstallments; i++) {
-        const installmentDate = new Date(baseDate)
-        installmentDate.setMonth(baseDate.getMonth() + (i - 1))
+        const installmentDate = new Date(baseDate);
+        installmentDate.setMonth(baseDate.getMonth() + (i - 1));
 
         const expense = new Expense({
           id: i === 1 ? parentId : crypto.randomUUID(),
           amount: installmentAmount,
-          description: `${dto.description || 'Gasto Parcelado'} (${i}/${dto.totalInstallments})`,
+          description: `${dto.description || "Gasto Parcelado"} (${i}/${
+            dto.totalInstallments
+          })`,
           date: installmentDate,
           categoryId: dto.categoryId,
           teamId: dto.teamId,
@@ -55,13 +61,14 @@ export class CreateExpenseUseCase {
           isRecurring: false,
           isInstallment: true,
           installmentNumber: i,
+          installmentValue: installmentAmount,
           totalInstallments: dto.totalInstallments,
           parentExpenseId: i === 1 ? null : parentId,
           createdAt: new Date(),
           category: null,
           owner: null,
-        })
-        expensesToCreate.push(expense)
+        });
+        expensesToCreate.push(expense);
       }
     } else {
       // Gasto Único ou Recorrente
@@ -78,13 +85,14 @@ export class CreateExpenseUseCase {
         recurrenceType: dto.isRecurring ? dto.recurrenceType : null,
         isInstallment: false,
         installmentNumber: null,
+        installmentValue: null,
         totalInstallments: null,
         parentExpenseId: null,
         createdAt: new Date(),
         category: null,
         owner: null,
-      })
-      expensesToCreate.push(expense)
+      });
+      expensesToCreate.push(expense);
     }
 
     if (expensesToCreate.length > 0) {

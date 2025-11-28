@@ -17,6 +17,7 @@ import { SignUpUseCase } from "@/app/auth/_use-case/sign-up.use-case";
 import { GetCurrentAuthUserUseCase } from "@/app/auth/_use-case/get-current-user.use-case";
 import { SignOutUseCase } from "@/app/auth/_use-case/sign-out.use-case";
 import { CreateTeamUseCase } from "@/app/(app)/team/_use-case/create-team.use-case";
+import { UpdateTeamUseCase } from "@/app/(app)/team/_use-case/update-team.use-case";
 import { ResetPasswordUseCase } from "@/app/auth/_use-case/reset-password.use-case";
 import { UpdatePasswordUseCase } from "@/app/auth/_use-case/update-password.use-case";
 import { VerifyRecoveryCodeUseCase } from "@/app/auth/_use-case/verify-recovery-code.use-case";
@@ -29,6 +30,7 @@ import { CreateExpenseUseCase } from "@/app/(app)/expenses/_use-case/create-expe
 import { GetExpensesUseCase } from "@/app/(app)/expenses/_use-case/get-expenses.use-case";
 import { DeleteExpenseUseCase } from "@/app/(app)/expenses/_use-case/delete-expense.use-case";
 import { GetExpenseSummaryByPeriodUseCase } from "@/app/(app)/expenses/_use-case/get-expense-summary-by-period.use-case";
+import { GetExpensesSummaryUseCase } from "@/app/(app)/expenses/_use-case/get-expenses-summary.use-case";
 
 // Incomes
 import { GetIncomesUseCase } from "@/app/(app)/income/_use_case/get-income.use-case";
@@ -63,6 +65,13 @@ import { ManageMembersUseCase } from "@/app/(app)/team/_use-case/manage-members.
 import { GetExpenseByIdUseCase } from "@/app/(app)/expenses/_use-case/get-expense-by-id.use-case";
 import { UpdateExpenseUseCase } from "@/app/(app)/expenses/_use-case/update-expense.use-case";
 
+// Profile
+import { UpdateProfileUseCase } from "@/app/auth/_use-case/update-profile.use-case";
+
+// Team Invites (Onboarding)
+import { GetPendingInvitesUseCase } from "@/app/(app)/team/_use-case/get-pending-invites.use-case";
+import { AcceptInviteUseCase } from "@/app/(app)/team/_use-case/accept-invite.use-case";
+import { DeclineInviteUseCase } from "@/app/(app)/team/_use-case/decline-invite.use-case";
 // Services
 import { GeminiAiService } from "../services/gemini-ai.service";
 
@@ -143,9 +152,15 @@ export const updatePasswordUseCase = container.get(
   "updatePasswordUseCase",
   () => new UpdatePasswordUseCase(authRepository)
 );
+
 export const verifyRecoveryCodeUseCase = container.get(
   "verifyRecoveryCodeUseCase",
   () => new VerifyRecoveryCodeUseCase(authRepository)
+);
+
+export const updateProfileUseCase = container.get(
+  "updateProfileUseCase",
+  () => new UpdateProfileUseCase(authRepository)
 );
 
 // Team
@@ -157,6 +172,11 @@ export const createTeamUseCase = container.get(
       categoryRepository,
       budgetCategoryRepository
     )
+);
+
+export const updateTeamUseCase = container.get(
+  "updateTeamUseCase",
+  () => new UpdateTeamUseCase(teamRepository)
 );
 
 // Dashboard
@@ -198,6 +218,11 @@ export const getExpenseSummaryByPeriodUseCase = container.get(
       expenseRepository,
       budgetCategoryRepository
     )
+);
+
+export const getExpensesSummaryUseCase = container.get(
+  "getExpensesSummaryUseCase",
+  () => new GetExpensesSummaryUseCase(expenseRepository)
 );
 
 // Categories
@@ -305,9 +330,6 @@ export const parseReceiptUseCase = container.get(
 );
 
 // Team Invites (Onboarding)
-import { GetPendingInvitesUseCase } from "@/app/(app)/team/_use-case/get-pending-invites.use-case";
-import { AcceptInviteUseCase } from "@/app/(app)/team/_use-case/accept-invite.use-case";
-import { DeclineInviteUseCase } from "@/app/(app)/team/_use-case/decline-invite.use-case";
 
 export const getPendingInvitesUseCase = container.get(
   "getPendingInvitesUseCase",

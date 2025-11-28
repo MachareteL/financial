@@ -1,11 +1,27 @@
-import type { Expense } from '../entities/expense'
+import type { Expense } from "../entities/expense";
 
 export interface IExpenseRepository {
-  create(expense: Expense): Promise<Expense>
-  createMany(expenses: Expense[]): Promise<Expense[]>
-  update(expense: Expense): Promise<Expense>
-  delete(id: string, teamId: string): Promise<void>
-  findById(id: string, teamId: string): Promise<Expense | null>
-  findByTeamId(teamId: string, page?: number, limit?: number): Promise<Expense[]>
-  findByDateRange(teamId: string, startDate: Date, endDate: Date, page?: number, limit?: number): Promise<Expense[]>
+  create(expense: Expense): Promise<Expense>;
+  createMany(expenses: Expense[]): Promise<Expense[]>;
+  update(expense: Expense): Promise<Expense>;
+  delete(id: string, teamId: string): Promise<void>;
+  findById(id: string, teamId: string): Promise<Expense | null>;
+  findByTeamId(
+    teamId: string,
+    page?: number,
+    limit?: number
+  ): Promise<Expense[]>;
+  findByDateRange(
+    teamId: string,
+    startDate: Date,
+    endDate: Date,
+    page?: number,
+    limit?: number
+  ): Promise<Expense[]>;
+  getSummary(
+    teamId: string,
+    startDate?: Date,
+    endDate?: Date,
+    categoryId?: string
+  ): Promise<{ total: number; count: number }>;
 }

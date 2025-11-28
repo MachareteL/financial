@@ -26,7 +26,11 @@ export class GetExpensesUseCase {
         limit
       );
     } else {
-      expenses = await this.expenseRepository.findByTeamId(dto.teamId, page, limit);
+      expenses = await this.expenseRepository.findByTeamId(
+        dto.teamId,
+        page,
+        limit
+      );
     }
 
     return expenses.map(this.mapEntityToDTO);
@@ -61,6 +65,7 @@ export class GetExpensesUseCase {
       recurrenceType: expense.recurrenceType,
       isInstallment: expense.isInstallment,
       installmentNumber: expense.installmentNumber,
+      installmentValue: expense.installmentValue,
       totalInstallments: expense.totalInstallments,
     };
   }

@@ -35,7 +35,7 @@ export const notify = {
     });
   },
 
-  info: (title: string, descriptionOrOptions: string | NotifyOptions) => {
+  info: (title: string, descriptionOrOptions?: string | NotifyOptions) => {
     if (typeof descriptionOrOptions === "string") {
       toast.info(title, {
         description: descriptionOrOptions,

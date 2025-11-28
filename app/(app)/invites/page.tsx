@@ -9,7 +9,7 @@ import {
 } from "@/infrastructure/dependency-injection";
 import { useAuth } from "@/app/auth/auth-provider";
 import { notify } from "@/lib/notify-helper";
-import type { TeamInvite } from "@/domain/entities/team-invite";
+import type { TeamInviteDetailsDTO } from "@/domain/dto/team.types.d.ts";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,7 +22,7 @@ import { UserPlus, Mail } from "lucide-react";
 
 export default function InvitesPage() {
   const { session } = useAuth();
-  const [invites, setInvites] = useState<TeamInvite[]>([]);
+  const [invites, setInvites] = useState<TeamInviteDetailsDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const router = useRouter();
@@ -115,18 +115,16 @@ export default function InvitesPage() {
                     Pendente
                   </span>
                 </div>
-                <CardTitle>{(invite as any).teamName}</CardTitle>
+                <CardTitle>{invite.teamName}</CardTitle>
                 <CardDescription>
-                  Convidado por {(invite as any).invitedByName}
+                  Convidado por {invite.invitedByName}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="text-sm">
                     <span className="text-muted-foreground">Cargo: </span>
-                    <span className="font-medium">
-                      {(invite as any).roleName}
-                    </span>
+                    <span className="font-medium">{invite.roleName}</span>
                   </div>
                   <div className="flex gap-2">
                     <Button

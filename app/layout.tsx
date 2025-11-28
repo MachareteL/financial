@@ -19,7 +19,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={inter.className}>
         <AuthProvider>{children}</AuthProvider>
         <Toaster />
       </body>

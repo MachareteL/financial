@@ -487,6 +487,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_auth_user_team_ids: { Args: never; Returns: string[] }
       get_auth_user_teams: { Args: never; Returns: string[] }
     }
     Enums: {
