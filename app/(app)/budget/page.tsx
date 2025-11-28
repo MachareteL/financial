@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/auth/auth-provider";
 import { useTeam } from "@/app/(app)/team/team-provider";
+import { usePermission } from "@/hooks/use-permission";
 import {
   getIncomesUseCase,
   createIncomeUseCase,
@@ -117,6 +118,7 @@ const getFolderStyle = (name: string) => {
 export default function BudgetPage() {
   const { session, loading: authLoading } = useAuth();
   const { currentTeam } = useTeam();
+  const { can } = usePermission();
   const router = useRouter();
 
   // --- Estado Global ---
@@ -554,6 +556,7 @@ export default function BudgetPage() {
                             }
                             min={0}
                             max={100}
+                            disabled={!can("MANAGE_BUDGET")}
                           />
                           <span className="text-sm font-bold text-slate-400">
                             %
@@ -581,6 +584,7 @@ export default function BudgetPage() {
                           onValueChange={(vals) =>
                             handleSliderChange(bc.id, vals[0])
                           }
+                          disabled={!can("MANAGE_BUDGET")}
                           className="cursor-grab active:cursor-grabbing py-2"
                         />
                       </div>
@@ -632,18 +636,20 @@ export default function BudgetPage() {
                 <CheckCircle2 className="w-5 h-5 text-green-400" />
                 <span className="text-sm font-medium">Pronto para salvar</span>
               </div>
-              <Button
-                size="sm"
-                onClick={handleSaveBudget}
-                disabled={isSaving}
-                className="bg-white text-slate-900 hover:bg-slate-100 rounded-full px-6 font-bold"
-              >
-                {isSaving ? (
-                  <Loader2 className="animate-spin w-4 h-4" />
-                ) : (
-                  "Confirmar"
-                )}
-              </Button>
+              {can("MANAGE_BUDGET") && (
+                <Button
+                  size="sm"
+                  onClick={handleSaveBudget}
+                  disabled={isSaving}
+                  className="bg-white text-slate-900 hover:bg-slate-100 rounded-full px-6 font-bold"
+                >
+                  {isSaving ? (
+                    <Loader2 className="animate-spin w-4 h-4" />
+                  ) : (
+                    "Confirmar"
+                  )}
+                </Button>
+              )}
             </div>
 
             {/* Mensagem de Erro Flutuante se inválido */}
@@ -672,14 +678,16 @@ export default function BudgetPage() {
               open={isIncomeDialogOpen}
               onOpenChange={setIsIncomeDialogOpen}
             >
-              <DialogTrigger asChild>
-                <Button
-                  onClick={() => setEditingIncome(null)}
-                  className="rounded-full"
-                >
-                  <Plus className="w-4 h-4 mr-2" /> Nova Receita
-                </Button>
-              </DialogTrigger>
+              {can("MANAGE_BUDGET") && (
+                <DialogTrigger asChild>
+                  <Button
+                    onClick={() => setEditingIncome(null)}
+                    className="rounded-full"
+                  >
+                    <Plus className="w-4 h-4 mr-2" /> Nova Receita
+                  </Button>
+                </DialogTrigger>
+              )}
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>
@@ -793,12 +801,14 @@ export default function BudgetPage() {
                 <p className="text-sm mb-4">
                   Adicione seu salário ou rendas extras para começar.
                 </p>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsIncomeDialogOpen(true)}
-                >
-                  Adicionar Agora
-                </Button>
+                {can("MANAGE_BUDGET") && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsIncomeDialogOpen(true)}
+                  >
+                    Adicionar Agora
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -844,25 +854,29 @@ export default function BudgetPage() {
                       })}
                     </span>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => {
-                          setEditingIncome(inc);
-                          setIsIncomeDialogOpen(true);
-                        }}
-                      >
-                        <Edit2 className="w-4 h-4 text-slate-400 hover:text-blue-600" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => handleDeleteIncome(inc.id)}
-                      >
-                        <Trash2 className="w-4 h-4 text-slate-400 hover:text-red-600" />
-                      </Button>
+                      {can("MANAGE_BUDGET") && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => {
+                              setEditingIncome(inc);
+                              setIsIncomeDialogOpen(true);
+                            }}
+                          >
+                            <Edit2 className="w-4 h-4 text-slate-400 hover:text-blue-600" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleDeleteIncome(inc.id)}
+                          >
+                            <Trash2 className="w-4 h-4 text-slate-400 hover:text-red-600" />
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

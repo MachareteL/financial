@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/auth/auth-provider";
 import { useTeam } from "../team/team-provider";
+import { usePermission } from "@/hooks/use-permission";
 import { notify } from "@/lib/notify-helper";
 
 // Use Cases
@@ -119,6 +120,7 @@ const getFolderStyle = (name: string | null) => {
 export default function CategoriesPage() {
   const { session, loading: authLoading } = useAuth();
   const { currentTeam } = useTeam();
+  const { can } = usePermission();
   const router = useRouter();
 
   // --- State Management ---
@@ -292,12 +294,14 @@ export default function CategoriesPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button
-              onClick={() => openDialog(null)}
-              className="rounded-full bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-200"
-            >
-              <Plus className="w-4 h-4 mr-2" /> Nova
-            </Button>
+            {can("MANAGE_BUDGET") && (
+              <Button
+                onClick={() => openDialog(null)}
+                className="rounded-full bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-200"
+              >
+                <Plus className="w-4 h-4 mr-2" /> Nova
+              </Button>
+            )}
           </div>
         </div>
 
@@ -337,13 +341,15 @@ export default function CategoriesPage() {
                       <p className="text-sm text-slate-400">
                         Nenhuma categoria nesta pasta.
                       </p>
-                      <Button
-                        variant="link"
-                        onClick={() => openDialog(null)}
-                        className="text-slate-600"
-                      >
-                        Criar agora
-                      </Button>
+                      {can("MANAGE_BUDGET") && (
+                        <Button
+                          variant="link"
+                          onClick={() => openDialog(null)}
+                          className="text-slate-600"
+                        >
+                          Criar agora
+                        </Button>
+                      )}
                     </div>
                   ) : (
                     items.map((cat) => (
@@ -370,28 +376,32 @@ export default function CategoriesPage() {
                             </div>
                           </div>
 
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 -mr-2 text-slate-300 hover:text-slate-600"
-                              >
-                                <MoreHorizontal className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => openDialog(cat)}>
-                                <Edit2 className="w-4 h-4 mr-2" /> Editar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleDelete(cat.id)}
-                                className="text-red-600 focus:text-red-600"
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" /> Excluir
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          {can("MANAGE_BUDGET") && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 -mr-2 text-slate-300 hover:text-slate-600"
+                                >
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => openDialog(cat)}
+                                >
+                                  <Edit2 className="w-4 h-4 mr-2" /> Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleDelete(cat.id)}
+                                  className="text-red-600 focus:text-red-600"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" /> Excluir
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                         </div>
                       </div>
                     ))
@@ -412,9 +422,11 @@ export default function CategoriesPage() {
               <p className="text-slate-500 max-w-xs mx-auto mb-6">
                 Comece criando categorias para organizar suas finanças.
               </p>
-              <Button onClick={() => openDialog(null)}>
-                Criar Primeira Categoria
-              </Button>
+              {can("MANAGE_BUDGET") && (
+                <Button onClick={() => openDialog(null)}>
+                  Criar Primeira Categoria
+                </Button>
+              )}
             </div>
           )}
         </div>

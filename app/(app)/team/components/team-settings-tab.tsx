@@ -16,10 +16,12 @@ import { useTeam } from "@/app/(app)/team/team-provider";
 import { notify } from "@/lib/notify-helper";
 import { updateTeamUseCase } from "@/infrastructure/dependency-injection";
 import { useAuth } from "@/app/auth/auth-provider";
+import { usePermission } from "@/hooks/use-permission";
 
 export function TeamSettingsTab() {
   const { currentTeam } = useTeam();
   const { session } = useAuth();
+  const { can } = usePermission();
   const [name, setName] = useState(currentTeam?.team.name || "");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -73,19 +75,22 @@ export function TeamSettingsTab() {
                 placeholder="Minha Equipe"
                 required
                 minLength={3}
+                disabled={!can("MANAGE_TEAM")}
               />
               <p className="text-[0.8rem] text-muted-foreground">
                 Este é o nome visível para todos os membros da equipe.
               </p>
             </div>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="mr-2 h-4 w-4" />
-              )}
-              Salvar Alterações
-            </Button>
+            {can("MANAGE_TEAM") && (
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Salvar Alterações
+              </Button>
+            )}
           </form>
         </CardContent>
       </Card>

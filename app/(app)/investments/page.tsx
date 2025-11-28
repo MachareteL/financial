@@ -5,6 +5,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/auth/auth-provider";
 import { useTeam } from "@/app/(app)/team/team-provider";
+import { usePermission } from "@/hooks/use-permission";
 import { notify } from "@/lib/notify-helper";
 
 // Use Cases
@@ -138,6 +139,7 @@ interface ProjectionData {
 export default function InvestmentsPage() {
   const { session, loading: authLoading } = useAuth();
   const { currentTeam } = useTeam();
+  const { can } = usePermission();
   const router = useRouter();
 
   const [investments, setInvestments] = useState<InvestmentDetailsDTO[]>([]);
@@ -397,14 +399,16 @@ export default function InvestmentsPage() {
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button
-              onClick={() => setEditingInvestment(null)}
-              className="shadow-lg shadow-blue-600/20 bg-blue-600 hover:bg-blue-700"
-            >
-              <Plus className="w-4 h-4 mr-2" /> Novo Investimento
-            </Button>
-          </DialogTrigger>
+          {can("MANAGE_INVESTMENTS") && (
+            <DialogTrigger asChild>
+              <Button
+                onClick={() => setEditingInvestment(null)}
+                className="shadow-lg shadow-blue-600/20 bg-blue-600 hover:bg-blue-700"
+              >
+                <Plus className="w-4 h-4 mr-2" /> Novo Investimento
+              </Button>
+            </DialogTrigger>
+          )}
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>
@@ -692,9 +696,11 @@ export default function InvestmentsPage() {
             <p className="text-slate-500">
               Você ainda não cadastrou nenhum investimento.
             </p>
-            <Button variant="link" onClick={() => setIsDialogOpen(true)}>
-              Começar agora
-            </Button>
+            {can("MANAGE_INVESTMENTS") && (
+              <Button variant="link" onClick={() => setIsDialogOpen(true)}>
+                Começar agora
+              </Button>
+            )}
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -718,25 +724,29 @@ export default function InvestmentsPage() {
                         <Icon className={`w-5 h-5 ${config.color}`} />
                       </div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => {
-                            setEditingInvestment(inv);
-                            setIsDialogOpen(true);
-                          }}
-                        >
-                          <Edit2 className="w-3.5 h-3.5 text-slate-400 hover:text-blue-600" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleDelete(inv.id)}
-                        >
-                          <Trash2 className="w-3.5 h-3.5 text-slate-400 hover:text-red-600" />
-                        </Button>
+                        {can("MANAGE_INVESTMENTS") && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                setEditingInvestment(inv);
+                                setIsDialogOpen(true);
+                              }}
+                            >
+                              <Edit2 className="w-3.5 h-3.5 text-slate-400 hover:text-blue-600" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleDelete(inv.id)}
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-slate-400 hover:text-red-600" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
 

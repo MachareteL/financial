@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/auth/auth-provider";
 import { useTeam } from "@/app/(app)/team/team-provider";
+import { usePermission } from "@/hooks/use-permission";
 import { notify } from "@/lib/notify-helper";
 
 // Use Cases
@@ -46,6 +47,7 @@ const PAGE_SIZE = 20;
 export default function ExpensesPage() {
   const { session, loading: authLoading } = useAuth();
   const { currentTeam } = useTeam();
+  const { can } = usePermission();
   const router = useRouter();
 
   // --- Estados de Dados ---
@@ -295,12 +297,14 @@ export default function ExpensesPage() {
               <span className="text-xs">• {summaryData.count} itens</span>
             </p>
           </div>
-          <Button
-            onClick={() => router.push("/expenses/new")}
-            className="bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-200"
-          >
-            <Plus className="w-4 h-4 mr-2" /> Novo Gasto
-          </Button>
+          {can("MANAGE_EXPENSES") && (
+            <Button
+              onClick={() => router.push("/expenses/new")}
+              className="bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-200"
+            >
+              <Plus className="w-4 h-4 mr-2" /> Novo Gasto
+            </Button>
+          )}
         </div>
 
         {/* Toolbar (Non-Sticky) */}

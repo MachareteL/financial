@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { CalendarDays, CreditCard, Edit, Trash2, Loader2 } from "lucide-react";
+import { usePermission } from "@/hooks/use-permission";
 import { getCategoryStyle } from "../utils";
 import { EmptyState } from "./empty-state";
 import { notify } from "@/lib/notify-helper";
@@ -25,6 +26,8 @@ export function ExpensesList({
   hasMore,
   onClearFilters,
 }: ExpensesListProps) {
+  const { can } = usePermission();
+
   if (Object.entries(groupedExpenses).length === 0) {
     return <EmptyState onClearFilters={onClearFilters} />;
   }
@@ -101,28 +104,32 @@ export function ExpensesList({
                       </div>
 
                       <div className="flex items-center gap-1 -mr-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/expenses/${expense.id}/edit`);
-                          }}
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-red-300 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(expense.id);
-                          }}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
+                        {can("MANAGE_EXPENSES") && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/expenses/${expense.id}/edit`);
+                              }}
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-red-300 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(expense.id);
+                              }}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
