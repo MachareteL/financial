@@ -26,9 +26,11 @@ export type UpdateIncomeDTO = {
   type: "recurring" | "one_time";
   frequency?: "monthly" | "weekly" | "yearly";
   date: string;
+  userId: string;
 };
 
 export type DeleteIncomeDTO = {
   incomeId: string;
   teamId: string;
+  userId: string;
 };

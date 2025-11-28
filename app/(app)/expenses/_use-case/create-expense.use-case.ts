@@ -1,4 +1,5 @@
 import type { IExpenseRepository } from "@/domain/interfaces/expense.repository.interface";
+import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 import type { IStorageRepository } from "@/domain/interfaces/storage.repository.interface";
 import type { CreateExpenseDTO } from "@/domain/dto/expense.types.d.ts";
 import { Expense } from "@/domain/entities/expense";
@@ -6,10 +7,21 @@ import { Expense } from "@/domain/entities/expense";
 export class CreateExpenseUseCase {
   constructor(
     private expenseRepository: IExpenseRepository,
-    private storageRepository: IStorageRepository
+    private storageRepository: IStorageRepository,
+    private teamRepository: ITeamRepository
   ) {}
 
   async execute(dto: CreateExpenseDTO): Promise<void> {
+    const hasPermission = await this.teamRepository.verifyPermission(
+      dto.userId,
+      dto.teamId,
+      "MANAGE_EXPENSES"
+    );
+
+    if (!hasPermission) {
+      throw new Error("Permissão negada: Você não pode criar despesas.");
+    }
+
     let receiptUrl: string | null = null;
 
     if (dto.receiptFile && dto.userId) {

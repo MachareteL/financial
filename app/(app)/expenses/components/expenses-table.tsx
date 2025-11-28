@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, CreditCard, FileText, Edit, Loader2 } from "lucide-react";
+import { usePermission } from "@/hooks/use-permission";
 import { getCategoryStyle } from "../utils";
 import type { ExpenseDetailsDTO } from "@/domain/dto/expense.types.d.ts";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
@@ -29,6 +30,7 @@ export function ExpensesTable({
   router,
   hasMore,
 }: ExpensesTableProps) {
+  const { can } = usePermission();
   return (
     <Card className="border-none shadow-sm overflow-hidden bg-white ring-1 ring-slate-200">
       <CardContent className="p-0">
@@ -124,16 +126,18 @@ export function ExpensesTable({
                       })}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-slate-300 opacity-0 group-hover:opacity-100 hover:text-blue-600 transition-all"
-                        onClick={() =>
-                          router.push(`/expenses/${expense.id}/edit`)
-                        }
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
+                      {can("MANAGE_EXPENSES") && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-300 opacity-0 group-hover:opacity-100 hover:text-blue-600 transition-all"
+                          onClick={() =>
+                            router.push(`/expenses/${expense.id}/edit`)
+                          }
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 );

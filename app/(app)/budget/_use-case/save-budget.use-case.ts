@@ -1,22 +1,35 @@
-import type { IBudgetRepository } from '@/domain/interfaces/budget.repository.interface'
-import type { SaveBudgetDTO } from '@/domain/dto/budget.types.d.ts'
-import { Budget } from '@/domain/entities/budget'
+import type { IBudgetRepository } from "@/domain/interfaces/budget.repository.interface";
+import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
+import type { SaveBudgetDTO } from "@/domain/dto/budget.types.d.ts";
+import { Budget } from "@/domain/entities/budget";
 
 export class SaveBudgetUseCase {
-  constructor(private budgetRepository: IBudgetRepository) {}
+  constructor(
+    private budgetRepository: IBudgetRepository,
+    private teamRepository: ITeamRepository
+  ) {}
 
   async execute(dto: SaveBudgetDTO): Promise<void> {
+    const hasPermission = await this.teamRepository.verifyPermission(
+      dto.userId,
+      dto.teamId,
+      "MANAGE_BUDGET"
+    );
+
+    if (!hasPermission) {
+      throw new Error("Permissão negada: Você não pode editar o orçamento.");
+    }
     const existingBudget = await this.budgetRepository.findByTeamAndPeriod(
       dto.teamId,
       dto.month,
-      dto.year,
-    )
+      dto.year
+    );
 
     if (existingBudget) {
       const updatedBudget = existingBudget.update({
         totalIncome: dto.totalIncome,
-      })
-      await this.budgetRepository.update(updatedBudget)
+      });
+      await this.budgetRepository.update(updatedBudget);
     } else {
       const budget = new Budget({
         id: crypto.randomUUID(),
@@ -25,8 +38,8 @@ export class SaveBudgetUseCase {
         totalIncome: dto.totalIncome,
         teamId: dto.teamId,
         createdAt: new Date(),
-      })
-      await this.budgetRepository.create(budget)
+      });
+      await this.budgetRepository.create(budget);
     }
   }
 }

@@ -34,6 +34,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "@/app/auth/auth-provider";
+import { usePermission } from "@/hooks/use-permission";
 
 import {
   getCategoriesUseCase,
@@ -52,6 +53,7 @@ import { notify } from "@/lib/notify-helper";
 export default function EditExpensePage() {
   const { session, loading: authLoading } = useAuth();
   const { currentTeam } = useTeam();
+  const { can } = usePermission();
 
   const teamId = currentTeam?.team.id;
   const userId = session?.user.id;
@@ -177,6 +179,7 @@ export default function EditExpensePage() {
         // 3. Se ambos são null, mandamos null (remove o recibo).
         receiptFile: selectedFile,
         receiptUrl: selectedFile ? undefined : existingReceiptUrl,
+        userId: userId!,
       };
 
       await updateExpenseUseCase.execute(dto);
@@ -202,7 +205,11 @@ export default function EditExpensePage() {
 
     setIsDeleting(true);
     try {
-      await deleteExpenseUseCase.execute({ expenseId: expense.id, teamId });
+      await deleteExpenseUseCase.execute({
+        expenseId: expense.id,
+        teamId,
+        userId: userId!,
+      });
       notify.success("Gasto excluído!", {
         description: "O gasto foi removido com sucesso.",
       });
@@ -426,35 +433,39 @@ export default function EditExpensePage() {
                   Cancelar
                 </Button>
 
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={handleDelete}
-                  disabled={isSaving || isDeleting}
-                  className="flex-1"
-                >
-                  {isDeleting ? (
-                    <Loader2 className="animate-spin h-4 w-4" />
-                  ) : (
-                    <>
-                      <Trash2 className="w-4 h-4 mr-2" /> Excluir
-                    </>
-                  )}
-                </Button>
+                {can("MANAGE_EXPENSES") && (
+                  <>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={handleDelete}
+                      disabled={isSaving || isDeleting}
+                      className="flex-1"
+                    >
+                      {isDeleting ? (
+                        <Loader2 className="animate-spin h-4 w-4" />
+                      ) : (
+                        <>
+                          <Trash2 className="w-4 h-4 mr-2" /> Excluir
+                        </>
+                      )}
+                    </Button>
 
-                <Button
-                  type="submit"
-                  disabled={isSaving || isDeleting}
-                  className="flex-1"
-                >
-                  {isSaving ? (
-                    <Loader2 className="animate-spin h-4 w-4" />
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" /> Salvar
-                    </>
-                  )}
-                </Button>
+                    <Button
+                      type="submit"
+                      disabled={isSaving || isDeleting}
+                      className="flex-1"
+                    >
+                      {isSaving ? (
+                        <Loader2 className="animate-spin h-4 w-4" />
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4 mr-2" /> Salvar
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
               </div>
             </form>
           </CardContent>

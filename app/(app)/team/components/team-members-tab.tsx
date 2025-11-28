@@ -87,11 +87,12 @@ export function TeamMembersTab({
   };
 
   const handleUpdateMemberRole = async (memberId: string, roleId: string) => {
-    if (!currentTeam) return;
+    if (!currentTeam || !session?.user) return;
     try {
       await manageMembersUseCase.updateMemberRole({
         teamId: currentTeam.team.id,
         memberId,
+        userId: session.user.id,
         roleId: roleId === "default" ? null : roleId,
       });
       notify.success("Cargo atualizado com sucesso!");
@@ -102,13 +103,17 @@ export function TeamMembersTab({
   };
 
   const handleRemoveMember = async (memberId: string) => {
-    if (!currentTeam) return;
+    if (!currentTeam || !session?.user) return;
     if (!confirm("Remover este membro da equipe? Ele perderá acesso a equipe."))
       return;
 
     setIsActionLoading(true);
     try {
-      await manageMembersUseCase.removeMember(currentTeam.team.id, memberId);
+      await manageMembersUseCase.removeMember(
+        currentTeam.team.id,
+        memberId,
+        session.user.id
+      );
       notify.success("Membro removido", {
         description: "A lista de acesso foi atualizada.",
       });
@@ -131,7 +136,7 @@ export function TeamMembersTab({
             Gerencie quem tem acesso à sua equipe.
           </p>
         </div>
-        {can("manage_team") && (
+        {can("MANAGE_TEAM") && (
           <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
             <DialogTrigger asChild>
               <Button className="w-full sm:w-auto shadow-sm">
@@ -249,7 +254,7 @@ export function TeamMembersTab({
                         <Shield className="w-3 h-3" />
                         {member.teamRole?.name}
                       </div>
-                    ) : can("manage_roles") && !isMe ? (
+                    ) : can("MANAGE_TEAM") && !isMe ? (
                       <Select
                         value={member.roleId || "default"}
                         onValueChange={(val) =>
@@ -277,7 +282,7 @@ export function TeamMembersTab({
                     )}
                   </div>
 
-                  {can("manage_team") && !isMe && !memberIsOwner && (
+                  {can("MANAGE_TEAM") && !isMe && !memberIsOwner && (
                     <Button
                       variant="ghost"
                       size="sm"

@@ -41,4 +41,11 @@ export interface ITeamRepository {
   getPendingInvitesByEmail(email: string): Promise<TeamInviteDetailsDTO[]>;
   acceptInvite(inviteId: string, userId: string): Promise<void>;
   declineInvite(inviteId: string): Promise<void>;
+
+  // Permissions
+  verifyPermission(
+    userId: string,
+    teamId: string,
+    permission: string
+  ): Promise<boolean>;
 }

@@ -5,6 +5,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/auth/auth-provider";
 import { useTeam } from "@/app/(app)/team/team-provider";
+import { usePermission } from "@/hooks/use-permission";
 import { notify } from "@/lib/notify-helper";
 
 // Use Cases
@@ -138,6 +139,7 @@ interface ProjectionData {
 export default function InvestmentsPage() {
   const { session, loading: authLoading } = useAuth();
   const { currentTeam } = useTeam();
+  const { can } = usePermission();
   const router = useRouter();
 
   const [investments, setInvestments] = useState<InvestmentDetailsDTO[]>([]);
@@ -226,52 +228,62 @@ export default function InvestmentsPage() {
       // Itera sobre cada investimento para aplicar sua taxa específica
       investments.forEach((inv) => {
         // Taxa mensal aproximada
-        const monthlyRate = Math.pow(1 + inv.annualReturnRate / 100, 1 / 12) - 1;
-        
+        const monthlyRate =
+          Math.pow(1 + inv.annualReturnRate / 100, 1 / 12) - 1;
+
         // Valor deste ativo neste mês da simulação
-        // Nota: Esta é uma simplificação para o gráfico agregado. 
+        // Nota: Esta é uma simplificação para o gráfico agregado.
         // Em um app real, faríamos a evolução individual e somaríamos.
         // Aqui, vamos projetar o "delta" que esse ativo adiciona ao bolo total.
-        
-        const assetValueAtMonthStart = inv.currentAmount * Math.pow(1 + monthlyRate, m);
-        const contributionsValueAtMonthStart = inv.monthlyContribution * ((Math.pow(1 + monthlyRate, m) - 1) / monthlyRate);
-        
-        // Mas para somar tudo num loop simples é complexo. 
-        // Vamos simplificar: Usar uma média ponderada de retorno seria melhor, 
+
+        const assetValueAtMonthStart =
+          inv.currentAmount * Math.pow(1 + monthlyRate, m);
+        const contributionsValueAtMonthStart =
+          inv.monthlyContribution *
+          ((Math.pow(1 + monthlyRate, m) - 1) / monthlyRate);
+
+        // Mas para somar tudo num loop simples é complexo.
+        // Vamos simplificar: Usar uma média ponderada de retorno seria melhor,
         // mas vamos iterar o "bolo total" somando os ganhos individuais.
       });
 
       // --- Abordagem Iterativa Simplificada ---
       if (m > 0) {
-         let monthGain = 0;
-         let monthDeposit = 0;
+        let monthGain = 0;
+        let monthDeposit = 0;
 
-         investments.forEach(inv => {
-            // Quanto esse ativo específico rende num mês (simplificado sobre o valor atual dele projetado linearmente para performance)
-            // O ideal é ter um objeto de estado para cada ativo, mas para UI rápida:
-            const monthlyRate = inv.annualReturnRate / 100 / 12; 
-            // Estimativa do valor do ativo neste passo 'm' (sem considerar juros sobre juros exatos de aportes passados neste loop simples, 
-            // mas suficiente para "visão de futuro")
-            const estimatedAssetValue = inv.currentAmount + (inv.monthlyContribution * m); 
-            
-            // Ganho aproximado deste mês
-            monthGain += estimatedAssetValue * monthlyRate;
-            monthDeposit += inv.monthlyContribution;
-         });
+        investments.forEach((inv) => {
+          // Quanto esse ativo específico rende num mês (simplificado sobre o valor atual dele projetado linearmente para performance)
+          // O ideal é ter um objeto de estado para cada ativo, mas para UI rápida:
+          const monthlyRate = inv.annualReturnRate / 100 / 12;
+          // Estimativa do valor do ativo neste passo 'm' (sem considerar juros sobre juros exatos de aportes passados neste loop simples,
+          // mas suficiente para "visão de futuro")
+          const estimatedAssetValue =
+            inv.currentAmount + inv.monthlyContribution * m;
 
-         // Juros Compostos Simplificados Globais (para efeito visual de curva exponencial)
-         // Adiciona o rendimento ao total acumulado (juros sobre juros)
-         simulatedTotal += monthGain; 
-         
-         // Adiciona os novos aportes
-         simulatedTotal += monthDeposit;
-         simulatedInvested += monthDeposit;
+          // Ganho aproximado deste mês
+          monthGain += estimatedAssetValue * monthlyRate;
+          monthDeposit += inv.monthlyContribution;
+        });
+
+        // Juros Compostos Simplificados Globais (para efeito visual de curva exponencial)
+        // Adiciona o rendimento ao total acumulado (juros sobre juros)
+        simulatedTotal += monthGain;
+
+        // Adiciona os novos aportes
+        simulatedTotal += monthDeposit;
+        simulatedInvested += monthDeposit;
       }
 
       // Reduz pontos para o gráfico não ficar pesado (1 ponto a cada 3 meses)
       if (m % 3 === 0 || m === totalMonths) {
         dataPoints.push({
-          month: m === 0 ? "Hoje" : `${Math.floor(m/12) > 0 ? Math.floor(m/12) + 'a ' : ''}${m%12}m`,
+          month:
+            m === 0
+              ? "Hoje"
+              : `${Math.floor(m / 12) > 0 ? Math.floor(m / 12) + "a " : ""}${
+                  m % 12
+                }m`,
           total: simulatedTotal,
           invested: simulatedInvested,
           yield: simulatedTotal - simulatedInvested,
@@ -305,10 +317,15 @@ export default function InvestmentsPage() {
           ...rawData,
           investmentId: editingInvestment.id,
           teamId,
+          userId: userId!,
         });
         notify.success("Investimento atualizado!");
       } else {
-        await createInvestmentUseCase.execute({ ...rawData, teamId });
+        await createInvestmentUseCase.execute({
+          ...rawData,
+          teamId,
+          userId: userId!,
+        });
         notify.success("Novo ativo adicionado!");
       }
       setIsDialogOpen(false);
@@ -325,7 +342,11 @@ export default function InvestmentsPage() {
     if (!teamId) return;
     if (!confirm("Remover este investimento da carteira?")) return;
     try {
-      await deleteInvestmentUseCase.execute(id, teamId);
+      await deleteInvestmentUseCase.execute({
+        investmentId: id,
+        teamId,
+        userId: userId!,
+      });
       notify.success("Investimento removido.");
       loadInvestments();
     } catch (error: any) {
@@ -334,11 +355,17 @@ export default function InvestmentsPage() {
   };
 
   // --- Totais do Dashboard ---
-  const totalPatrimony = investments.reduce((acc, i) => acc + i.currentAmount, 0);
-  const totalMonthlyContribution = investments.reduce((acc, i) => acc + i.monthlyContribution, 0);
-  
+  const totalPatrimony = investments.reduce(
+    (acc, i) => acc + i.currentAmount,
+    0
+  );
+  const totalMonthlyContribution = investments.reduce(
+    (acc, i) => acc + i.monthlyContribution,
+    0
+  );
+
   // Estimativa de Renda Passiva (Regra dos 0.5% ao mês safe withdrawal)
-  const estimatedPassiveIncome = totalPatrimony * 0.005; 
+  const estimatedPassiveIncome = totalPatrimony * 0.005;
 
   if (authLoading || isDataLoading || !session || !teamId) {
     return (
@@ -350,42 +377,71 @@ export default function InvestmentsPage() {
 
   return (
     <div className="space-y-8 pb-20 animate-in fade-in duration-500">
-      
       {/* --- HEADER --- */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.push("/dashboard")} className="rounded-full hover:bg-slate-100">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push("/dashboard")}
+            className="rounded-full hover:bg-slate-100"
+          >
             <ArrowLeft className="h-5 w-5 text-slate-500" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Investimentos</h1>
-            <p className="text-slate-500">Acompanhe a evolução do patrimônio da família.</p>
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+              Investimentos
+            </h1>
+            <p className="text-slate-500">
+              Acompanhe a evolução do patrimônio da família.
+            </p>
           </div>
         </div>
-        
+
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setEditingInvestment(null)} className="shadow-lg shadow-blue-600/20 bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" /> Novo Investimento
-            </Button>
-          </DialogTrigger>
+          {can("MANAGE_INVESTMENTS") && (
+            <DialogTrigger asChild>
+              <Button
+                onClick={() => setEditingInvestment(null)}
+                className="shadow-lg shadow-blue-600/20 bg-blue-600 hover:bg-blue-700"
+              >
+                <Plus className="w-4 h-4 mr-2" /> Novo Investimento
+              </Button>
+            </DialogTrigger>
+          )}
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>{editingInvestment ? "Editar Ativo" : "Novo Ativo"}</DialogTitle>
-              <DialogDescription>Cadastre um investimento para rastrear.</DialogDescription>
+              <DialogTitle>
+                {editingInvestment ? "Editar Ativo" : "Novo Ativo"}
+              </DialogTitle>
+              <DialogDescription>
+                Cadastre um investimento para rastrear.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 mt-2">
               <div className="space-y-2">
                 <Label>Nome do Ativo</Label>
-                <Input name="name" placeholder="Ex: CDB Nubank, Ações PETR4..." required defaultValue={editingInvestment?.name} />
+                <Input
+                  name="name"
+                  placeholder="Ex: CDB Nubank, Ações PETR4..."
+                  required
+                  defaultValue={editingInvestment?.name}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Categoria</Label>
-                <Select name="type" defaultValue={editingInvestment?.type || "savings"}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  name="type"
+                  defaultValue={editingInvestment?.type || "savings"}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     {Object.entries(ASSET_CONFIG).map(([key, config]) => (
-                      <SelectItem key={key} value={key}>{config.label}</SelectItem>
+                      <SelectItem key={key} value={key}>
+                        {config.label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -393,28 +449,61 @@ export default function InvestmentsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Investido Inicial (R$)</Label>
-                  <Input name="initialAmount" type="number" step="0.01" required defaultValue={editingInvestment?.initialAmount} />
+                  <Input
+                    name="initialAmount"
+                    type="number"
+                    step="0.01"
+                    required
+                    defaultValue={editingInvestment?.initialAmount}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Saldo Atual (R$)</Label>
-                  <Input name="currentAmount" type="number" step="0.01" required defaultValue={editingInvestment?.currentAmount} />
+                  <Input
+                    name="currentAmount"
+                    type="number"
+                    step="0.01"
+                    required
+                    defaultValue={editingInvestment?.currentAmount}
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Aporte Mensal (R$)</Label>
-                  <Input name="monthlyContribution" type="number" step="0.01" defaultValue={editingInvestment?.monthlyContribution || 0} />
+                  <Input
+                    name="monthlyContribution"
+                    type="number"
+                    step="0.01"
+                    defaultValue={editingInvestment?.monthlyContribution || 0}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Retorno Anual (%)</Label>
-                  <Input name="annualReturnRate" type="number" step="0.01" required defaultValue={editingInvestment?.annualReturnRate} />
+                  <Input
+                    name="annualReturnRate"
+                    type="number"
+                    step="0.01"
+                    required
+                    defaultValue={editingInvestment?.annualReturnRate}
+                  />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Data Início</Label>
-                <Input name="startDate" type="date" required defaultValue={editingInvestment?.startDate || new Date().toISOString().split("T")[0]} />
+                <Input
+                  name="startDate"
+                  type="date"
+                  required
+                  defaultValue={
+                    editingInvestment?.startDate ||
+                    new Date().toISOString().split("T")[0]
+                  }
+                />
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <Loader2 className="animate-spin" /> : "Salvar"}</Button>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? <Loader2 className="animate-spin" /> : "Salvar"}
+              </Button>
             </form>
           </DialogContent>
         </Dialog>
@@ -426,159 +515,281 @@ export default function InvestmentsPage() {
         <Card className="border-none shadow-lg bg-slate-900 text-white md:col-span-2 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
           <CardContent className="p-8 flex flex-col justify-between h-full relative z-10">
-             <div>
-                <p className="text-blue-200 font-medium mb-2 flex items-center gap-2">
-                   <Wallet className="w-4 h-4" /> Patrimônio Total
+            <div>
+              <p className="text-blue-200 font-medium mb-2 flex items-center gap-2">
+                <Wallet className="w-4 h-4" /> Patrimônio Total
+              </p>
+              <h2 className="text-4xl sm:text-5xl font-bold tracking-tight">
+                {totalPatrimony.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                })}
+              </h2>
+            </div>
+            <div className="mt-8 flex items-center gap-6">
+              <div>
+                <p className="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">
+                  Aporte Mensal
                 </p>
-                <h2 className="text-4xl sm:text-5xl font-bold tracking-tight">
-                   {totalPatrimony.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                </h2>
-             </div>
-             <div className="mt-8 flex items-center gap-6">
-                <div>
-                   <p className="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">Aporte Mensal</p>
-                   <p className="text-xl font-semibold text-white flex items-center gap-2">
-                      + {totalMonthlyContribution.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                      <span className="text-xs font-normal text-slate-400">/mês</span>
-                   </p>
-                </div>
-                <div className="h-8 w-[1px] bg-slate-700"></div>
-                <div>
-                   <p className="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">Renda Passiva (Est.)</p>
-                   <p className="text-xl font-semibold text-emerald-400 flex items-center gap-2">
-                      ~ {estimatedPassiveIncome.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                      <span className="text-xs font-normal text-slate-400">/mês</span>
-                   </p>
-                </div>
-             </div>
+                <p className="text-xl font-semibold text-white flex items-center gap-2">
+                  +{" "}
+                  {totalMonthlyContribution.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                  <span className="text-xs font-normal text-slate-400">
+                    /mês
+                  </span>
+                </p>
+              </div>
+              <div className="h-8 w-[1px] bg-slate-700"></div>
+              <div>
+                <p className="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">
+                  Renda Passiva (Est.)
+                </p>
+                <p className="text-xl font-semibold text-emerald-400 flex items-center gap-2">
+                  ~{" "}
+                  {estimatedPassiveIncome.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                  <span className="text-xs font-normal text-slate-400">
+                    /mês
+                  </span>
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
         {/* Allocation Mini-Chart Placeholder or Motivation */}
         <Card className="border-slate-100 shadow-sm bg-gradient-to-br from-white to-slate-50 flex flex-col justify-center items-center text-center p-6">
-           <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-              <Sparkles className="w-8 h-8 text-blue-600" />
-           </div>
-           <h3 className="text-lg font-bold text-slate-900 mb-2">Construindo o Futuro</h3>
-           <p className="text-sm text-slate-500">
-             "O melhor momento para plantar uma árvore foi há 20 anos. O segundo melhor é agora."
-           </p>
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+            <Sparkles className="w-8 h-8 text-blue-600" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 mb-2">
+            Construindo o Futuro
+          </h3>
+          <p className="text-sm text-slate-500">
+            "O melhor momento para plantar uma árvore foi há 20 anos. O segundo
+            melhor é agora."
+          </p>
         </Card>
       </div>
 
       {/* --- GRÁFICO DE PROJEÇÃO (DREAM SIMULATOR) --- */}
       <Card className="border-slate-200 shadow-sm">
         <CardHeader>
-           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                 <CardTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-blue-600" /> O Poder do Tempo
-                 </CardTitle>
-                 <CardDescription>Simulação baseada nos seus aportes e taxas atuais.</CardDescription>
-              </div>
-              <Tabs defaultValue="5" onValueChange={(v) => setProjectionYears(Number(v))}>
-                 <TabsList className="bg-slate-100">
-                    <TabsTrigger value="1">1 Ano</TabsTrigger>
-                    <TabsTrigger value="5">5 Anos</TabsTrigger>
-                    <TabsTrigger value="10">10 Anos</TabsTrigger>
-                    <TabsTrigger value="20">20 Anos</TabsTrigger>
-                 </TabsList>
-              </Tabs>
-           </div>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <CardTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-600" /> O Poder do
+                Tempo
+              </CardTitle>
+              <CardDescription>
+                Simulação baseada nos seus aportes e taxas atuais.
+              </CardDescription>
+            </div>
+            <Tabs
+              defaultValue="5"
+              onValueChange={(v) => setProjectionYears(Number(v))}
+            >
+              <TabsList className="bg-slate-100">
+                <TabsTrigger value="1">1 Ano</TabsTrigger>
+                <TabsTrigger value="5">5 Anos</TabsTrigger>
+                <TabsTrigger value="10">10 Anos</TabsTrigger>
+                <TabsTrigger value="20">20 Anos</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </CardHeader>
         <CardContent className="pl-0">
-           <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                 <AreaChart data={projectionData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <defs>
-                       <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                       </linearGradient>
-                       <linearGradient id="colorInvested" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#94a3b8" stopOpacity={0} />
-                       </linearGradient>
-                    </defs>
-                    <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickMargin={10} />
-                    <YAxis 
-                      stroke="#94a3b8" 
-                      fontSize={12} 
-                      tickLine={false} 
-                      axisLine={false} 
-                      tickFormatter={(val) => `R$${val/1000}k`} 
-                    />
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                    <Tooltip 
-                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                      formatter={(value: number) => [value.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}), ""]}
-                    />
-                    <Area type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorTotal)" name="Patrimônio Total" />
-                    <Area type="monotone" dataKey="invested" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" fillOpacity={1} fill="url(#colorInvested)" name="Dinheiro Investido" />
-                 </AreaChart>
-              </ResponsiveContainer>
-           </div>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={projectionData}
+                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient
+                    id="colorInvested"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#94a3b8" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="month"
+                  stroke="#94a3b8"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={10}
+                />
+                <YAxis
+                  stroke="#94a3b8"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(val) => `R$${val / 1000}k`}
+                />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="#e2e8f0"
+                />
+                <Tooltip
+                  contentStyle={{
+                    borderRadius: "8px",
+                    border: "none",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                  }}
+                  formatter={(value: number) => [
+                    value.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    }),
+                    "",
+                  ]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="total"
+                  stroke="#3b82f6"
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#colorTotal)"
+                  name="Patrimônio Total"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="invested"
+                  stroke="#94a3b8"
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  fillOpacity={1}
+                  fill="url(#colorInvested)"
+                  name="Dinheiro Investido"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </CardContent>
       </Card>
 
       {/* --- LISTA DE ATIVOS --- */}
       <div className="space-y-4">
         <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-           <Briefcase className="w-5 h-5 text-slate-500" /> Sua Carteira
+          <Briefcase className="w-5 h-5 text-slate-500" /> Sua Carteira
         </h3>
-        
+
         {investments.length === 0 ? (
-           <Card className="border-dashed bg-slate-50 py-12 text-center">
-              <p className="text-slate-500">Você ainda não cadastrou nenhum investimento.</p>
-              <Button variant="link" onClick={() => setIsDialogOpen(true)}>Começar agora</Button>
-           </Card>
+          <Card className="border-dashed bg-slate-50 py-12 text-center">
+            <p className="text-slate-500">
+              Você ainda não cadastrou nenhum investimento.
+            </p>
+            {can("MANAGE_INVESTMENTS") && (
+              <Button variant="link" onClick={() => setIsDialogOpen(true)}>
+                Começar agora
+              </Button>
+            )}
+          </Card>
         ) : (
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {investments.map((inv) => {
-                 const config = getAssetConfig(inv.type);
-                 const Icon = config.icon;
-                 const totalReturn = inv.currentAmount - inv.initialAmount;
-                 const returnPercentage = inv.initialAmount > 0 ? (totalReturn / inv.initialAmount) * 100 : 0;
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {investments.map((inv) => {
+              const config = getAssetConfig(inv.type);
+              const Icon = config.icon;
+              const totalReturn = inv.currentAmount - inv.initialAmount;
+              const returnPercentage =
+                inv.initialAmount > 0
+                  ? (totalReturn / inv.initialAmount) * 100
+                  : 0;
 
-                 return (
-                    <Card key={inv.id} className="hover:shadow-md transition-all border-slate-200 group">
-                       <CardContent className="p-5">
-                          <div className="flex justify-between items-start mb-4">
-                             <div className={`p-2.5 rounded-xl ${config.bg}`}>
-                                <Icon className={`w-5 h-5 ${config.color}`} />
-                             </div>
-                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingInvestment(inv); setIsDialogOpen(true); }}>
-                                   <Edit2 className="w-3.5 h-3.5 text-slate-400 hover:text-blue-600" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(inv.id)}>
-                                   <Trash2 className="w-3.5 h-3.5 text-slate-400 hover:text-red-600" />
-                                </Button>
-                             </div>
-                          </div>
-                          
-                          <div className="mb-4">
-                             <h4 className="font-bold text-slate-900 truncate">{inv.name}</h4>
-                             <p className="text-xs text-slate-500">{config.label}</p>
-                          </div>
+              return (
+                <Card
+                  key={inv.id}
+                  className="hover:shadow-md transition-all border-slate-200 group"
+                >
+                  <CardContent className="p-5">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className={`p-2.5 rounded-xl ${config.bg}`}>
+                        <Icon className={`w-5 h-5 ${config.color}`} />
+                      </div>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {can("MANAGE_INVESTMENTS") && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                setEditingInvestment(inv);
+                                setIsDialogOpen(true);
+                              }}
+                            >
+                              <Edit2 className="w-3.5 h-3.5 text-slate-400 hover:text-blue-600" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleDelete(inv.id)}
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-slate-400 hover:text-red-600" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
 
-                          <div className="flex justify-between items-end">
-                             <div>
-                                <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">Saldo</p>
-                                <p className="text-lg font-bold text-slate-800">
-                                   {inv.currentAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                                </p>
-                             </div>
-                             <Badge variant="outline" className={`gap-1 ${totalReturn >= 0 ? "text-green-600 bg-green-50 border-green-200" : "text-red-600 bg-red-50 border-red-200"}`}>
-                                {totalReturn >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
-                                {Math.abs(returnPercentage).toFixed(1)}%
-                             </Badge>
-                          </div>
-                       </CardContent>
-                    </Card>
-                 );
-              })}
-           </div>
+                    <div className="mb-4">
+                      <h4 className="font-bold text-slate-900 truncate">
+                        {inv.name}
+                      </h4>
+                      <p className="text-xs text-slate-500">{config.label}</p>
+                    </div>
+
+                    <div className="flex justify-between items-end">
+                      <div>
+                        <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">
+                          Saldo
+                        </p>
+                        <p className="text-lg font-bold text-slate-800">
+                          {inv.currentAmount.toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })}
+                        </p>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={`gap-1 ${
+                          totalReturn >= 0
+                            ? "text-green-600 bg-green-50 border-green-200"
+                            : "text-red-600 bg-red-50 border-red-200"
+                        }`}
+                      >
+                        {totalReturn >= 0 ? (
+                          <ArrowUpRight className="w-3 h-3" />
+                        ) : (
+                          <TrendingUp className="w-3 h-3 rotate-180" />
+                        )}
+                        {Math.abs(returnPercentage).toFixed(1)}%
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

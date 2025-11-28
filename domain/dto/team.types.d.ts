@@ -14,6 +14,7 @@ export interface TeamMemberProfileDTO {
 
 export interface CreateTeamRoleDTO {
   teamId: string;
+  userId: string;
   name: string;
   color: string;
   permissions: string[];
@@ -22,6 +23,7 @@ export interface CreateTeamRoleDTO {
 export interface UpdateTeamRoleDTO {
   roleId: string;
   teamId: string;
+  userId: string;
   name: string;
   color: string;
   permissions: string[];
@@ -37,6 +39,7 @@ export interface InviteMemberDTO {
 export interface UpdateMemberRoleDTO {
   teamId: string;
   memberId: string;
+  userId: string;
   roleId: string | null;
 }
 
