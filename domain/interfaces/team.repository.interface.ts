@@ -1,4 +1,5 @@
-import type { Team } from "../entities/team";
+import type { TeamInviteDetailsDTO } from "@/domain/dto/team.types.d.ts";
+import { Team } from "@/domain/entities/team";
 import type { TeamRole, TeamRoleProps } from "../entities/team-role";
 import type { TeamInvite, TeamInviteProps } from "../entities/team-invite";
 import type { TeamMemberProfileDTO } from "../dto/team.types.d.ts";
@@ -37,7 +38,7 @@ export interface ITeamRepository {
   deleteTeamInvite(inviteId: string, teamId: string): Promise<void>; // Cancelar convite (pelo admin)
 
   // User Invites (Onboarding)
-  getPendingInvitesByEmail(email: string): Promise<TeamInvite[]>;
+  getPendingInvitesByEmail(email: string): Promise<TeamInviteDetailsDTO[]>;
   acceptInvite(inviteId: string, userId: string): Promise<void>;
   declineInvite(inviteId: string): Promise<void>;
 }

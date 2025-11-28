@@ -44,3 +44,15 @@ export interface CreateTeamDTO {
   teamName: string;
   userId: string;
 }
+export type TeamInviteDetailsDTO = {
+  id: string;
+  email: string;
+  status: "pending" | "accepted" | "declined";
+  teamId: string;
+  roleId: string | null;
+  invitedBy: string;
+  createdAt: Date;
+  teamName?: string;
+  invitedByName?: string;
+  roleName?: string;
+};
