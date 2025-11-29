@@ -83,17 +83,17 @@ export function TeamSettingsTab({ team, subscription }: TeamSettingsTabProps) {
       {/* AI Powered Section */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-indigo-600" />
-          <h3 className="text-lg font-semibold text-gray-900">AI Powered</h3>
+          <Sparkles className="w-5 h-5 text-primary" />
+          <h3 className="text-lg font-semibold text-foreground">AI Powered</h3>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card
-            className={`border-indigo-100 bg-indigo-50/50 ${
+            className={`border-primary/20 bg-primary/5 ${
               !isPro ? "opacity-75 grayscale" : ""
             }`}
           >
             <CardHeader className="pb-2">
-              <Bot className="w-8 h-8 text-indigo-600 mb-2" />
+              <Bot className="w-8 h-8 text-primary mb-2" />
               <CardTitle className="text-base">Leitura de Recibos</CardTitle>
             </CardHeader>
             <CardContent>
@@ -102,7 +102,7 @@ export function TeamSettingsTab({ team, subscription }: TeamSettingsTabProps) {
                 recibos.
               </p>
               {!isPro && (
-                <div className="mt-3 text-xs font-medium text-indigo-600 bg-indigo-100 inline-block px-2 py-1 rounded">
+                <div className="mt-3 text-xs font-medium text-primary bg-primary/10 inline-block px-2 py-1 rounded">
                   Disponível no PRO
                 </div>
               )}
@@ -110,7 +110,7 @@ export function TeamSettingsTab({ team, subscription }: TeamSettingsTabProps) {
           </Card>
 
           <Card
-            className={`border-indigo-100 bg-indigo-50/50 ${
+            className={`border-primary/20 bg-primary/5 ${
               !isPro ? "opacity-75 grayscale" : ""
             }`}
           >
@@ -124,7 +124,7 @@ export function TeamSettingsTab({ team, subscription }: TeamSettingsTabProps) {
                 economia.
               </p>
               {!isPro && (
-                <div className="mt-3 text-xs font-medium text-indigo-600 bg-indigo-100 inline-block px-2 py-1 rounded">
+                <div className="mt-3 text-xs font-medium text-primary bg-primary/10 inline-block px-2 py-1 rounded">
                   Disponível no PRO
                 </div>
               )}
@@ -135,7 +135,7 @@ export function TeamSettingsTab({ team, subscription }: TeamSettingsTabProps) {
 
       {/* General Settings */}
       <section className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">Geral</h3>
+        <h3 className="text-lg font-semibold text-foreground">Geral</h3>
         <Card>
           <CardHeader>
             <CardTitle>Preferências da Equipe</CardTitle>
@@ -251,7 +251,7 @@ export function TeamSettingsTab({ team, subscription }: TeamSettingsTabProps) {
       {/* Billing Section */}
       {team && (
         <section className="space-y-4 pt-4 border-t">
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-foreground">
             Assinatura e Cobrança
           </h3>
           <TeamBillingSection team={team} subscription={subscription || null} />

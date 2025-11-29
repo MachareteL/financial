@@ -272,23 +272,23 @@ export default function ExpensesPage() {
 
   if (authLoading || !session || !teamId) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="animate-spin h-8 w-8 text-blue-600" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="animate-spin h-8 w-8 text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 p-4 pb-20 animate-in fade-in">
+    <div className="min-h-screen bg-background p-4 pb-20 animate-in fade-in">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">
               Extrato Financeiro
             </h1>
-            <p className="text-slate-500 text-sm flex items-center gap-2 mt-1">
-              <span className="font-semibold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-sm">
+            <p className="text-muted-foreground text-sm flex items-center gap-2 mt-1">
+              <span className="font-semibold text-foreground bg-card px-2 py-0.5 rounded border border-border shadow-sm">
                 R${" "}
                 {summaryData.total.toLocaleString("pt-BR", {
                   minimumFractionDigits: 2,
@@ -300,7 +300,7 @@ export default function ExpensesPage() {
           {can("MANAGE_EXPENSES") && (
             <Button
               onClick={() => router.push("/expenses/new")}
-              className="bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-200"
+              className="shadow-md shadow-primary/20"
             >
               <Plus className="w-4 h-4 mr-2" /> Novo Gasto
             </Button>
@@ -308,14 +308,14 @@ export default function ExpensesPage() {
         </div>
 
         {/* Toolbar (Non-Sticky) */}
-        <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-3">
+        <div className="bg-card p-3 rounded-xl border border-border shadow-sm space-y-3">
           <div className="flex flex-col md:flex-row gap-3">
             {/* Busca */}
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar gastos..."
-                className="pl-9 bg-white border-slate-200 focus:ring-blue-500 transition-all"
+                className="pl-9 bg-background border-input focus:ring-primary transition-all"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -324,7 +324,7 @@ export default function ExpensesPage() {
             {/* Filtros */}
             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
               <Select value={filterMonth} onValueChange={handleMonthChange}>
-                <SelectTrigger className="w-[140px] bg-white">
+                <SelectTrigger className="w-[140px] bg-background">
                   <SelectValue placeholder="Mês" />
                 </SelectTrigger>
                 <SelectContent>
@@ -339,7 +339,7 @@ export default function ExpensesPage() {
                 </SelectContent>
               </Select>
               <Select value={filterYear} onValueChange={setFilterYear}>
-                <SelectTrigger className="w-[100px] bg-white">
+                <SelectTrigger className="w-[100px] bg-background">
                   <SelectValue placeholder="Ano" />
                 </SelectTrigger>
                 <SelectContent>
@@ -352,9 +352,9 @@ export default function ExpensesPage() {
                 </SelectContent>
               </Select>
               <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger className="w-[150px] bg-white">
+                <SelectTrigger className="w-[150px] bg-background">
                   <div className="flex items-center gap-2 truncate">
-                    <Filter className="w-3.5 h-3.5 text-slate-400" />
+                    <Filter className="w-3.5 h-3.5 text-muted-foreground" />
                     <span className="truncate">
                       {filterCategory === "all"
                         ? "Categoria"
@@ -381,7 +381,7 @@ export default function ExpensesPage() {
             }
             className="w-full"
           >
-            <TabsList className="grid w-full grid-cols-3 h-9 bg-slate-100/50 p-1">
+            <TabsList className="grid w-full grid-cols-3 h-9 bg-muted p-1">
               <TabsTrigger value="list" className="text-xs font-medium">
                 Timeline
               </TabsTrigger>
@@ -398,8 +398,10 @@ export default function ExpensesPage() {
         {/* --- MAIN CONTENT --- */}
         {isLoadingInitial ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <Loader2 className="animate-spin text-blue-500 w-10 h-10" />
-            <p className="text-slate-500 text-sm">Carregando transações...</p>
+            <Loader2 className="animate-spin text-primary w-10 h-10" />
+            <p className="text-muted-foreground text-sm">
+              Carregando transações...
+            </p>
           </div>
         ) : (
           <>

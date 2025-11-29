@@ -110,51 +110,53 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="w-full h-screen lg:grid lg:grid-cols-2 overflow-hidden bg-white">
+    <div className="w-full h-screen lg:grid lg:grid-cols-2 overflow-hidden bg-background">
       {/* --- ESQUERDA: BRANDING (Visível apenas em Desktop) --- */}
-      <div className="hidden lg:flex flex-col justify-between bg-slate-900 text-white p-10 relative overflow-hidden">
-        {/* Background Effects */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600 rounded-full blur-[120px] opacity-20 -translate-y-1/2 translate-x-1/2"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-600 rounded-full blur-[120px] opacity-20 translate-y-1/2 -translate-x-1/2"></div>
-
-        <div className="relative z-10 flex items-center gap-2 text-lg font-bold tracking-tight">
-          <div className="bg-blue-600 p-1.5 rounded-lg">
-            <TrendingUp className="w-5 h-5 text-white" />
+      <div className="hidden lg:flex flex-col justify-between bg-muted text-foreground p-10 relative overflow-hidden">
+        <div className="absolute top-10 left-10 z-10 flex items-center gap-2 font-bold text-2xl text-foreground">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <TrendingUp className="w-5 h-5 text-primary-foreground" />
           </div>
-          FinançasEmPar
+          Lemon
         </div>
 
-        <div className="relative z-10 max-w-md">
-          <blockquote className="space-y-4">
-            <p className="text-2xl font-medium leading-relaxed">
-              "Finalmente paramos de brigar por dinheiro. O método 50/30/20
-              automático organizou nossa vida financeira em semanas."
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/20 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2"></div>
+
+        <div className="relative z-10 mt-auto mb-20">
+          <blockquote className="space-y-2">
+            <p className="text-lg">
+              &ldquo;O Lemon transformou a maneira como gerenciamos nossas
+              finanças em família. Simples, intuitivo e poderoso.&rdquo;
             </p>
-            <footer className="text-sm text-slate-400">
-              Sofia & Marcos <br />
-              <span className="text-slate-500">Usuários desde 2024</span>
+            <footer className="text-sm text-muted-foreground">
+              Sofia & Marcos
+              <br />
+              <span className="text-muted-foreground/80">
+                Usuários desde 2024
+              </span>
             </footer>
           </blockquote>
         </div>
 
-        <div className="relative z-10 text-xs text-slate-500">
-          © 2025 FinançasEmPar Inc.
+        <div className="relative z-10 text-xs text-muted-foreground">
+          © 2025 Lemon Inc.
         </div>
       </div>
 
       {/* --- DIREITA: FORMULÁRIOS --- */}
-      <div className="flex items-center justify-center p-6 lg:p-10 bg-slate-50/50">
+      <div className="flex items-center justify-center p-6 lg:p-10 bg-muted/30">
         <div className="mx-auto w-full max-w-[400px] space-y-8">
           <div className="flex flex-col space-y-2 text-center">
             <div className="lg:hidden flex justify-center mb-4">
-              <div className="bg-blue-600 p-2 rounded-xl">
-                <TrendingUp className="w-6 h-6 text-white" />
+              <div className="bg-primary p-2 rounded-xl text-primary-foreground">
+                <TrendingUp className="w-6 h-6" />
               </div>
             </div>
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
               Acesse sua conta
             </h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               Gerencie as finanças da sua família em um só lugar.
             </p>
           </div>
@@ -179,7 +181,7 @@ export default function AuthPage() {
                     type="email"
                     placeholder="seu@email.com"
                     required
-                    className="bg-white"
+                    className="bg-background"
                   />
                 </div>
                 <div className="space-y-2">
@@ -192,7 +194,7 @@ export default function AuthPage() {
                         <Button
                           variant="link"
                           size="sm"
-                          className="px-0 font-normal text-xs text-blue-600 h-auto"
+                          className="px-0 font-normal text-xs text-primary h-auto"
                         >
                           Esqueceu a senha?
                         </Button>
@@ -235,12 +237,12 @@ export default function AuthPage() {
                     name="password"
                     type="password"
                     required
-                    className="bg-white"
+                    className="bg-background"
                   />
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 shadow-sm"
+                  className="w-full shadow-sm"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -265,7 +267,7 @@ export default function AuthPage() {
                     name="name"
                     placeholder="Como você quer ser chamado?"
                     required
-                    className="bg-white"
+                    className="bg-background"
                   />
                 </div>
                 <div className="space-y-2">
@@ -276,7 +278,7 @@ export default function AuthPage() {
                     type="email"
                     placeholder="seu@email.com"
                     required
-                    className="bg-white"
+                    className="bg-background"
                   />
                 </div>
                 <div className="space-y-2">
@@ -287,24 +289,24 @@ export default function AuthPage() {
                     type="password"
                     placeholder="Mínimo 6 caracteres"
                     required
-                    className="bg-white"
+                    className="bg-background"
                   />
                 </div>
 
-                <div className="text-xs text-slate-500 space-y-2 py-2">
+                <div className="text-xs text-muted-foreground space-y-2 py-2">
                   <p className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3 h-3 text-green-500" /> Gestão
-                    de time familiar
+                    <CheckCircle2 className="w-3 h-3 text-primary" /> Gestão de
+                    time familiar
                   </p>
                   <p className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3 h-3 text-green-500" /> Leitura
-                    de recibos com IA
+                    <CheckCircle2 className="w-3 h-3 text-primary" /> Leitura de
+                    recibos com IA
                   </p>
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 shadow-sm"
+                  className="w-full shadow-sm"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -317,13 +319,13 @@ export default function AuthPage() {
             </TabsContent>
           </Tabs>
 
-          <p className="text-center text-xs text-slate-500 px-8">
+          <p className="text-center text-xs text-muted-foreground px-8">
             Ao continuar, você concorda com nossos{" "}
-            <Link href="#" className="underline hover:text-slate-800">
+            <Link href="#" className="underline hover:text-foreground">
               Termos de Serviço
             </Link>{" "}
             e{" "}
-            <Link href="#" className="underline hover:text-slate-800">
+            <Link href="#" className="underline hover:text-foreground">
               Política de Privacidade
             </Link>
             .

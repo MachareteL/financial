@@ -89,38 +89,38 @@ const ASSET_CONFIG: Record<
   savings: {
     label: "Poupança/CDB",
     icon: PiggyBank,
-    color: "text-green-600",
-    bg: "bg-green-100",
+    color: "text-green-600 dark:text-green-400",
+    bg: "bg-green-100 dark:bg-green-900/20",
   },
   stocks: {
     label: "Ações",
     icon: LineChart,
-    color: "text-blue-600",
-    bg: "bg-blue-100",
+    color: "text-blue-600 dark:text-blue-400",
+    bg: "bg-blue-100 dark:bg-blue-900/20",
   },
   bonds: {
     label: "Tesouro/Títulos",
     icon: Landmark,
-    color: "text-amber-600",
-    bg: "bg-amber-100",
+    color: "text-amber-600 dark:text-amber-400",
+    bg: "bg-amber-100 dark:bg-amber-900/20",
   },
   real_estate: {
     label: "Imóveis/FIIs",
     icon: Building2,
-    color: "text-orange-600",
-    bg: "bg-orange-100",
+    color: "text-orange-600 dark:text-orange-400",
+    bg: "bg-orange-100 dark:bg-orange-900/20",
   },
   crypto: {
     label: "Criptomoedas",
     icon: Bitcoin,
-    color: "text-indigo-600",
-    bg: "bg-indigo-100",
+    color: "text-indigo-600 dark:text-indigo-400",
+    bg: "bg-indigo-100 dark:bg-indigo-900/20",
   },
   other: {
     label: "Outros",
     icon: Briefcase,
-    color: "text-slate-600",
-    bg: "bg-slate-100",
+    color: "text-zinc-600 dark:text-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
   },
 };
 
@@ -369,8 +369,8 @@ export default function InvestmentsPage() {
 
   if (authLoading || isDataLoading || !session || !teamId) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="animate-spin h-10 w-10 text-blue-600" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="animate-spin h-10 w-10 text-primary" />
       </div>
     );
   }
@@ -384,15 +384,15 @@ export default function InvestmentsPage() {
             variant="ghost"
             size="icon"
             onClick={() => router.push("/dashboard")}
-            className="rounded-full hover:bg-slate-100"
+            className="rounded-full hover:bg-muted"
           >
-            <ArrowLeft className="h-5 w-5 text-slate-500" />
+            <ArrowLeft className="h-5 w-5 text-muted-foreground" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">
               Investimentos
             </h1>
-            <p className="text-slate-500">
+            <p className="text-muted-foreground">
               Acompanhe a evolução do patrimônio da família.
             </p>
           </div>
@@ -403,7 +403,7 @@ export default function InvestmentsPage() {
             <DialogTrigger asChild>
               <Button
                 onClick={() => setEditingInvestment(null)}
-                className="shadow-lg shadow-blue-600/20 bg-blue-600 hover:bg-blue-700"
+                className="shadow-lg shadow-primary/20 bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 <Plus className="w-4 h-4 mr-2" /> Novo Investimento
               </Button>
@@ -512,14 +512,14 @@ export default function InvestmentsPage() {
       {/* --- HERO STATS (PATRIMÔNIO) --- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Total Patrimony */}
-        <Card className="border-none shadow-lg bg-slate-900 text-white md:col-span-2 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
+        <Card className="border-none shadow-lg bg-zinc-950 text-white md:col-span-2 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
           <CardContent className="p-8 flex flex-col justify-between h-full relative z-10">
             <div>
-              <p className="text-blue-200 font-medium mb-2 flex items-center gap-2">
+              <p className="text-zinc-400 font-medium mb-2 flex items-center gap-2">
                 <Wallet className="w-4 h-4" /> Patrimônio Total
               </p>
-              <h2 className="text-4xl sm:text-5xl font-bold tracking-tight">
+              <h2 className="text-4xl sm:text-5xl font-bold tracking-tight text-white">
                 {totalPatrimony.toLocaleString("pt-BR", {
                   style: "currency",
                   currency: "BRL",
@@ -528,7 +528,7 @@ export default function InvestmentsPage() {
             </div>
             <div className="mt-8 flex items-center gap-6">
               <div>
-                <p className="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">
+                <p className="text-xs text-zinc-500 uppercase font-bold tracking-wider mb-1">
                   Aporte Mensal
                 </p>
                 <p className="text-xl font-semibold text-white flex items-center gap-2">
@@ -537,23 +537,23 @@ export default function InvestmentsPage() {
                     style: "currency",
                     currency: "BRL",
                   })}
-                  <span className="text-xs font-normal text-slate-400">
+                  <span className="text-xs font-normal text-zinc-500">
                     /mês
                   </span>
                 </p>
               </div>
-              <div className="h-8 w-[1px] bg-slate-700"></div>
+              <div className="h-8 w-[1px] bg-zinc-800"></div>
               <div>
-                <p className="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">
+                <p className="text-xs text-zinc-500 uppercase font-bold tracking-wider mb-1">
                   Renda Passiva (Est.)
                 </p>
-                <p className="text-xl font-semibold text-emerald-400 flex items-center gap-2">
+                <p className="text-xl font-semibold text-primary flex items-center gap-2">
                   ~{" "}
                   {estimatedPassiveIncome.toLocaleString("pt-BR", {
                     style: "currency",
                     currency: "BRL",
                   })}
-                  <span className="text-xs font-normal text-slate-400">
+                  <span className="text-xs font-normal text-zinc-500">
                     /mês
                   </span>
                 </p>
@@ -563,14 +563,14 @@ export default function InvestmentsPage() {
         </Card>
 
         {/* Allocation Mini-Chart Placeholder or Motivation */}
-        <Card className="border-slate-100 shadow-sm bg-gradient-to-br from-white to-slate-50 flex flex-col justify-center items-center text-center p-6">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-            <Sparkles className="w-8 h-8 text-blue-600" />
+        <Card className="border-border shadow-sm bg-gradient-to-br from-card to-muted/50 flex flex-col justify-center items-center text-center p-6">
+          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+            <Sparkles className="w-8 h-8 text-primary" />
           </div>
-          <h3 className="text-lg font-bold text-slate-900 mb-2">
+          <h3 className="text-lg font-bold text-foreground mb-2">
             Construindo o Futuro
           </h3>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             "O melhor momento para plantar uma árvore foi há 20 anos. O segundo
             melhor é agora."
           </p>
@@ -578,13 +578,12 @@ export default function InvestmentsPage() {
       </div>
 
       {/* --- GRÁFICO DE PROJEÇÃO (DREAM SIMULATOR) --- */}
-      <Card className="border-slate-200 shadow-sm">
+      <Card className="border-border shadow-sm">
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <CardTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-blue-600" /> O Poder do
-                Tempo
+              <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-primary" /> O Poder do Tempo
               </CardTitle>
               <CardDescription>
                 Simulação baseada nos seus aportes e taxas atuais.
@@ -594,7 +593,7 @@ export default function InvestmentsPage() {
               defaultValue="5"
               onValueChange={(v) => setProjectionYears(Number(v))}
             >
-              <TabsList className="bg-slate-100">
+              <TabsList className="bg-muted">
                 <TabsTrigger value="1">1 Ano</TabsTrigger>
                 <TabsTrigger value="5">5 Anos</TabsTrigger>
                 <TabsTrigger value="10">10 Anos</TabsTrigger>
@@ -612,8 +611,8 @@ export default function InvestmentsPage() {
               >
                 <defs>
                   <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#84cc16" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#84cc16" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient
                     id="colorInvested"
@@ -645,12 +644,15 @@ export default function InvestmentsPage() {
                   strokeDasharray="3 3"
                   vertical={false}
                   stroke="#e2e8f0"
+                  strokeOpacity={0.5}
                 />
                 <Tooltip
                   contentStyle={{
                     borderRadius: "8px",
                     border: "none",
                     boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    backgroundColor: "hsl(var(--card))",
+                    color: "hsl(var(--foreground))",
                   }}
                   formatter={(value: number) => [
                     value.toLocaleString("pt-BR", {
@@ -663,7 +665,7 @@ export default function InvestmentsPage() {
                 <Area
                   type="monotone"
                   dataKey="total"
-                  stroke="#3b82f6"
+                  stroke="#84cc16"
                   strokeWidth={3}
                   fillOpacity={1}
                   fill="url(#colorTotal)"
@@ -687,13 +689,13 @@ export default function InvestmentsPage() {
 
       {/* --- LISTA DE ATIVOS --- */}
       <div className="space-y-4">
-        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-          <Briefcase className="w-5 h-5 text-slate-500" /> Sua Carteira
+        <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+          <Briefcase className="w-5 h-5 text-muted-foreground" /> Sua Carteira
         </h3>
 
         {investments.length === 0 ? (
-          <Card className="border-dashed bg-slate-50 py-12 text-center">
-            <p className="text-slate-500">
+          <Card className="border-dashed bg-muted/50 py-12 text-center">
+            <p className="text-muted-foreground">
               Você ainda não cadastrou nenhum investimento.
             </p>
             {can("MANAGE_INVESTMENTS") && (
@@ -716,7 +718,7 @@ export default function InvestmentsPage() {
               return (
                 <Card
                   key={inv.id}
-                  className="hover:shadow-md transition-all border-slate-200 group"
+                  className="hover:shadow-md transition-all border-border group bg-card"
                 >
                   <CardContent className="p-5">
                     <div className="flex justify-between items-start mb-4">
@@ -735,7 +737,7 @@ export default function InvestmentsPage() {
                                 setIsDialogOpen(true);
                               }}
                             >
-                              <Edit2 className="w-3.5 h-3.5 text-slate-400 hover:text-blue-600" />
+                              <Edit2 className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
                             </Button>
                             <Button
                               variant="ghost"
@@ -743,7 +745,7 @@ export default function InvestmentsPage() {
                               className="h-8 w-8"
                               onClick={() => handleDelete(inv.id)}
                             >
-                              <Trash2 className="w-3.5 h-3.5 text-slate-400 hover:text-red-600" />
+                              <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
                             </Button>
                           </>
                         )}
@@ -751,21 +753,24 @@ export default function InvestmentsPage() {
                     </div>
 
                     <div className="mb-4">
-                      <h4 className="font-bold text-slate-900 truncate">
+                      <h4 className="font-bold text-foreground truncate">
                         {inv.name}
                       </h4>
-                      <p className="text-xs text-slate-500">{config.label}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {config.label}
+                      </p>
                     </div>
 
                     <div className="flex justify-between items-end">
                       <div>
-                        <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">
+                        <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">
                           Saldo
                         </p>
-                        <p className="text-lg font-bold text-slate-800">
+                        <p className="text-lg font-bold text-foreground">
                           {inv.currentAmount.toLocaleString("pt-BR", {
                             style: "currency",
                             currency: "BRL",
+                            maximumFractionDigits: 0,
                           })}
                         </p>
                       </div>
@@ -773,8 +778,8 @@ export default function InvestmentsPage() {
                         variant="outline"
                         className={`gap-1 ${
                           totalReturn >= 0
-                            ? "text-green-600 bg-green-50 border-green-200"
-                            : "text-red-600 bg-red-50 border-red-200"
+                            ? "text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+                            : "text-red-600 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
                         }`}
                       >
                         {totalReturn >= 0 ? (

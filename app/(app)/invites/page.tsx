@@ -108,10 +108,10 @@ export default function InvitesPage() {
             <Card key={invite.id}>
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="p-2 bg-green-100 rounded-full">
-                    <UserPlus className="h-4 w-4 text-green-600" />
+                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900/20 rounded-full">
+                    <UserPlus className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
-                  <span className="text-xs font-medium px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full">
+                  <span className="text-xs font-medium px-2 py-1 bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400 rounded-full">
                     Pendente
                   </span>
                 </div>

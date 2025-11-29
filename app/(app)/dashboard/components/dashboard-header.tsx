@@ -45,12 +45,12 @@ export function DashboardHeader({
   onLogout,
 }: DashboardHeaderProps) {
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/50 backdrop-blur-sm p-4 rounded-2xl border border-slate-100 shadow-sm">
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card/50 backdrop-blur-sm p-4 rounded-2xl border border-border shadow-sm">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-foreground tracking-tight flex items-center gap-2">
           Olá, {userName}! <span className="text-2xl">👋</span>
         </h1>
-        <p className="text-slate-500 text-sm">
+        <p className="text-muted-foreground text-sm">
           Visão geral de <strong>{teamName}</strong>
         </p>
       </div>
@@ -61,8 +61,8 @@ export function DashboardHeader({
           onValueChange={(v) => setSelectedMonth(Number(v))}
           disabled={isLoading}
         >
-          <SelectTrigger className="w-[140px] bg-white border-slate-200 shadow-sm">
-            <CalendarDays className="w-4 h-4 mr-2 text-blue-500" />
+          <SelectTrigger className="w-[140px] bg-card border-border shadow-sm">
+            <CalendarDays className="w-4 h-4 mr-2 text-primary" />
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -79,7 +79,7 @@ export function DashboardHeader({
           onValueChange={(v) => setSelectedYear(Number(v))}
           disabled={isLoading}
         >
-          <SelectTrigger className="w-[100px] bg-white border-slate-200 shadow-sm">
+          <SelectTrigger className="w-[100px] bg-card border-border shadow-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -95,7 +95,7 @@ export function DashboardHeader({
           size="icon"
           variant="ghost"
           onClick={onLogout}
-          className="ml-auto sm:ml-0 text-slate-400 hover:text-red-500 hover:bg-red-50"
+          className="ml-auto sm:ml-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
           title="Sair"
         >
           <LogOut className="w-4 h-4" />

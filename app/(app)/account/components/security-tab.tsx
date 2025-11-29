@@ -99,14 +99,14 @@ export function SecurityTab() {
         </CardContent>
       </Card>
 
-      <Card className="border-blue-100 bg-blue-50/50">
+      <Card className="border-primary/20 bg-primary/5">
         <CardContent className="pt-6 flex items-start gap-4">
-          <div className="bg-blue-100 p-2 rounded-full">
-            <ShieldCheck className="w-6 h-6 text-blue-600" />
+          <div className="bg-primary/10 p-2 rounded-full">
+            <ShieldCheck className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h4 className="font-semibold text-blue-900">Conta Segura</h4>
-            <p className="text-sm text-blue-700 mt-1">
+            <h4 className="font-semibold text-foreground">Conta Segura</h4>
+            <p className="text-sm text-muted-foreground mt-1">
               Sua conta está protegida com criptografia de ponta a ponta.
               Recomendamos usar uma senha única e forte.
             </p>

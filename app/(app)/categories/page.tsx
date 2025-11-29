@@ -76,38 +76,43 @@ const FOLDER_CONFIG: Record<
 > = {
   Necessidades: {
     icon: Home,
-    bg: "bg-blue-50",
-    text: "text-blue-700",
-    border: "border-blue-100",
-    gradient: "from-blue-50 to-white",
+    bg: "bg-blue-50 dark:bg-blue-900/20",
+    text: "text-blue-700 dark:text-blue-400",
+    border: "border-blue-100 dark:border-blue-800",
+    gradient:
+      "from-blue-50 to-background dark:from-blue-900/10 dark:to-background",
   },
   Desejos: {
     icon: ShoppingBag,
-    bg: "bg-purple-50",
-    text: "text-purple-700",
-    border: "border-purple-100",
-    gradient: "from-purple-50 to-white",
+    bg: "bg-purple-50 dark:bg-purple-900/20",
+    text: "text-purple-700 dark:text-purple-400",
+    border: "border-purple-100 dark:border-purple-800",
+    gradient:
+      "from-purple-50 to-background dark:from-purple-900/10 dark:to-background",
   },
   Poupança: {
     icon: PiggyBank,
-    bg: "bg-emerald-50",
-    text: "text-emerald-700",
-    border: "border-emerald-100",
-    gradient: "from-emerald-50 to-white",
+    bg: "bg-emerald-50 dark:bg-emerald-900/20",
+    text: "text-emerald-700 dark:text-emerald-400",
+    border: "border-emerald-100 dark:border-emerald-800",
+    gradient:
+      "from-emerald-50 to-background dark:from-emerald-900/10 dark:to-background",
   },
   Investimentos: {
     icon: PiggyBank,
-    bg: "bg-emerald-50",
-    text: "text-emerald-700",
-    border: "border-emerald-100",
-    gradient: "from-emerald-50 to-white",
+    bg: "bg-emerald-50 dark:bg-emerald-900/20",
+    text: "text-emerald-700 dark:text-emerald-400",
+    border: "border-emerald-100 dark:border-emerald-800",
+    gradient:
+      "from-emerald-50 to-background dark:from-emerald-900/10 dark:to-background",
   },
   Outros: {
     icon: Wallet,
-    bg: "bg-slate-50",
-    text: "text-slate-700",
-    border: "border-slate-100",
-    gradient: "from-slate-50 to-white",
+    bg: "bg-zinc-50 dark:bg-zinc-900/20",
+    text: "text-zinc-700 dark:text-zinc-400",
+    border: "border-zinc-100 dark:border-zinc-800",
+    gradient:
+      "from-zinc-50 to-background dark:from-zinc-900/10 dark:to-background",
   },
 };
 
@@ -254,14 +259,14 @@ export default function CategoriesPage() {
 
   if (authLoading || isLoadingData || !session || !teamId) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="animate-spin h-8 w-8 text-slate-900" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="animate-spin h-8 w-8 text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 p-4 pb-20 animate-in fade-in duration-500">
+    <div className="min-h-screen bg-background p-4 pb-20 animate-in fade-in duration-500">
       <div className="max-w-5xl mx-auto space-y-8">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -270,15 +275,15 @@ export default function CategoriesPage() {
               variant="ghost"
               size="icon"
               onClick={() => router.push("/dashboard")}
-              className="rounded-full hover:bg-slate-100"
+              className="rounded-full hover:bg-muted"
             >
-              <ArrowLeft className="h-5 w-5 text-slate-500" />
+              <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-3xl font-bold text-foreground tracking-tight">
                 Categorias
               </h1>
-              <p className="text-slate-500">
+              <p className="text-muted-foreground">
                 Organize seus gastos em pastas inteligentes.
               </p>
             </div>
@@ -286,10 +291,10 @@ export default function CategoriesPage() {
 
           <div className="flex items-center gap-3 w-full md:w-auto">
             <div className="relative flex-1 md:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar categoria..."
-                className="pl-9 bg-white border-slate-200 rounded-full focus:ring-slate-200"
+                className="pl-9 bg-card border-border rounded-full focus:ring-primary"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -297,7 +302,7 @@ export default function CategoriesPage() {
             {can("MANAGE_BUDGET") && (
               <Button
                 onClick={() => openDialog(null)}
-                className="rounded-full bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-200"
+                className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20"
               >
                 <Plus className="w-4 h-4 mr-2" /> Nova
               </Button>
@@ -324,12 +329,12 @@ export default function CategoriesPage() {
                   >
                     <Icon className="w-5 h-5" />
                   </div>
-                  <h2 className="text-lg font-bold text-slate-800">
+                  <h2 className="text-lg font-bold text-foreground">
                     {folderName}
                   </h2>
                   <Badge
                     variant="secondary"
-                    className="bg-slate-100 text-slate-500 hover:bg-slate-200"
+                    className="bg-muted text-muted-foreground hover:bg-muted/80"
                   >
                     {items.length}
                   </Badge>
@@ -337,15 +342,15 @@ export default function CategoriesPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {items.length === 0 ? (
-                    <div className="col-span-full py-8 text-center border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50/50">
-                      <p className="text-sm text-slate-400">
+                    <div className="col-span-full py-8 text-center border-2 border-dashed border-border rounded-2xl bg-muted/30">
+                      <p className="text-sm text-muted-foreground">
                         Nenhuma categoria nesta pasta.
                       </p>
                       {can("MANAGE_BUDGET") && (
                         <Button
                           variant="link"
                           onClick={() => openDialog(null)}
-                          className="text-slate-600"
+                          className="text-primary"
                         >
                           Criar agora
                         </Button>
@@ -355,7 +360,7 @@ export default function CategoriesPage() {
                     items.map((cat) => (
                       <div
                         key={cat.id}
-                        className="group relative bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200 transition-all duration-300"
+                        className="group relative bg-card p-4 rounded-2xl border border-border shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300"
                       >
                         <div
                           className={`absolute inset-0 bg-gradient-to-br ${style.gradient} opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl pointer-events-none`}
@@ -363,14 +368,14 @@ export default function CategoriesPage() {
 
                         <div className="relative flex justify-between items-start">
                           <div className="flex items-start gap-3">
-                            <div className="mt-1 p-1.5 bg-slate-50 rounded-lg text-slate-400 group-hover:text-slate-600 transition-colors">
+                            <div className="mt-1 p-1.5 bg-muted rounded-lg text-muted-foreground group-hover:text-foreground transition-colors">
                               <Tag className="w-4 h-4" />
                             </div>
                             <div>
-                              <h3 className="font-semibold text-slate-900 group-hover:text-slate-700 transition-colors">
+                              <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
                                 {cat.name}
                               </h3>
-                              <p className="text-xs text-slate-400 mt-0.5">
+                              <p className="text-xs text-muted-foreground mt-0.5">
                                 {folderName}
                               </p>
                             </div>
@@ -382,7 +387,7 @@ export default function CategoriesPage() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 -mr-2 text-slate-300 hover:text-slate-600"
+                                  className="h-8 w-8 -mr-2 text-muted-foreground hover:text-foreground"
                                 >
                                   <MoreHorizontal className="w-4 h-4" />
                                 </Button>
@@ -395,7 +400,7 @@ export default function CategoriesPage() {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => handleDelete(cat.id)}
-                                  className="text-red-600 focus:text-red-600"
+                                  className="text-destructive focus:text-destructive"
                                 >
                                   <Trash2 className="w-4 h-4 mr-2" /> Excluir
                                 </DropdownMenuItem>
@@ -413,13 +418,13 @@ export default function CategoriesPage() {
 
           {categories.length === 0 && !isLoadingData && (
             <div className="text-center py-20">
-              <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="w-8 h-8 text-slate-400" />
+              <div className="bg-muted w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="w-8 h-8 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900">
+              <h3 className="text-lg font-bold text-foreground">
                 Tudo limpo por aqui
               </h3>
-              <p className="text-slate-500 max-w-xs mx-auto mb-6">
+              <p className="text-muted-foreground max-w-xs mx-auto mb-6">
                 Comece criando categorias para organizar suas finanças.
               </p>
               {can("MANAGE_BUDGET") && (
@@ -433,17 +438,17 @@ export default function CategoriesPage() {
 
         {/* Dialog Form */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden bg-white border-none shadow-2xl">
+          <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden bg-card border-border shadow-2xl">
             <div
-              className={`h-2 w-full bg-gradient-to-r from-blue-500 to-purple-500`}
+              className={`h-2 w-full bg-gradient-to-r from-primary to-purple-500`}
             />
             <div className="p-6">
               <DialogHeader className="mb-6">
                 <DialogTitle className="text-xl font-bold flex items-center gap-2">
                   {editingCategory ? (
-                    <Edit2 className="w-5 h-5 text-blue-500" />
+                    <Edit2 className="w-5 h-5 text-primary" />
                   ) : (
-                    <Plus className="w-5 h-5 text-blue-500" />
+                    <Plus className="w-5 h-5 text-primary" />
                   )}
                   {editingCategory ? "Editar Categoria" : "Nova Categoria"}
                 </DialogTitle>
@@ -456,7 +461,7 @@ export default function CategoriesPage() {
                 <div className="space-y-2">
                   <Label
                     htmlFor="name"
-                    className="text-xs font-bold uppercase text-slate-500"
+                    className="text-xs font-bold uppercase text-muted-foreground"
                   >
                     Nome
                   </Label>
@@ -466,14 +471,14 @@ export default function CategoriesPage() {
                     placeholder="Ex: Mercado, Uber, Netflix..."
                     defaultValue={editingCategory?.name || ""}
                     required
-                    className="bg-slate-50 border-slate-200 focus:bg-white transition-all"
+                    className="bg-muted/50 border-border focus:bg-background transition-all"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label
                     htmlFor="budgetCategoryId"
-                    className="text-xs font-bold uppercase text-slate-500"
+                    className="text-xs font-bold uppercase text-muted-foreground"
                   >
                     Pasta de Orçamento
                   </Label>
@@ -485,16 +490,16 @@ export default function CategoriesPage() {
                     }
                     required
                   >
-                    <SelectTrigger className="bg-slate-50 border-slate-200">
+                    <SelectTrigger className="bg-muted/50 border-border">
                       <SelectValue placeholder="Selecione uma pasta" />
                     </SelectTrigger>
                     <SelectContent>
                       {budgetCategories.map((bc) => (
                         <SelectItem key={bc.id} value={bc.id}>
                           <div className="flex items-center gap-2">
-                            <Folder className="w-4 h-4 text-slate-400" />
+                            <Folder className="w-4 h-4 text-muted-foreground" />
                             <span>{bc.name}</span>
-                            <span className="text-xs text-slate-400 ml-auto">
+                            <span className="text-xs text-muted-foreground ml-auto">
                               {(bc.percentage * 100).toFixed(0)}%
                             </span>
                           </div>
@@ -502,7 +507,7 @@ export default function CategoriesPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[10px] text-muted-foreground">
                     Isso define em qual pote do orçamento essa categoria vai
                     consumir.
                   </p>
@@ -520,7 +525,7 @@ export default function CategoriesPage() {
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="flex-1 bg-slate-900 hover:bg-slate-800"
+                    className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     {isLoading ? (
                       <Loader2 className="animate-spin w-4 h-4" />

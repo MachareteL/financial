@@ -12,7 +12,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     // 1. O TeamProvider garante que temos um time selecionado
     <TeamProvider>
       <SubscriptionPromoModal />
-      <div className="min-h-screen w-full bg-gray-50 dark:bg-zinc-900">
+      <div className="min-h-screen w-full bg-background">
         <InviteChecker />
         {/* 2. Sidebar (Visível apenas em Desktop) */}
         <Sidebar />

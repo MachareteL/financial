@@ -84,28 +84,31 @@ const FOLDER_CONFIG: Record<
   { color: string; bg: string; border: string; iconColor: string }
 > = {
   Necessidades: {
-    color: "text-blue-700",
-    bg: "bg-blue-50/50",
-    border: "border-blue-200",
-    iconColor: "bg-blue-100 text-blue-600",
+    color: "text-blue-700 dark:text-blue-400",
+    bg: "bg-blue-50/50 dark:bg-blue-900/10",
+    border: "border-blue-200 dark:border-blue-800",
+    iconColor:
+      "bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400",
   },
   Desejos: {
-    color: "text-purple-700",
-    bg: "bg-purple-50/50",
-    border: "border-purple-200",
-    iconColor: "bg-purple-100 text-purple-600",
+    color: "text-purple-700 dark:text-purple-400",
+    bg: "bg-purple-50/50 dark:bg-purple-900/10",
+    border: "border-purple-200 dark:border-purple-800",
+    iconColor:
+      "bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400",
   },
   Poupança: {
-    color: "text-emerald-700",
-    bg: "bg-emerald-50/50",
-    border: "border-emerald-200",
-    iconColor: "bg-emerald-100 text-emerald-600",
+    color: "text-emerald-700 dark:text-emerald-400",
+    bg: "bg-emerald-50/50 dark:bg-emerald-900/10",
+    border: "border-emerald-200 dark:border-emerald-800",
+    iconColor:
+      "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400",
   },
   Default: {
-    color: "text-slate-700",
-    bg: "bg-slate-50/50",
-    border: "border-slate-200",
-    iconColor: "bg-slate-100 text-slate-600",
+    color: "text-zinc-700 dark:text-zinc-400",
+    bg: "bg-zinc-50/50 dark:bg-zinc-900/10",
+    border: "border-zinc-200 dark:border-zinc-800",
+    iconColor: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
   },
 };
 
@@ -345,7 +348,7 @@ export default function BudgetPage() {
 
   if (authLoading || !session || !teamId) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="animate-spin h-10 w-10 text-primary" />
       </div>
     );
@@ -361,26 +364,26 @@ export default function BudgetPage() {
             size="icon"
             onClick={() => router.push("/dashboard")}
           >
-            <ArrowLeft className="h-5 w-5 text-slate-500" />
+            <ArrowLeft className="h-5 w-5 text-muted-foreground" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">
               Planejamento
             </h1>
-            <p className="text-slate-500">
+            <p className="text-muted-foreground">
               Defina as metas para o seu dinheiro.
             </p>
           </div>
         </div>
 
         {/* Seletor de Data Limpo */}
-        <div className="flex items-center bg-white p-1 rounded-full border shadow-sm">
+        <div className="flex items-center bg-card p-1 rounded-full border border-border shadow-sm">
           <Select
             value={selectedMonth.toString()}
             onValueChange={(v) => setSelectedMonth(Number(v))}
           >
-            <SelectTrigger className="w-[140px] border-0 h-9 rounded-l-full focus:ring-0">
-              <CalendarDays className="w-4 h-4 mr-2 text-slate-400" />
+            <SelectTrigger className="w-[140px] border-0 h-9 rounded-l-full focus:ring-0 bg-transparent">
+              <CalendarDays className="w-4 h-4 mr-2 text-muted-foreground" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -393,12 +396,12 @@ export default function BudgetPage() {
               ))}
             </SelectContent>
           </Select>
-          <div className="h-4 w-[1px] bg-slate-200" />
+          <div className="h-4 w-[1px] bg-border" />
           <Select
             value={selectedYear.toString()}
             onValueChange={(v) => setSelectedYear(Number(v))}
           >
-            <SelectTrigger className="w-[80px] border-0 h-9 rounded-r-full focus:ring-0">
+            <SelectTrigger className="w-[80px] border-0 h-9 rounded-r-full focus:ring-0 bg-transparent">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -413,16 +416,16 @@ export default function BudgetPage() {
       </div>
 
       <Tabs defaultValue="planning" className="w-full">
-        <TabsList className="w-full max-w-md grid grid-cols-2 mb-8 p-1 bg-slate-100/80 backdrop-blur rounded-xl">
+        <TabsList className="w-full max-w-md grid grid-cols-2 mb-8 p-1 bg-muted/80 backdrop-blur rounded-xl">
           <TabsTrigger
             value="planning"
-            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"
           >
             Distribuição
           </TabsTrigger>
           <TabsTrigger
             value="incomes"
-            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"
           >
             Receitas
           </TabsTrigger>
@@ -431,14 +434,14 @@ export default function BudgetPage() {
         {/* --- TAB 1: PLANEJAMENTO FINANCEIRO --- */}
         <TabsContent value="planning" className="space-y-8">
           {/* HERO CARD: RENDA PLANEJADA */}
-          <div className="relative overflow-hidden bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+          <div className="relative overflow-hidden bg-card rounded-2xl border border-border shadow-sm p-8">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
 
             <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-8">
               <div className="space-y-4 flex-1">
                 <Label
                   htmlFor="income-input"
-                  className="text-slate-500 font-medium uppercase tracking-wide text-xs flex items-center gap-2"
+                  className="text-muted-foreground font-medium uppercase tracking-wide text-xs flex items-center gap-2"
                 >
                   <Wallet className="w-4 h-4" /> Renda total disponível para{" "}
                   {new Date(0, selectedMonth - 1).toLocaleString("pt-BR", {
@@ -446,19 +449,19 @@ export default function BudgetPage() {
                   })}
                 </Label>
                 <div className="relative group">
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-4xl font-bold text-slate-300 group-focus-within:text-blue-500 transition-colors">
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-4xl font-bold text-muted-foreground/30 group-focus-within:text-primary transition-colors">
                     R$
                   </span>
                   <Input
                     id="income-input"
                     type="number"
-                    className="ml-14 text-5xl md:text-6xl font-bold h-auto border-none shadow-none bg-transparent focus-visible:ring-0 p-0 text-slate-900 placeholder:text-slate-200"
+                    className="ml-14 text-5xl md:text-6xl font-bold h-auto border-none shadow-none bg-transparent focus-visible:ring-0 p-0 text-foreground placeholder:text-muted-foreground/20"
                     value={plannedIncome}
                     onChange={(e) => setPlannedIncome(e.target.value)}
                     placeholder="0"
                   />
                 </div>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-muted-foreground">
                   Defina quanto dinheiro vai entrar. O app distribuirá
                   automaticamente abaixo.
                 </p>
@@ -467,24 +470,24 @@ export default function BudgetPage() {
               {/* Sugestão Inteligente */}
               {suggestedIncome > 0 && suggestedIncome !== numericIncome && (
                 <div
-                  className="flex items-center gap-3 bg-blue-50/80 backdrop-blur-sm p-3 pr-4 rounded-xl border border-blue-100 cursor-pointer hover:bg-blue-100 transition-colors group"
+                  className="flex items-center gap-3 bg-primary/10 backdrop-blur-sm p-3 pr-4 rounded-xl border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors group"
                   onClick={handleUseSuggestedIncome}
                 >
-                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                    <Sparkles className="w-5 h-5 text-blue-600" />
+                  <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                    <Sparkles className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-blue-700 uppercase">
+                    <p className="text-xs font-bold text-primary uppercase">
                       Sugestão Detectada
                     </p>
-                    <p className="text-sm text-blue-900 font-medium">
+                    <p className="text-sm text-foreground font-medium">
                       Usar R${" "}
                       {suggestedIncome.toLocaleString("pt-BR", {
                         minimumFractionDigits: 2,
                       })}
                     </p>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-blue-400 ml-2" />
+                  <ArrowRight className="w-4 h-4 text-primary/60 ml-2" />
                 </div>
               )}
             </div>
@@ -493,15 +496,15 @@ export default function BudgetPage() {
           {/* SLIDERS DE DISTRIBUIÇÃO */}
           <div>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <PieChart className="w-5 h-5 text-slate-500" /> Distribuição do
-                Orçamento
+              <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <PieChart className="w-5 h-5 text-muted-foreground" />{" "}
+                Distribuição do Orçamento
               </h3>
               <Badge
                 variant={isValidTotal ? "outline" : "destructive"}
                 className={
                   isValidTotal
-                    ? "bg-green-50 text-green-700 border-green-200"
+                    ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800"
                     : ""
                 }
               >
@@ -539,17 +542,17 @@ export default function BudgetPage() {
                             <h4 className={`font-bold text-lg ${style.color}`}>
                               {bc.name}
                             </h4>
-                            <p className="text-slate-500 text-xs font-medium">
+                            <p className="text-muted-foreground text-xs font-medium">
                               Meta de alocação
                             </p>
                           </div>
                         </div>
 
                         {/* Input Manual de Porcentagem */}
-                        <div className="flex items-baseline gap-1 bg-white/50 rounded-lg px-2 border border-transparent hover:border-slate-200 focus-within:border-blue-400 transition-colors">
+                        <div className="flex items-baseline gap-1 bg-background/50 rounded-lg px-2 border border-transparent hover:border-border focus-within:border-primary transition-colors">
                           <Input
                             type="number"
-                            className="w-14 text-right text-2xl font-bold h-auto p-0 border-none bg-transparent focus-visible:ring-0 text-slate-900 placeholder:text-slate-300"
+                            className="w-14 text-right text-2xl font-bold h-auto p-0 border-none bg-transparent focus-visible:ring-0 text-foreground placeholder:text-muted-foreground"
                             value={percStr}
                             onChange={(e) =>
                               handlePercentageChange(bc.id, e.target.value)
@@ -558,7 +561,7 @@ export default function BudgetPage() {
                             max={100}
                             disabled={!can("MANAGE_BUDGET")}
                           />
-                          <span className="text-sm font-bold text-slate-400">
+                          <span className="text-sm font-bold text-muted-foreground">
                             %
                           </span>
                         </div>
@@ -566,7 +569,7 @@ export default function BudgetPage() {
                     </CardHeader>
                     <CardContent className="p-5 pt-2 space-y-6">
                       <div className="text-center py-2">
-                        <p className="text-2xl font-bold text-slate-800">
+                        <p className="text-2xl font-bold text-foreground">
                           {amount.toLocaleString("pt-BR", {
                             style: "currency",
                             currency: "BRL",
@@ -590,27 +593,27 @@ export default function BudgetPage() {
                       </div>
 
                       {/* Categorias Inclusas */}
-                      <div className="pt-4 border-t border-slate-200/60">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">
+                      <div className="pt-4 border-t border-border/60">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase mb-2">
                           Inclui gastos como:
                         </p>
                         <div className="flex flex-wrap gap-1.5">
                           {catsInFolder.slice(0, 4).map((c) => (
                             <span
                               key={c.id}
-                              className="text-[11px] px-2 py-1 bg-white border border-slate-100 text-slate-600 rounded-md shadow-sm"
+                              className="text-[11px] px-2 py-1 bg-background border border-border text-muted-foreground rounded-md shadow-sm"
                             >
                               {c.name}
                             </span>
                           ))}
                           {catsInFolder.length > 4 && (
-                            <span className="text-[11px] px-2 py-1 text-slate-400">
+                            <span className="text-[11px] px-2 py-1 text-muted-foreground">
                               +{catsInFolder.length - 4}
                             </span>
                           )}
                           <button
                             onClick={() => router.push("/categories")}
-                            className="text-[11px] px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md transition-colors"
+                            className="text-[11px] px-2 py-1 bg-muted hover:bg-muted/80 text-muted-foreground rounded-md transition-colors"
                           >
                             <Edit2 className="w-3 h-3" />
                           </button>
@@ -626,7 +629,7 @@ export default function BudgetPage() {
           {/* FLOAT SAVE BAR */}
           <div className="fixed bottom-20 right-0 z-20 w-full max-w-md px-4">
             <div
-              className={`bg-slate-900 text-white p-2 pr-3 rounded-full shadow-2xl flex items-center justify-between transition-all duration-300 ${
+              className={`bg-foreground text-background p-2 pr-3 rounded-full shadow-2xl flex items-center justify-between transition-all duration-300 ${
                 isValidTotal
                   ? "translate-y-0 opacity-100"
                   : "translate-y-24 opacity-0"
@@ -641,7 +644,7 @@ export default function BudgetPage() {
                   size="sm"
                   onClick={handleSaveBudget}
                   disabled={isSaving}
-                  className="bg-white text-slate-900 hover:bg-slate-100 rounded-full px-6 font-bold"
+                  className="bg-background text-foreground hover:bg-muted rounded-full px-6 font-bold"
                 >
                   {isSaving ? (
                     <Loader2 className="animate-spin w-4 h-4" />
@@ -654,7 +657,7 @@ export default function BudgetPage() {
 
             {/* Mensagem de Erro Flutuante se inválido */}
             {!isValidTotal && (
-              <div className="bg-red-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center justify-center gap-2 text-sm font-medium animate-pulse">
+              <div className="bg-destructive text-destructive-foreground px-4 py-2 rounded-full shadow-lg flex items-center justify-center gap-2 text-sm font-medium animate-pulse">
                 <AlertCircle className="w-4 h-4" />
                 Ajuste os percentuais para somar 100% (Atual:{" "}
                 {totalPercentage.toFixed(0)}%)
@@ -667,10 +670,10 @@ export default function BudgetPage() {
         <TabsContent value="incomes" className="space-y-6">
           <div className="flex justify-between items-end mb-4">
             <div>
-              <h3 className="text-xl font-bold text-slate-900">
+              <h3 className="text-xl font-bold text-foreground">
                 Minhas Fontes de Renda
               </h3>
-              <p className="text-slate-500 text-sm">
+              <p className="text-muted-foreground text-sm">
                 Cadastre aqui o que compõe sua renda mensal.
               </p>
             </div>
@@ -787,15 +790,15 @@ export default function BudgetPage() {
 
           {isLoading ? (
             <div className="text-center py-12">
-              <Loader2 className="animate-spin mx-auto text-slate-300 w-8 h-8" />
+              <Loader2 className="animate-spin mx-auto text-muted-foreground w-8 h-8" />
             </div>
           ) : incomes.length === 0 ? (
-            <Card className="border-dashed bg-slate-50/50 border-slate-200">
-              <CardContent className="py-16 text-center text-slate-500 flex flex-col items-center">
-                <div className="bg-white p-4 rounded-full shadow-sm mb-4">
-                  <Wallet className="w-8 h-8 text-slate-300" />
+            <Card className="border-dashed bg-muted/50 border-border">
+              <CardContent className="py-16 text-center text-muted-foreground flex flex-col items-center">
+                <div className="bg-background p-4 rounded-full shadow-sm mb-4">
+                  <Wallet className="w-8 h-8 text-muted-foreground/50" />
                 </div>
-                <p className="font-medium text-slate-900">
+                <p className="font-medium text-foreground">
                   Nenhuma receita cadastrada.
                 </p>
                 <p className="text-sm mb-4">
@@ -816,14 +819,14 @@ export default function BudgetPage() {
               {incomes.map((inc) => (
                 <div
                   key={inc.id}
-                  className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-white border border-slate-100 rounded-xl hover:shadow-md hover:border-blue-100 transition-all"
+                  className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-card border border-border rounded-xl hover:shadow-md hover:border-primary/20 transition-all"
                 >
                   <div className="flex items-center gap-4 mb-3 sm:mb-0">
                     <div
-                      className={`p-3 rounded-full ${
+                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
                         inc.type === "recurring"
-                          ? "bg-purple-50 text-purple-600"
-                          : "bg-emerald-50 text-emerald-600"
+                          ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                          : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                       }`}
                     >
                       {inc.type === "recurring" ? (
@@ -833,13 +836,13 @@ export default function BudgetPage() {
                       )}
                     </div>
                     <div>
-                      <p className="font-bold text-slate-900 text-base">
+                      <p className="font-bold text-foreground text-base">
                         {inc.description}
                       </p>
-                      <p className="text-xs text-slate-500 flex gap-2 items-center mt-0.5">
+                      <p className="text-xs text-muted-foreground flex gap-2 items-center mt-0.5">
                         <CalendarDays className="w-3 h-3" />
                         <span>{new Date(inc.date).toLocaleDateString()}</span>
-                        <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                        <span className="w-1 h-1 bg-muted-foreground/30 rounded-full"></span>
                         <span className="capitalize">
                           {inc.type === "recurring" ? "Recorrente" : "Pontual"}
                         </span>
@@ -847,7 +850,7 @@ export default function BudgetPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end pl-14 sm:pl-0">
-                    <span className="text-lg font-bold text-slate-700 group-hover:text-blue-600 transition-colors">
+                    <span className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
                       {inc.amount.toLocaleString("pt-BR", {
                         style: "currency",
                         currency: "BRL",
@@ -865,7 +868,7 @@ export default function BudgetPage() {
                               setIsIncomeDialogOpen(true);
                             }}
                           >
-                            <Edit2 className="w-4 h-4 text-slate-400 hover:text-blue-600" />
+                            <Edit2 className="w-4 h-4 text-muted-foreground hover:text-primary" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -873,7 +876,7 @@ export default function BudgetPage() {
                             className="h-8 w-8"
                             onClick={() => handleDeleteIncome(inc.id)}
                           >
-                            <Trash2 className="w-4 h-4 text-slate-400 hover:text-red-600" />
+                            <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
                           </Button>
                         </>
                       )}

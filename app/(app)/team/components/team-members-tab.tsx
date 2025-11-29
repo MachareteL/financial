@@ -129,7 +129,7 @@ export function TeamMembersTab({
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-foreground">
             Membros Ativos
           </h3>
           <p className="text-sm text-muted-foreground">
@@ -208,7 +208,7 @@ export function TeamMembersTab({
               key={member.id}
               className={`overflow-hidden transition-all hover:shadow-md border-muted ${
                 memberIsOwner
-                  ? "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-100"
+                  ? "bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-100 dark:border-amber-800"
                   : "bg-card hover:border-primary/20"
               }`}
             >
@@ -218,7 +218,7 @@ export function TeamMembersTab({
                     <div
                       className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-sm shadow-sm ${
                         memberIsOwner
-                          ? "bg-amber-100 text-amber-700"
+                          ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
                           : "bg-primary/10 text-primary"
                       }`}
                     >
@@ -255,7 +255,7 @@ export function TeamMembersTab({
                     </Label>
 
                     {memberIsOwner ? (
-                      <div className="flex items-center gap-2 text-xs font-medium text-amber-700 bg-amber-100/50 px-2.5 py-1.5 rounded-md border border-amber-200/50 w-full">
+                      <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-900/20 px-2.5 py-1.5 rounded-md border border-amber-200/50 dark:border-amber-800/50 w-full">
                         <Shield className="w-3 h-3" />
                         {member.teamRole?.name}
                       </div>
@@ -291,7 +291,7 @@ export function TeamMembersTab({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 h-8 text-xs"
+                      className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 h-8 text-xs"
                       onClick={() => handleRemoveMember(member.id)}
                     >
                       <Trash2 className="w-3 h-3 mr-2" /> Remover

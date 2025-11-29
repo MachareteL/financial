@@ -101,7 +101,7 @@ export default function TeamPage() {
                   {currentTeam.team.name}
                 </h1>
                 {isPro ? (
-                  <Badge className="bg-gradient-to-r from-indigo-500 to-purple-600 border-0 text-white shadow-sm">
+                  <Badge className="bg-gradient-to-r from-primary to-purple-600 border-0 text-primary-foreground shadow-sm">
                     <Sparkles className="w-3 h-3 mr-1" /> PRO
                   </Badge>
                 ) : (

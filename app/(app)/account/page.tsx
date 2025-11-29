@@ -60,7 +60,7 @@ export default function AccountPage() {
               >
                 <Settings className="w-4 h-4 mr-2 hidden sm:inline-block" />
                 Preferências
-                <Sparkles className="w-3 h-3 ml-2 text-indigo-500" />
+                <Sparkles className="w-3 h-3 ml-2 text-primary" />
               </TabsTrigger>
             </TabsList>
           </div>

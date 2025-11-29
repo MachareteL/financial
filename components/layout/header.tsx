@@ -12,7 +12,7 @@ export function Header() {
       </div>
 
       {/* Lado Esquerdo Mobile: Título ou Logo Simplificado */}
-      <div className="flex sm:hidden font-semibold text-lg">Finanças</div>
+      <div className="flex sm:hidden font-semibold text-lg">Lemon</div>
 
       {/* Lado Direito: Ações do Usuário */}
       <div className="flex items-center gap-4">

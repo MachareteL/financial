@@ -54,8 +54,8 @@ export function UpgradeModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <div className="mx-auto bg-blue-100 p-3 rounded-full mb-4">
-            <Sparkles className="w-6 h-6 text-blue-600" />
+          <div className="mx-auto bg-primary/10 p-3 rounded-full mb-4">
+            <Sparkles className="w-6 h-6 text-primary" />
           </div>
           <DialogTitle className="text-center text-xl">
             {featureName
@@ -77,19 +77,19 @@ export function UpgradeModal({
             </h4>
             <div className="space-y-3">
               <div className="flex items-center gap-3 text-sm">
-                <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
                 <span>Leitura de recibos com IA</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
                 <span>Membros ilimitados</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
                 <span>Suporte prioritário</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
                 <span>Insights financeiros</span>
               </div>
             </div>
@@ -99,31 +99,31 @@ export function UpgradeModal({
             <div
               className={`border rounded-xl p-4 cursor-pointer transition-all relative ${
                 billingInterval === "year"
-                  ? "border-blue-500 bg-blue-50/50"
-                  : "hover:border-blue-300"
+                  ? "border-primary bg-primary/5"
+                  : "hover:border-primary/50"
               }`}
               onClick={() => setBillingInterval("year")}
             >
-              <div className="absolute -top-3 right-4 bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full">
+              <div className="absolute -top-3 right-4 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-full">
                 MELHOR VALOR
               </div>
               <div className="font-semibold">Anual</div>
               <div className="text-2xl font-bold">
-                R$ 29,90
+                R$ 19,90
                 <span className="text-sm font-normal text-muted-foreground">
                   /mês
                 </span>
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                Cobrado anualmente (R$ 358,80)
+                Cobrado anualmente (R$ 238,80)
               </div>
             </div>
 
             <div
               className={`border rounded-xl p-4 cursor-pointer transition-all ${
                 billingInterval === "month"
-                  ? "border-blue-500 bg-blue-50/50"
-                  : "hover:border-blue-300"
+                  ? "border-primary bg-primary/5"
+                  : "hover:border-primary/50"
               }`}
               onClick={() => setBillingInterval("month")}
             >
@@ -145,7 +145,7 @@ export function UpgradeModal({
           <Button
             onClick={handleSubscribe}
             disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 h-11 text-base"
+            className="w-full bg-primary hover:bg-primary/90 h-11 text-base"
           >
             {isLoading ? (
               <>

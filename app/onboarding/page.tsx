@@ -23,13 +23,15 @@ import {
   declineInviteUseCase,
 } from "@/infrastructure/dependency-injection";
 import { notify } from "@/lib/notify-helper";
-import type { TeamInvite } from "@/domain/entities/team-invite";
+import type { TeamInviteDetailsDTO } from "@/domain/dto/team.types";
 
 export default function OnboardingPage() {
-  const { session, loading, setSession } = useAuth(); // Added setSession
+  const { session, loading, setSession } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [invites, setInvites] = useState<TeamInvite[]>([]);
+  const [invites, setInvites] = useState<TeamInviteDetailsDTO[]>([]);
   const [loadingInvites, setLoadingInvites] = useState(true);
+  const [teamName, setTeamName] = useState("");
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -117,23 +119,25 @@ export default function OnboardingPage() {
 
   if (loading || !session || (session.teams && session.teams.length > 0)) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Carregando...</h1>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <h1 className="text-2xl font-bold mb-4 text-foreground">
+            Carregando...
+          </h1>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="max-w-4xl w-full space-y-6">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             Bem-vindo, {session.user.name}!
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Para começar, você precisa criar um time/equipe ou ser convidado
             para um(a).
           </p>
@@ -143,8 +147,8 @@ export default function OnboardingPage() {
           {/* Criar Time */}
           <Card className="h-full">
             <CardHeader className="text-center">
-              <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                <Plus className="w-6 h-6 text-blue-600" />
+              <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <UserPlus className="w-6 h-6 text-primary" />
               </div>
               <CardTitle>Criar Nova equipe</CardTitle>
               <CardDescription>
@@ -161,6 +165,8 @@ export default function OnboardingPage() {
                     placeholder="Ex: Família Silva"
                     required
                     disabled={isLoading}
+                    value={teamName}
+                    onChange={(e) => setTeamName(e.target.value)}
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
@@ -173,8 +179,8 @@ export default function OnboardingPage() {
           {/* Convites */}
           <Card className="h-full flex flex-col">
             <CardHeader className="text-center">
-              <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                <UserPlus className="w-6 h-6 text-green-600" />
+              <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <UserPlus className="w-6 h-6 text-primary" />
               </div>
               <CardTitle>Convites Pendentes</CardTitle>
               <CardDescription>
@@ -183,38 +189,40 @@ export default function OnboardingPage() {
             </CardHeader>
             <CardContent className="flex-1">
               {loadingInvites ? (
-                <div className="text-center py-4">Carregando convites...</div>
+                <div className="text-center py-4 text-muted-foreground">
+                  Carregando convites...
+                </div>
               ) : invites.length > 0 ? (
                 <div className="space-y-4">
                   {invites.map((invite) => (
                     <div
                       key={invite.id}
-                      className="bg-white border rounded-lg p-4 shadow-sm flex flex-col gap-3"
+                      className="bg-card border rounded-lg p-4 shadow-sm flex flex-col gap-3"
                     >
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-foreground">
                           Time: {(invite as any).teamName}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-muted-foreground">
                           Convidado por: {(invite as any).invitedByName}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-muted-foreground">
                           Cargo: {(invite as any).roleName}
                         </p>
                       </div>
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          className="flex-1 bg-green-600 hover:bg-green-700"
+                          className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
                           onClick={() => handleAcceptInvite(invite.id)}
-                          disabled={isLoading}
+                          disabled={actionLoading === invite.id}
                         >
                           Aceitar
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
-                          className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="flex-1 text-destructive hover:text-destructive hover:bg-destructive/10"
                           onClick={() => handleDeclineInvite(invite.id)}
                           disabled={isLoading}
                         >
@@ -226,15 +234,15 @@ export default function OnboardingPage() {
                 </div>
               ) : (
                 <div className="text-center space-y-4">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-2">
+                  <div className="bg-muted/50 p-4 rounded-lg">
+                    <p className="text-sm text-muted-foreground mb-2">
                       Seu email para convite:
                     </p>
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-foreground">
                       {session.user.email}
                     </p>
                   </div>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Nenhum convite pendente no momento.
                   </p>
                 </div>
@@ -252,14 +260,14 @@ export default function OnboardingPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-start gap-3">
-              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-xs font-bold text-blue-600">1</span>
+              <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-xs font-bold text-primary">1</span>
               </div>
               <div>
                 <h4 className="font-medium">
                   Cada pessoa tem um Time ou uma Equipe
                 </h4>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Um "time" é o espaço compartilhado onde vocês organizam a vida
                   financeira em conjunto.
                 </p>

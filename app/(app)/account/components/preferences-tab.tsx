@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -25,7 +26,7 @@ export function PreferencesTab() {
   const [isLoading, setIsLoading] = useState(false);
   const [aiInsights, setAiInsights] = useState(true);
   const [aiTone, setAiTone] = useState("casual");
-  const [theme, setTheme] = useState("system");
+  const { theme, setTheme } = useTheme();
   const [language, setLanguage] = useState("pt-BR");
 
   const handleSavePreferences = async (e: React.FormEvent) => {
@@ -43,15 +44,15 @@ export function PreferencesTab() {
       {/* AI Preferences */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-indigo-600" />
-          <h3 className="text-lg font-semibold text-gray-900">
+          <Sparkles className="w-5 h-5 text-primary" />
+          <h3 className="text-lg font-semibold text-foreground">
             Inteligência Artificial
           </h3>
         </div>
-        <Card className="border-indigo-100 bg-indigo-50/30">
+        <Card className="border-primary/20 bg-primary/5">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Bot className="w-5 h-5 text-indigo-600" />
+              <Bot className="w-5 h-5 text-primary" />
               Personalização da IA
             </CardTitle>
             <CardDescription>
@@ -72,7 +73,7 @@ export function PreferencesTab() {
             <div className="space-y-2">
               <Label>Tom de Voz da IA</Label>
               <Select value={aiTone} onValueChange={setAiTone}>
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="bg-card">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -90,7 +91,7 @@ export function PreferencesTab() {
 
       {/* General Preferences */}
       <section className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">Geral</h3>
+        <h3 className="text-lg font-semibold text-foreground">Geral</h3>
         <Card>
           <CardHeader>
             <CardTitle>Aparência e Idioma</CardTitle>
