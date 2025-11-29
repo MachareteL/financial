@@ -35,8 +35,6 @@ export async function POST(req: Request) {
   try {
     switch (event.type) {
       case "checkout.session.completed": {
-        // We rely on customer.subscription.* events for subscription management
-        // to avoid issues with stripe.subscriptions.retrieve() missing fields.
         break;
       }
       case "customer.subscription.created":
