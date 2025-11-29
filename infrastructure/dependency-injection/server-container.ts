@@ -28,6 +28,24 @@ const teamRepository = container.get(
   () => new ServerSupabaseTeamRepository()
 );
 
+import { ServerSupabaseCategoryRepository } from "../repositories/server-supabase-category.repository";
+import { ServerSupabaseBudgetCategoryRepository } from "../repositories/server-supabase-budget-category.repository";
+import { CreateTeamUseCase } from "@/app/(app)/team/_use-case/create-team.use-case";
+
+const categoryRepository = new ServerSupabaseCategoryRepository();
+const budgetCategoryRepository = new ServerSupabaseBudgetCategoryRepository();
+
+export const createTeamUseCase = container.get(
+  "createTeamUseCase",
+  () =>
+    new CreateTeamUseCase(
+      teamRepository,
+      categoryRepository,
+      budgetCategoryRepository,
+      subscriptionRepository
+    )
+);
+
 export const subscribeTeamUseCase = container.get(
   "subscribeTeamUseCase",
   () => new SubscribeTeamUseCase(paymentGateway)

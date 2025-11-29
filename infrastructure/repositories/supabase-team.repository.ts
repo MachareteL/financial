@@ -119,6 +119,29 @@ export class TeamRepository implements ITeamRepository {
     return count || 0;
   }
 
+  async getTeamsByOwner(userId: string): Promise<Team[]> {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
+      .from("teams")
+      .select("*")
+      .eq("created_by", userId);
+
+    if (error) throw new Error(error.message);
+
+    return (data || []).map(
+      (item) =>
+        new Team({
+          id: item.id,
+          name: item.name,
+          createdAt: new Date(item.created_at),
+          createdBy: item.created_by!,
+          trialEndsAt: item.trial_ends_at
+            ? new Date(item.trial_ends_at)
+            : undefined,
+        })
+    );
+  }
+
   async countMembersWithPermission(
     teamId: string,
     permission: string

@@ -180,7 +180,8 @@ export const createTeamUseCase = container.get(
     new CreateTeamUseCase(
       teamRepository,
       categoryRepository,
-      budgetCategoryRepository
+      budgetCategoryRepository,
+      subscriptionRepository
     )
 );
 
