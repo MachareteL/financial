@@ -119,6 +119,32 @@ export class TeamRepository implements ITeamRepository {
     return count || 0;
   }
 
+  async countMembersWithPermission(
+    teamId: string,
+    permission: string
+  ): Promise<number> {
+    const supabase = getSupabaseClient();
+    // Fetch all members and their roles to filter in memory (Supabase doesn't support array contains on joined table easily in one go without RPC or complex query)
+    // Alternatively, we can use the contains filter on the joined table if we structure it right.
+    // But permissions is a JSONB or array column.
+    // Let's fetch role_id and permissions for all members of the team.
+
+    const { data, error } = await supabase
+      .from("team_members")
+      .select("role_id, team_roles!inner(permissions)")
+      .eq("team_id", teamId);
+
+    if (error) throw new Error(error.message);
+
+    // Filter in memory
+    const count = data.filter((member: any) => {
+      const perms = member.team_roles?.permissions || [];
+      return perms.includes(permission);
+    }).length;
+
+    return count;
+  }
+
   async getTeamById(teamId: string): Promise<Team | null> {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase

@@ -13,6 +13,10 @@ export interface ITeamRepository {
   ): Promise<Team>;
   updateTeam(teamId: string, name: string): Promise<void>;
   countTeamsByOwner(userId: string): Promise<number>;
+  countMembersWithPermission(
+    teamId: string,
+    permission: string
+  ): Promise<number>;
   getTeamById(teamId: string): Promise<Team | null>;
 
   // Members

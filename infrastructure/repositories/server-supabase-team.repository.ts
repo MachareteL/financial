@@ -9,6 +9,26 @@ import {
 } from "@/domain/dto/team.types";
 
 export class ServerSupabaseTeamRepository implements ITeamRepository {
+  async countMembersWithPermission(
+    teamId: string,
+    permission: string
+  ): Promise<number> {
+    const supabase = await getSupabaseClient();
+    const { data, error } = await supabase
+      .from("team_members")
+      .select("role_id, team_roles!inner(permissions)")
+      .eq("team_id", teamId);
+
+    if (error) throw new Error(error.message);
+
+    const count = data.filter((member: any) => {
+      const perms = member.team_roles?.permissions || [];
+      return perms.includes(permission);
+    }).length;
+
+    return count;
+  }
+
   async getTeamById(teamId: string): Promise<Team | null> {
     const supabase = await getSupabaseClient();
     const { data, error } = await supabase
