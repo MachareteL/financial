@@ -7,3 +7,4 @@ export { InvestmentRepository } from "./supabase-investment.repository";
 export { StorageRepository } from "./supabase-storage.repository";
 export { TeamRepository } from "./supabase-team.repository";
 export { BudgetCategoryRepository } from "./supabase-budget-category.repository";
+export { SupabaseSubscriptionRepository } from "./supabase-subscription.repository";

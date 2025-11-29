@@ -13,11 +13,19 @@ import { getSupabaseClient } from "../database/supabase.client";
 import type { Database } from "@/domain/dto/database.types.d.ts";
 
 export class TeamRepository implements ITeamRepository {
-  async createTeam(teamName: string, createdBy: string): Promise<Team> {
+  async createTeam(
+    teamName: string,
+    createdBy: string,
+    trialEndsAt?: Date
+  ): Promise<Team> {
     const supabase = getSupabaseClient();
     const { data: teamData, error: teamError } = await supabase
       .from("teams")
-      .insert({ name: teamName, created_by: createdBy })
+      .insert({
+        name: teamName,
+        created_by: createdBy,
+        trial_ends_at: trialEndsAt ? trialEndsAt.toISOString() : null,
+      })
       .select()
       .single();
 
@@ -82,6 +90,9 @@ export class TeamRepository implements ITeamRepository {
       name: teamData.name,
       createdAt: new Date(teamData.created_at),
       createdBy: teamData.created_by!,
+      trialEndsAt: teamData.trial_ends_at
+        ? new Date(teamData.trial_ends_at)
+        : undefined,
     });
   }
 
@@ -93,6 +104,41 @@ export class TeamRepository implements ITeamRepository {
       .eq("id", teamId);
 
     if (error) throw new Error(error.message);
+  }
+
+  async countTeamsByOwner(userId: string): Promise<number> {
+    const supabase = getSupabaseClient();
+    // Count teams where the user is the creator (or owner role)
+    // Based on schema, teams has created_by.
+    const { count, error } = await supabase
+      .from("teams")
+      .select("*", { count: "exact", head: true })
+      .eq("created_by", userId);
+
+    if (error) throw new Error((error as any).message);
+    return count || 0;
+  }
+
+  async getTeamById(teamId: string): Promise<Team | null> {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
+      .from("teams")
+      .select("*")
+      .eq("id", teamId)
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    if (!data) return null;
+
+    return new Team({
+      id: data.id,
+      name: data.name,
+      createdAt: new Date(data.created_at),
+      createdBy: data.created_by!,
+      trialEndsAt: data.trial_ends_at
+        ? new Date(data.trial_ends_at)
+        : undefined,
+    });
   }
 
   async getTeamMembers(teamId: string): Promise<TeamMemberProfileDTO[]> {

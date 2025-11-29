@@ -14,6 +14,7 @@ import {
   Users,
   ShieldCheck,
   Settings,
+  CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/app/auth/auth-provider";
 import { useTeam } from "@/app/(app)/team/team-provider";
@@ -35,6 +36,10 @@ import {
 import { TeamMembersTab } from "./components/team-members-tab";
 import { TeamRolesTab } from "./components/team-roles-tab";
 import { TeamSettingsTab } from "./components/team-settings-tab";
+import { TeamSubscriptionTab } from "./components/team-subscription-tab";
+
+import type { Subscription } from "@/domain/entities/subscription";
+import type { Team } from "@/domain/entities/team";
 
 export default function TeamPage() {
   const { currentTeam } = useTeam();
@@ -45,6 +50,8 @@ export default function TeamPage() {
   const [members, setMembers] = useState<TeamMemberProfileDTO[]>([]);
   const [roles, setRoles] = useState<TeamRole[]>([]);
   const [invites, setInvites] = useState<TeamInvite[]>([]);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [teamDetails, setTeamDetails] = useState<Team | null>(null);
 
   // Estados de UI
   const [isLoading, setIsLoading] = useState(true);
@@ -62,6 +69,8 @@ export default function TeamPage() {
       setMembers(data.members);
       setRoles(data.roles);
       setInvites(data.invites);
+      setSubscription(data.subscription);
+      setTeamDetails(data.team);
     } catch (error: any) {
       notify.error(error, "carregar os dados da equipe");
     } finally {
@@ -145,6 +154,10 @@ export default function TeamPage() {
             <TabsTrigger value="settings" className="text-xs sm:text-sm">
               <Settings className="w-4 h-4 mr-2 hidden sm:inline-block" />
               Configurações
+            </TabsTrigger>
+            <TabsTrigger value="subscription" className="text-xs sm:text-sm">
+              <CreditCard className="w-4 h-4 mr-2 hidden sm:inline-block" />
+              Assinatura
             </TabsTrigger>
           </TabsList>
 
@@ -239,6 +252,15 @@ export default function TeamPage() {
 
           <TabsContent value="settings" className="outline-none">
             <TeamSettingsTab />
+          </TabsContent>
+
+          <TabsContent value="subscription" className="outline-none">
+            {teamDetails && (
+              <TeamSubscriptionTab
+                team={teamDetails}
+                subscription={subscription}
+              />
+            )}
           </TabsContent>
         </Tabs>
       </div>

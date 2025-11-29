@@ -9,6 +9,7 @@ import {
   IncomeRepository,
   InvestmentRepository,
   BudgetCategoryRepository,
+  SupabaseSubscriptionRepository,
 } from "../repositories";
 
 // Auth
@@ -78,6 +79,9 @@ import { GeminiAiService } from "../services/gemini-ai.service";
 // AI Use Cases
 import { ParseReceiptUseCase } from "@/app/(app)/expenses/_use-case/parse-receipt.use-case";
 
+// Subscription & Billing
+import { CheckFeatureAccessUseCase } from "@/app/(app)/team/_use-case/check-feature-access.use-case";
+
 const container = Container.getInstance();
 
 const authRepository = container.get(
@@ -118,6 +122,7 @@ const investmentRepository = container.get(
 );
 
 // Services
+// Services
 const aiService = container.get(
   "aiService",
   () =>
@@ -125,6 +130,11 @@ const aiService = container.get(
       process.env.GOOGLE_API_KEY!,
       process.env.GOOGLE_GEMINI_MODEL
     )
+);
+
+const subscriptionRepository = container.get(
+  "subscriptionRepository",
+  () => new SupabaseSubscriptionRepository()
 );
 
 // Auth
@@ -323,7 +333,7 @@ export const deleteInvestmentUseCase = container.get(
 // Team Management
 export const getTeamDataUseCase = container.get(
   "getTeamDataUseCase",
-  () => new GetTeamDataUseCase(teamRepository)
+  () => new GetTeamDataUseCase(teamRepository, subscriptionRepository)
 );
 
 export const manageRolesUseCase = container.get(
@@ -357,4 +367,10 @@ export const acceptInviteUseCase = container.get(
 export const declineInviteUseCase = container.get(
   "declineInviteUseCase",
   () => new DeclineInviteUseCase(teamRepository)
+);
+
+// Subscription & Billing
+export const checkFeatureAccessUseCase = container.get(
+  "checkFeatureAccessUseCase",
+  () => new CheckFeatureAccessUseCase(teamRepository, subscriptionRepository)
 );

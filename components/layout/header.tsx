@@ -1,6 +1,7 @@
 import { UserNav } from "@/components/layout/user-nav";
 import { TeamSwitcher } from "@/components/layout/team-switcher";
 import { NotificationsNav } from "@/components/layout/notifications-nav";
+import { SubscriptionBadge } from "@/components/layout/subscription-badge";
 
 export function Header() {
   return (
@@ -15,6 +16,7 @@ export function Header() {
 
       {/* Lado Direito: Ações do Usuário */}
       <div className="flex items-center gap-4">
+        <SubscriptionBadge />
         <NotificationsNav />
         <UserNav />
       </div>

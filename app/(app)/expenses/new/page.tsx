@@ -42,6 +42,8 @@ import {
   UploadCloud,
   FileText,
 } from "lucide-react";
+import { UpgradeModal } from "@/app/(app)/components/upgrade-modal";
+import { useFeatureAccess } from "@/hooks/use-feature-access";
 
 export default function NewExpensePage() {
   const { session, loading: authLoading } = useAuth();
@@ -65,10 +67,13 @@ export default function NewExpensePage() {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
 
   // Configurações Avançadas (Tabs: Único, Recorrente, Parcelado)
-  const [expenseType, setExpenseType] = useState<"single" | "recurring" | "installment">("single");
+  const [expenseType, setExpenseType] = useState<
+    "single" | "recurring" | "installment"
+  >("single");
 
   // Detalhes específicos
-  const [recurrenceType, setRecurrenceType] = useState<CreateExpenseDTO["recurrenceType"]>("monthly");
+  const [recurrenceType, setRecurrenceType] =
+    useState<CreateExpenseDTO["recurrenceType"]>("monthly");
   const [installments, setInstallments] = useState("2");
 
   // Arquivo
@@ -77,6 +82,10 @@ export default function NewExpensePage() {
 
   const teamId = session?.teams?.[0]?.team.id;
   const userId = session?.user?.id;
+
+  // Feature Access
+  const { hasAccess: hasAiAccess } = useFeatureAccess("ai_receipt_scanning");
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   // --- 1. Inicialização ---
   useEffect(() => {
@@ -113,6 +122,12 @@ export default function NewExpensePage() {
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!hasAiAccess) {
+      setIsUpgradeModalOpen(true);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
 
     if (file.size > 8 * 1024 * 1024) {
       // 8MB
@@ -584,6 +599,11 @@ export default function NewExpensePage() {
           </Card>
         </div>
       </div>
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        featureName="Leitura com IA"
+      />
     </div>
   );
 }

@@ -6,8 +6,14 @@ import type { TeamMemberProfileDTO } from "../dto/team.types.d.ts";
 
 export interface ITeamRepository {
   // Team Management
-  createTeam(teamName: string, adminUserId: string): Promise<Team>;
+  createTeam(
+    teamName: string,
+    adminUserId: string,
+    trialEndsAt?: Date
+  ): Promise<Team>;
   updateTeam(teamId: string, name: string): Promise<void>;
+  countTeamsByOwner(userId: string): Promise<number>;
+  getTeamById(teamId: string): Promise<Team | null>;
 
   // Members
   getTeamMembers(teamId: string): Promise<TeamMemberProfileDTO[]>;

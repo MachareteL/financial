@@ -12,7 +12,26 @@ export class CreateTeamUseCase {
   ) {}
 
   async execute(dto: CreateTeamDTO): Promise<Team> {
-    const team = await this.teamRepository.createTeam(dto.teamName, dto.userId);
+    // 1. Anti-Abuse: Check if user already owns 2 teams
+    const ownedTeamsCount = await this.teamRepository.countTeamsByOwner(
+      dto.userId
+    );
+    if (ownedTeamsCount >= 2) {
+      throw new Error(
+        "Você atingiu o limite de 2 times criados. Entre em contato para aumentar seu limite."
+      );
+    }
+
+    // 2. Set Trial End Date (14 days from now)
+    const trialEndsAt = new Date();
+    trialEndsAt.setDate(trialEndsAt.getDate() + 14);
+
+    // 3. Create Team
+    const team = await this.teamRepository.createTeam(
+      dto.teamName,
+      dto.userId,
+      trialEndsAt
+    );
 
     const newBudgetCategories =
       await this.budgetCategoryRepository.createDefaultCategories(team.id);

@@ -2,6 +2,7 @@ import type { IAuthRepository } from "@/domain/interfaces/auth.repository.interf
 import type { UserSession, TeamMembership } from "@/domain/dto/user.types.d.ts";
 import { User } from "@/domain/entities/user";
 import { Team } from "@/domain/entities/team";
+import { Subscription } from "@/domain/entities/subscription";
 import { getSupabaseClient } from "../database/supabase.client";
 
 export class AuthSupabaseRepository implements IAuthRepository {
@@ -22,7 +23,20 @@ export class AuthSupabaseRepository implements IAuthRepository {
             id,
             name,
             created_at,
-            created_by
+            created_by,
+            trial_ends_at,
+            subscriptions (
+              id,
+              team_id,
+              external_id,
+              external_customer_id,
+              gateway_id,
+              status,
+              plan_id,
+              current_period_end,
+              created_at,
+              updated_at
+            )
           ),
           team_roles (
             name,
@@ -44,16 +58,48 @@ export class AuthSupabaseRepository implements IAuthRepository {
       createdAt: new Date(profile.created_at),
     });
 
-    const teams: TeamMembership[] = profile.team_members.map((membership) => ({
-      team: new Team({
-        id: membership.teams.id,
-        name: membership.teams.name,
-        createdAt: new Date(membership.teams.created_at),
-        createdBy: membership.teams.created_by!,
-      }),
-      role: membership.team_roles.name,
-      permissions: membership.team_roles.permissions || [],
-    }));
+    const teams: TeamMembership[] = profile.team_members.map((membership) => {
+      const teamData = membership.teams;
+      const subData = Array.isArray(teamData.subscriptions)
+        ? teamData.subscriptions[0]
+        : teamData.subscriptions;
+
+      const subscription = subData
+        ? new Subscription({
+            id: subData.id,
+            teamId: subData.team_id,
+            externalId: subData.external_id,
+            externalCustomerId: subData.external_customer_id,
+            gatewayId: subData.gateway_id,
+            status: subData.status as any,
+            planId: subData.plan_id,
+            currentPeriodEnd: subData.current_period_end
+              ? new Date(subData.current_period_end)
+              : null,
+            createdAt: subData.created_at
+              ? new Date(subData.created_at)
+              : new Date(),
+            updatedAt: subData.updated_at
+              ? new Date(subData.updated_at)
+              : new Date(),
+          })
+        : null;
+
+      return {
+        team: new Team({
+          id: teamData.id,
+          name: teamData.name,
+          createdAt: new Date(teamData.created_at),
+          createdBy: teamData.created_by!,
+          trialEndsAt: teamData.trial_ends_at
+            ? new Date(teamData.trial_ends_at)
+            : null,
+        }),
+        role: membership.team_roles.name,
+        permissions: membership.team_roles.permissions || [],
+        subscription,
+      };
+    });
 
     return {
       user: user,

@@ -325,6 +325,53 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          created_at: string | null
+          current_period_end: string | null
+          external_customer_id: string
+          external_id: string
+          gateway_id: string
+          id: string
+          plan_id: string | null
+          status: string
+          team_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_period_end?: string | null
+          external_customer_id: string
+          external_id: string
+          gateway_id: string
+          id?: string
+          plan_id?: string | null
+          status: string
+          team_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_period_end?: string | null
+          external_customer_id?: string
+          external_id?: string
+          gateway_id?: string
+          id?: string
+          plan_id?: string | null
+          status?: string
+          team_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_invites: {
         Row: {
           created_at: string
@@ -467,18 +514,21 @@ export type Database = {
           created_by: string | null
           id: string
           name: string
+          trial_ends_at: string | null
         }
         Insert: {
           created_at?: string
           created_by?: string | null
           id?: string
           name: string
+          trial_ends_at?: string | null
         }
         Update: {
           created_at?: string
           created_by?: string | null
           id?: string
           name?: string
+          trial_ends_at?: string | null
         }
         Relationships: []
       }
@@ -489,6 +539,9 @@ export type Database = {
     Functions: {
       get_auth_user_team_ids: { Args: never; Returns: string[] }
       get_auth_user_teams: { Args: never; Returns: string[] }
+      get_my_teams: { Args: never; Returns: string[] }
+      has_pending_invite: { Args: { check_team_id: string }; Returns: boolean }
+      is_team_owner: { Args: { check_team_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
