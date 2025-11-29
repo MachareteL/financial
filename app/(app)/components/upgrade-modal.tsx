@@ -25,17 +25,16 @@ export function UpgradeModal({
   featureName,
 }: UpgradeModalProps) {
   const { currentTeam } = useTeam();
-  const [isLoading, setIsLoading] = useState(false);
-  const [billingInterval, setBillingInterval] = useState<"month" | "year">(
-    "month"
-  );
+  const [loadingInterval, setLoadingInterval] = useState<
+    "month" | "year" | null
+  >(null);
 
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (interval: "month" | "year") => {
     if (!currentTeam) return;
-    setIsLoading(true);
+    setLoadingInterval(interval);
     try {
       const priceId =
-        billingInterval === "month"
+        interval === "month"
           ? process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_MONTHLY
           : process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_YEARLY;
 
@@ -46,13 +45,13 @@ export function UpgradeModal({
       await subscribeTeamAction(currentTeam.team.id, priceId);
     } catch (error: any) {
       notify.error(error, "iniciar assinatura");
-      setIsLoading(false);
+      setLoadingInterval(null);
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[800px]">
         <DialogHeader>
           <div className="mx-auto bg-primary/10 p-3 rounded-full mb-4">
             <Sparkles className="w-6 h-6 text-primary" />
@@ -66,97 +65,114 @@ export function UpgradeModal({
             {featureName
               ? "Esta funcionalidade é exclusiva do plano PRO."
               : "Tenha acesso ilimitado a todas as funcionalidades."}{" "}
-            Assine agora e potencialize sua gestão.
+            Escolha o plano ideal para sua equipe.
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid md:grid-cols-2 gap-6 py-4">
-          <div className="space-y-4">
-            <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
-              Benefícios PRO:
-            </h4>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 text-sm">
-                <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
-                <span>Leitura de recibos com IA</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
-                <span>Membros ilimitados</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
-                <span>Suporte prioritário</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
-                <span>Insights financeiros</span>
-              </div>
+          {/* Plano Anual */}
+          <div className="border border-primary bg-primary/5 rounded-xl p-6 flex flex-col relative">
+            <div className="absolute -top-3 right-4 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
+              MELHOR VALOR
             </div>
-          </div>
-
-          <div className="flex flex-col gap-3 justify-center">
-            <div
-              className={`border rounded-xl p-4 cursor-pointer transition-all relative ${
-                billingInterval === "year"
-                  ? "border-primary bg-primary/5"
-                  : "hover:border-primary/50"
-              }`}
-              onClick={() => setBillingInterval("year")}
-            >
-              <div className="absolute -top-3 right-4 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-full">
-                MELHOR VALOR
-              </div>
-              <div className="font-semibold">Anual</div>
-              <div className="text-2xl font-bold">
+            <div className="mb-4">
+              <h3 className="font-semibold text-lg">Anual</h3>
+              <div className="text-3xl font-bold mt-2">
                 R$ 19,90
                 <span className="text-sm font-normal text-muted-foreground">
                   /mês
                 </span>
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Cobrado anualmente (R$ 238,80)
-              </div>
+              </p>
             </div>
 
-            <div
-              className={`border rounded-xl p-4 cursor-pointer transition-all ${
-                billingInterval === "month"
-                  ? "border-primary bg-primary/5"
-                  : "hover:border-primary/50"
-              }`}
-              onClick={() => setBillingInterval("month")}
+            <ul className="space-y-3 mb-6 flex-1">
+              <li className="flex items-center gap-2 text-sm">
+                <CheckCircle2 className="w-4 h-4 text-primary" />
+                <span>Economize 50%</span>
+              </li>
+              <li className="flex items-center gap-2 text-sm">
+                <CheckCircle2 className="w-4 h-4 text-primary" />
+                <span>Todos os recursos PRO</span>
+              </li>
+              <li className="flex items-center gap-2 text-sm">
+                <CheckCircle2 className="w-4 h-4 text-primary" />
+                <span>Suporte prioritário</span>
+              </li>
+            </ul>
+
+            <Button
+              onClick={() => handleSubscribe("year")}
+              disabled={!!loadingInterval}
+              className="w-full bg-primary hover:bg-primary/90"
             >
-              <div className="font-semibold">Mensal</div>
-              <div className="text-2xl font-bold">
+              {loadingInterval === "year" ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Processando...
+                </>
+              ) : (
+                "Assinar Anual"
+              )}
+            </Button>
+          </div>
+
+          {/* Plano Mensal */}
+          <div className="border rounded-xl p-6 flex flex-col">
+            <div className="mb-4">
+              <h3 className="font-semibold text-lg">Mensal</h3>
+              <div className="text-3xl font-bold mt-2">
                 R$ 39,90
                 <span className="text-sm font-normal text-muted-foreground">
                   /mês
                 </span>
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Cancele quando quiser
-              </div>
+              </p>
             </div>
+
+            <ul className="space-y-3 mb-6 flex-1">
+              <li className="flex items-center gap-2 text-sm">
+                <CheckCircle2 className="w-4 h-4 text-muted-foreground" />
+                <span>Flexibilidade total</span>
+              </li>
+              <li className="flex items-center gap-2 text-sm">
+                <CheckCircle2 className="w-4 h-4 text-primary" />
+                <span>Todos os recursos PRO</span>
+              </li>
+              <li className="flex items-center gap-2 text-sm">
+                <CheckCircle2 className="w-4 h-4 text-primary" />
+                <span>Acesso imediato</span>
+              </li>
+            </ul>
+
+            <Button
+              variant="outline"
+              onClick={() => handleSubscribe("month")}
+              disabled={!!loadingInterval}
+              className="w-full"
+            >
+              {loadingInterval === "month" ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Processando...
+                </>
+              ) : (
+                "Assinar Mensal"
+              )}
+            </Button>
           </div>
         </div>
 
-        <DialogFooter className="flex-col sm:flex-col gap-2">
+        <DialogFooter className="sm:justify-center">
           <Button
-            onClick={handleSubscribe}
-            disabled={isLoading}
-            className="w-full bg-primary hover:bg-primary/90 h-11 text-base"
+            variant="ghost"
+            onClick={onClose}
+            className="text-muted-foreground"
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                Processando...
-              </>
-            ) : (
-              "Assinar Agora"
-            )}
-          </Button>
-          <Button variant="ghost" onClick={onClose} className="w-full">
             Talvez depois
           </Button>
         </DialogFooter>

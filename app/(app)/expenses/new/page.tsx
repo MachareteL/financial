@@ -143,6 +143,9 @@ export default function NewExpensePage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      if (teamId) {
+        formData.append("teamId", teamId);
+      }
 
       const data = await parseReceiptAction(formData);
 

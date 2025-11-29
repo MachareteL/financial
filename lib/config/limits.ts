@@ -1,0 +1,6 @@
+export const LIMITS = {
+  MAX_REQUESTS_PER_MINUTE: 10,
+  FREE_PLAN_RECEIPT_LIMIT: 0, // Blocked for FREE plan
+  RATE_LIMIT_WINDOW_SECONDS: 60,
+  RATE_LIMIT_MAX_REQUESTS: 5,
+} as const;
