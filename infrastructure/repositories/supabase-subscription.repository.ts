@@ -19,6 +19,7 @@ export class SupabaseSubscriptionRepository implements ISubscriptionRepository {
       current_period_end: subscription.currentPeriodEnd
         ? subscription.currentPeriodEnd.toISOString()
         : null,
+      cancel_at_period_end: subscription.cancelAtPeriodEnd,
       created_at: subscription.createdAt.toISOString(),
       updated_at: subscription.updatedAt.toISOString(),
     });
@@ -35,6 +36,7 @@ export class SupabaseSubscriptionRepository implements ISubscriptionRepository {
         current_period_end: subscription.currentPeriodEnd
           ? subscription.currentPeriodEnd.toISOString()
           : null,
+        cancel_at_period_end: subscription.cancelAtPeriodEnd,
         updated_at: subscription.updatedAt.toISOString(),
       })
       .eq("id", subscription.id);
@@ -80,6 +82,7 @@ export class SupabaseSubscriptionRepository implements ISubscriptionRepository {
       currentPeriodEnd: data.current_period_end
         ? new Date(data.current_period_end)
         : null,
+      cancelAtPeriodEnd: data.cancel_at_period_end ?? false,
       createdAt: data.created_at ? new Date(data.created_at) : new Date(),
       updatedAt: data.updated_at ? new Date(data.updated_at) : new Date(),
     });

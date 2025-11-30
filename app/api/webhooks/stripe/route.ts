@@ -42,12 +42,16 @@ export async function POST(req: Request) {
   }
 
   try {
+    console.log(event);
+
     switch (event.type) {
       case "checkout.session.completed": {
         break;
       }
       case "customer.subscription.created":
       case "customer.subscription.updated":
+      case "customer.subscription.paused":
+      case "customer.subscription.resumed":
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
 
@@ -76,6 +80,8 @@ export async function POST(req: Request) {
           currentPeriodEnd: typedSub.current_period_end
             ? new Date(typedSub.current_period_end * 1000)
             : null,
+          cancelAtPeriodEnd:
+            typedSub.cancel_at_period_end || !!typedSub.cancel_at,
           createdAt: existingSub ? existingSub.createdAt : new Date(),
           updatedAt: new Date(),
         });

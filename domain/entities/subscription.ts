@@ -18,6 +18,7 @@ export const SubscriptionSchema = z.object({
   ]),
   planId: z.string().nullable(),
   currentPeriodEnd: z.date().nullable(),
+  cancelAtPeriodEnd: z.boolean().default(false),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -55,6 +56,9 @@ export class Subscription {
   }
   get currentPeriodEnd(): Date | null {
     return this.props.currentPeriodEnd;
+  }
+  get cancelAtPeriodEnd(): boolean {
+    return this.props.cancelAtPeriodEnd;
   }
   get createdAt(): Date {
     return this.props.createdAt;

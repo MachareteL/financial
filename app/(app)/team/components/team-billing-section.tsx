@@ -106,6 +106,26 @@ export function TeamBillingSection({
         </div>
       )}
 
+      {subscription?.cancelAtPeriodEnd && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex flex-col sm:flex-row items-start gap-4">
+          <div className="bg-amber-100 p-2 rounded-full">
+            <AlertTriangle className="w-6 h-6 text-amber-600" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-amber-900 text-lg">
+              Assinatura Cancelada
+            </h4>
+            <p className="text-amber-700 mt-1 max-w-xl">
+              Sua assinatura foi cancelada e expirará em{" "}
+              <strong>
+                {subscription.currentPeriodEnd?.toLocaleDateString()}
+              </strong>
+              . Você pode reativá-la a qualquer momento antes dessa data.
+            </p>
+          </div>
+        </div>
+      )}
+
       {!isPro && !isTrialActive && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex flex-col sm:flex-row items-start gap-4">
           <div className="bg-amber-100 p-2 rounded-full">
@@ -152,7 +172,7 @@ export function TeamBillingSection({
                 variant="secondary"
                 className="bg-green-100 text-green-700 hover:bg-green-100 border-0 text-[10px] px-1.5 h-5"
               >
-                -25%
+                -50%
               </Badge>
             </button>
           </div>
@@ -236,17 +256,22 @@ export function TeamBillingSection({
                   <div className="mt-6">
                     <div className="flex items-baseline gap-1">
                       <span className="text-5xl font-bold text-foreground tracking-tight">
-                        {billingInterval === "month" ? "R$ 39,90" : "R$ 29,90"}
+                        {billingInterval === "month" ? "R$ 39,90" : "R$ 19,90"}
                       </span>
                       <span className="text-muted-foreground font-medium">
                         /mês
                       </span>
                     </div>
                     {billingInterval === "year" && (
-                      <p className="text-sm text-green-600 font-medium mt-2 flex items-center gap-1">
-                        <Check className="w-3 h-3" />
-                        Economia de R$ 120,00 por ano
-                      </p>
+                      <div className="mt-2 space-y-1">
+                        <p className="text-sm text-muted-foreground">
+                          Cobrado anualmente (R$ 238,80)
+                        </p>
+                        <p className="text-sm text-green-600 font-medium flex items-center gap-1">
+                          <Check className="w-3 h-3" />
+                          Economia de R$ 240,00 por ano
+                        </p>
+                      </div>
                     )}
                   </div>
                 )}
