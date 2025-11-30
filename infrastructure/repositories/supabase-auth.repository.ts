@@ -34,6 +34,7 @@ export class AuthSupabaseRepository implements IAuthRepository {
               status,
               plan_id,
               current_period_end,
+              cancel_at_period_end,
               created_at,
               updated_at
             )
@@ -76,6 +77,7 @@ export class AuthSupabaseRepository implements IAuthRepository {
             gatewayId: subData.gateway_id,
             status: subData.status as any, // Status enum cast
             planId: subData.plan_id,
+            cancelAtPeriodEnd: subData.cancel_at_period_end ?? false,
             currentPeriodEnd: subData.current_period_end
               ? new Date(subData.current_period_end)
               : null,

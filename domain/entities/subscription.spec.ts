@@ -10,6 +10,7 @@ describe("Subscription Entity", () => {
     gatewayId: "stripe",
     status: "active" as const,
     planId: "price_123",
+    cancelAtPeriodEnd: false,
     currentPeriodEnd: new Date(),
     createdAt: new Date(),
     updatedAt: new Date(),

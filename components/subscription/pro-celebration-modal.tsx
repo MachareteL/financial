@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Trophy, Sparkles, Zap, ScanLine, Lightbulb } from "lucide-react";
+import { Trophy, Zap, ScanLine, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

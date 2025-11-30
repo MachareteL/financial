@@ -43,6 +43,7 @@ describe("CheckFeatureAccessUseCase", () => {
       gatewayId: "stripe",
       status: "active",
       planId: "pro-plan",
+      cancelAtPeriodEnd: false,
       currentPeriodEnd: new Date(),
       createdAt: new Date(),
       updatedAt: new Date(),
