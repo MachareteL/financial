@@ -31,3 +31,5 @@ next-env.d.ts
 .DS_Store
 
 dump/**
+
+.env.local
