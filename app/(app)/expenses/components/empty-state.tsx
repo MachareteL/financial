@@ -15,8 +15,8 @@ export function EmptyState({ onClearFilters }: EmptyStateProps) {
         Tudo limpo por aqui!
       </h3>
       <p className="text-slate-500 max-w-xs mx-auto mb-8 leading-relaxed">
-        Nenhum gasto encontrado com os filtros atuais. Que tal aproveitar para
-        economizar?
+        Nenhuma despesa encontrada com os filtros atuais. Que tal aproveitar
+        para economizar?
       </p>
       {onClearFilters && (
         <Button

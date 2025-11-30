@@ -37,6 +37,7 @@ import { Plus, Search, Filter, Loader2 } from "lucide-react";
 
 // Custom Components
 import { ExpensesList } from "./components/expenses-list";
+import { DeleteExpenseDialog } from "./components/delete-expense-dialog";
 import { ExpensesTable } from "./components/expenses-table";
 import { ExpensesAnalysis } from "./components/expenses-analysis";
 import { ReceiptViewer } from "./components/receipt-viewer";
@@ -55,6 +56,8 @@ export default function ExpensesPage() {
 
   // --- Estados de Controle e Paginação ---
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
@@ -248,14 +251,39 @@ export default function ExpensesPage() {
     return groups;
   }, [displayedExpenses]);
 
-  const handleDelete = async (id: string) => {
-    if (!teamId || !userId || !confirm("Excluir este gasto?")) return;
+  const handleDelete = (id: string) => {
+    setExpenseToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!teamId || !userId || !expenseToDelete) return;
+
+    setIsDeleting(expenseToDelete);
     try {
-      await deleteExpenseUseCase.execute({ expenseId: id, teamId, userId });
-      notify.success("Gasto excluído.");
-      setExpenses((prev) => prev.filter((e) => e.id !== id));
+      await deleteExpenseUseCase.execute({
+        expenseId: expenseToDelete,
+        teamId,
+        userId,
+      });
+
+      // Atualiza lista local
+      const deletedExpense = expenses.find((e) => e.id === expenseToDelete);
+      setExpenses((prev) => prev.filter((e) => e.id !== expenseToDelete));
+
+      // Atualiza sumário local (Total e Contagem)
+      if (deletedExpense) {
+        setSummaryData((prev) => ({
+          total: prev.total - deletedExpense.amount,
+          count: Math.max(0, prev.count - 1),
+        }));
+      }
+
+      notify.success("Despesa excluída.");
     } catch (err: any) {
-      notify.error(err, "excluir gasto");
+      notify.error(err, "excluir despesa");
+    } finally {
+      setIsDeleting(null);
+      setExpenseToDelete(null);
     }
   };
 
@@ -298,7 +326,7 @@ export default function ExpensesPage() {
               onClick={() => router.push("/expenses/new")}
               className="shadow-md shadow-primary/20"
             >
-              <Plus className="w-4 h-4 mr-2" /> Novo Gasto
+              <Plus className="w-4 h-4 mr-2" /> Nova Despesa
             </Button>
           )}
         </div>
@@ -310,7 +338,7 @@ export default function ExpensesPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar gastos..."
+                placeholder="Buscar despesas..."
                 className="pl-9 bg-background border-input focus:ring-primary transition-all"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -441,6 +469,13 @@ export default function ExpensesPage() {
       <ReceiptViewer
         selectedReceipt={selectedReceipt}
         onClose={() => setSelectedReceipt(null)}
+      />
+
+      <DeleteExpenseDialog
+        open={!!expenseToDelete}
+        onOpenChange={(open) => !open && setExpenseToDelete(null)}
+        onConfirm={confirmDelete}
+        isDeleting={!!isDeleting}
       />
     </div>
   );

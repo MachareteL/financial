@@ -254,7 +254,7 @@ export function ExpensesAnalysis({
       <Card className="border-slate-100 shadow-sm">
         <CardHeader>
           <CardTitle className="text-base font-bold text-slate-800">
-            Maiores Gastos do Período
+            Maiores Despesas do Período
           </CardTitle>
         </CardHeader>
         <CardContent>

@@ -205,7 +205,7 @@ export default function NewExpensePage() {
     if (!description.trim()) {
       notify.error(
         "Descrição obrigatória",
-        "Informe uma descrição para o gasto."
+        "Informe uma descrição para a despesa."
       );
       return;
     }
@@ -233,7 +233,7 @@ export default function NewExpensePage() {
 
       await createExpenseUseCase.execute(dto);
 
-      notify.success("Gasto registrado!", {
+      notify.success("Despesa registrada!", {
         description:
           expenseType === "installment"
             ? `Parcelamento em ${installments}x criado.`
@@ -270,7 +270,7 @@ export default function NewExpensePage() {
             <ArrowLeft className="h-5 w-5 text-slate-600" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Novo Gasto</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Nova Despesa</h1>
             <p className="text-slate-500 text-sm">
               Adicione uma despesa manual ou via comprovante.
             </p>
@@ -453,7 +453,7 @@ export default function NewExpensePage() {
                 </Select>
               </div>
 
-              {/* Tipo de Gasto (Abas Modernas) */}
+              {/* Tipo de Despesa (Abas Modernas) */}
               <div className="pt-2">
                 <Label className="text-slate-500 text-xs uppercase font-bold tracking-wide mb-3 block">
                   Detalhes do Lançamento
@@ -492,7 +492,7 @@ export default function NewExpensePage() {
                           <Receipt className="w-4 h-4 text-slate-400" />
                         </div>
                         <p className="text-xs text-slate-500">
-                          Gasto pontual. Não se repete nos próximos meses.
+                          Despesa pontual. Não se repete nos próximos meses.
                         </p>
                       </div>
                     </TabsContent>
@@ -592,7 +592,7 @@ export default function NewExpensePage() {
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4 mr-2 text-blue-200" />
-                      Confirmar Gasto
+                      Confirmar Despesa
                     </>
                   )}
                 </Button>

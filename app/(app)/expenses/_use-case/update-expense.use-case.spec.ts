@@ -50,6 +50,8 @@ describe("UpdateExpenseUseCase", () => {
     date: new Date(),
     categoryId: "123e4567-e89b-12d3-a456-426614174003",
     createdAt: new Date(),
+    isRecurring: false,
+    isInstallment: false,
   });
 
   it("should update expense details successfully", async () => {

@@ -33,6 +33,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import { DeleteExpenseDialog } from "../../components/delete-expense-dialog";
 import { useAuth } from "@/app/auth/auth-provider";
 import { usePermission } from "@/hooks/use-permission";
 
@@ -67,8 +68,10 @@ export default function EditExpensePage() {
   const [expense, setExpense] = useState<ExpenseDetailsDTO | null>(null);
 
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   // Formulário
   const [description, setDescription] = useState("");
@@ -113,13 +116,13 @@ export default function EditExpensePage() {
           setExistingReceiptUrl(expenseData.receiptUrl || null); // Salva a URL original
         } else {
           notify.error(
-            new Error("Gasto não encontrado"),
-            "carregar os dados do gasto"
+            new Error("Despesa não encontrada"),
+            "carregar os dados da despesa"
           );
           router.push("/expenses");
         }
       } catch (error: any) {
-        notify.error(error, "carregar os dados do gasto");
+        notify.error(error, "carregar os dados da despesa");
         router.push("/expenses");
       } finally {
         setIsLoadingData(false);
@@ -163,7 +166,7 @@ export default function EditExpensePage() {
     e.preventDefault();
     if (!teamId || !expense) return;
 
-    setIsSaving(true);
+    setIsLoading(true);
 
     try {
       const dto: UpdateExpenseDTO = {
@@ -184,38 +187,35 @@ export default function EditExpensePage() {
 
       await updateExpenseUseCase.execute(dto);
 
-      notify.success("Gasto atualizado!", {
+      notify.success("Despesa atualizada!", {
         description: "As alterações foram salvas com sucesso.",
       });
       router.push("/expenses");
     } catch (error: any) {
-      notify.error(error, "salvar o gasto");
+      notify.error(error, "salvar a despesa");
     } finally {
-      setIsSaving(false);
+      setIsLoading(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!teamId || !expense) return;
-    const confirmMessage = expense.isInstallment
-      ? "Este é um gasto parcelado. Deseja excluir APENAS esta parcela?"
-      : "Tem certeza que deseja excluir este gasto?";
-
-    if (!confirm(confirmMessage)) return;
+    if (!teamId || !userId || !expense) return;
 
     setIsDeleting(true);
     try {
       await deleteExpenseUseCase.execute({
         expenseId: expense.id,
         teamId,
-        userId: userId!,
+        userId,
       });
-      notify.success("Gasto excluído!", {
-        description: "O gasto foi removido com sucesso.",
+
+      notify.success("Despesa excluída!", {
+        description: "A despesa foi removida com sucesso.",
       });
+
       router.push("/expenses");
     } catch (error: any) {
-      notify.error(error, "excluir o gasto");
+      notify.error(error, "excluir a despesa");
     } finally {
       setIsDeleting(false);
     }
@@ -244,7 +244,7 @@ export default function EditExpensePage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Editar Gasto</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Editar Despesa</h1>
             <p className="text-gray-600">Alterar detalhes do lançamento</p>
           </div>
         </div>
@@ -279,7 +279,7 @@ export default function EditExpensePage() {
                 <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5" />
                 <div>
                   <p className="font-medium text-orange-800">
-                    Atenção: Gasto Parcelado
+                    Atenção: Despesa Parcelada
                   </p>
                   <p className="text-sm text-orange-700">
                     As alterações feitas aqui afetarão{" "}
@@ -296,7 +296,7 @@ export default function EditExpensePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Edit className="h-5 w-5" />
-              Dados do Gasto
+              Dados da Despesa
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -308,7 +308,7 @@ export default function EditExpensePage() {
                     id="description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    disabled={isSaving}
+                    disabled={isLoading}
                     required
                   />
                 </div>
@@ -322,7 +322,7 @@ export default function EditExpensePage() {
                       step="0.01"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
-                      disabled={isSaving}
+                      disabled={isLoading}
                       required
                     />
                   </div>
@@ -334,7 +334,7 @@ export default function EditExpensePage() {
                       type="date"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
-                      disabled={isSaving}
+                      disabled={isLoading}
                       required
                     />
                   </div>
@@ -345,7 +345,7 @@ export default function EditExpensePage() {
                   <Select
                     value={categoryId}
                     onValueChange={setCategoryId}
-                    disabled={isSaving}
+                    disabled={isLoading}
                     required
                   >
                     <SelectTrigger>
@@ -428,7 +428,7 @@ export default function EditExpensePage() {
                   variant="outline"
                   onClick={() => router.back()}
                   className="flex-1"
-                  disabled={isSaving || isDeleting}
+                  disabled={isLoading || isDeleting}
                 >
                   Cancelar
                 </Button>
@@ -438,25 +438,19 @@ export default function EditExpensePage() {
                     <Button
                       type="button"
                       variant="destructive"
-                      onClick={handleDelete}
-                      disabled={isSaving || isDeleting}
-                      className="flex-1"
+                      onClick={() => setShowDeleteDialog(true)}
+                      disabled={isLoading}
+                      className="w-full sm:w-auto"
                     >
-                      {isDeleting ? (
-                        <Loader2 className="animate-spin h-4 w-4" />
-                      ) : (
-                        <>
-                          <Trash2 className="w-4 h-4 mr-2" /> Excluir
-                        </>
-                      )}
+                      <Trash2 className="w-4 h-4 mr-2" /> Excluir
                     </Button>
 
                     <Button
                       type="submit"
-                      disabled={isSaving || isDeleting}
+                      disabled={isLoading || isDeleting}
                       className="flex-1"
                     >
-                      {isSaving ? (
+                      {isLoading ? (
                         <Loader2 className="animate-spin h-4 w-4" />
                       ) : (
                         <>
