@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/auth/auth-provider";
 import { useTeam } from "@/app/(app)/team/team-provider";
@@ -65,7 +65,6 @@ import {
   PiggyBank,
   Briefcase,
   Wallet,
-  CalendarRange,
   ArrowUpRight,
   Sparkles,
 } from "lucide-react";
@@ -202,51 +201,16 @@ export default function InvestmentsPage() {
     const dataPoints: ProjectionData[] = [];
 
     // Estado inicial (Mês 0)
-    let currentTotalPortfolio = investments.reduce(
+    let simulatedTotal = investments.reduce(
       (acc, inv) => acc + inv.currentAmount,
       0
     );
-    let totalInvestedFromPocket = investments.reduce(
-      (acc, inv) => acc + inv.initialAmount,
+    let simulatedInvested = investments.reduce(
+      (acc, inv) => acc + inv.currentAmount,
       0
-    ); // Aproximação: considera currentAmount como base inicial para simplicidade da curva futura, mas idealmente rastrearia histórico. Para projeção futura, currentAmount é o "principal" hoje.
-
-    // Para o gráfico ficar bonito, vamos considerar:
-    // "Invested" = Valor Atual (hoje) + Aportes Futuros acumulados
-    // "Total" = Valor Simulado com Juros
-    // "Yield" = Total - Invested
-
-    // Base inicial para o gráfico
-    let simulatedTotal = currentTotalPortfolio;
-    let simulatedInvested = currentTotalPortfolio; // Começa do valor atual como "base"
+    ); // Começa do valor atual como "base"
 
     for (let m = 0; m <= totalMonths; m++) {
-      // A cada mês, calculamos o rendimento de cada ativo individualmente
-      let monthlyYield = 0;
-      let monthlyContributionTotal = 0;
-
-      // Itera sobre cada investimento para aplicar sua taxa específica
-      investments.forEach((inv) => {
-        // Taxa mensal aproximada
-        const monthlyRate =
-          Math.pow(1 + inv.annualReturnRate / 100, 1 / 12) - 1;
-
-        // Valor deste ativo neste mês da simulação
-        // Nota: Esta é uma simplificação para o gráfico agregado.
-        // Em um app real, faríamos a evolução individual e somaríamos.
-        // Aqui, vamos projetar o "delta" que esse ativo adiciona ao bolo total.
-
-        const assetValueAtMonthStart =
-          inv.currentAmount * Math.pow(1 + monthlyRate, m);
-        const contributionsValueAtMonthStart =
-          inv.monthlyContribution *
-          ((Math.pow(1 + monthlyRate, m) - 1) / monthlyRate);
-
-        // Mas para somar tudo num loop simples é complexo.
-        // Vamos simplificar: Usar uma média ponderada de retorno seria melhor,
-        // mas vamos iterar o "bolo total" somando os ganhos individuais.
-      });
-
       // --- Abordagem Iterativa Simplificada ---
       if (m > 0) {
         let monthGain = 0;

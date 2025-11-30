@@ -29,7 +29,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Loader2, TrendingUp, CheckCircle2, Mail } from "lucide-react";
+import { Loader2, TrendingUp, CheckCircle2 } from "lucide-react";
 
 export default function AuthPage() {
   const router = useRouter();

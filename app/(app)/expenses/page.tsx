@@ -19,7 +19,6 @@ import {
 // Types
 import type { ExpenseDetailsDTO } from "@/domain/dto/expense.types.d.ts";
 import type { CategoryDetailsDTO } from "@/domain/dto/category.types.d.ts";
-import type { BudgetCategoryDetailsDTO } from "@/domain/dto/budget-category.types.d.ts";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -53,9 +52,6 @@ export default function ExpensesPage() {
   // --- Estados de Dados ---
   const [expenses, setExpenses] = useState<ExpenseDetailsDTO[]>([]);
   const [categories, setCategories] = useState<CategoryDetailsDTO[]>([]);
-  const [budgetCategories, setBudgetCategories] = useState<
-    BudgetCategoryDetailsDTO[]
-  >([]);
 
   // --- Estados de Controle e Paginação ---
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
@@ -110,12 +106,12 @@ export default function ExpensesPage() {
     if (!teamId) return;
     const loadAuxData = async () => {
       try {
-        const [cats, budCats] = await Promise.all([
+        const [cats] = await Promise.all([
           getCategoriesUseCase.execute(teamId),
           getBudgetCategoriesUseCase.execute(teamId),
         ]);
         setCategories(cats);
-        setBudgetCategories(budCats);
+        // setBudgetCategories(budCats);
       } catch (err) {
         console.error(err);
       }

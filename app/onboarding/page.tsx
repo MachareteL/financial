@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Users, Plus, UserPlus } from "lucide-react";
+import { Users, UserPlus } from "lucide-react";
 
 import { useAuth } from "@/app/auth/auth-provider";
 import {
@@ -26,12 +26,12 @@ import { notify } from "@/lib/notify-helper";
 import type { TeamInviteDetailsDTO } from "@/domain/dto/team.types";
 
 export default function OnboardingPage() {
-  const { session, loading, setSession } = useAuth();
+  const { session, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [invites, setInvites] = useState<TeamInviteDetailsDTO[]>([]);
   const [loadingInvites, setLoadingInvites] = useState(true);
   const [teamName, setTeamName] = useState("");
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [actionLoading] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {

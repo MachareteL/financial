@@ -10,7 +10,6 @@ import {
   Tag,
   Wallet,
   Users,
-  PieChart,
 } from "lucide-react";
 
 const navLinks = [

@@ -14,20 +14,15 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/app/auth/auth-provider";
 import {
   ArrowRight,
-  CheckCircle2,
-  Heart,
-  MessageCircle,
-  PieChart,
-  Shield,
   Sparkles,
   TrendingUp,
-  Users,
   Zap,
   Menu,
   X,
+  Users,
   Smartphone,
-  Globe,
-  Lock,
+  PieChart,
+  CheckCircle2,
 } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
@@ -36,7 +31,7 @@ export default function LandingPage() {
   const { session, loading } = useAuth();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { setTheme } = useTheme();
+  useTheme();
 
   const handleGetStarted = () => {
     if (session) {

@@ -1,6 +1,5 @@
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 import type { ISubscriptionRepository } from "@/domain/interfaces/subscription.repository.interface";
-import type { Team } from "@/domain/entities/team";
 
 export class CheckFeatureAccessUseCase {
   constructor(

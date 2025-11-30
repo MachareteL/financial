@@ -14,26 +14,23 @@ import {
   acceptInviteUseCase,
   declineInviteUseCase,
 } from "@/infrastructure/dependency-injection";
-import { TeamInvite } from "@/domain/entities/team-invite";
+import type { TeamInviteDetailsDTO } from "@/domain/dto/team.types";
 import { notify } from "@/lib/notify-helper";
 import { Badge } from "@/components/ui/badge";
 
 export function NotificationsNav() {
   const { session } = useAuth();
-  const [invites, setInvites] = useState<TeamInvite[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [invites, setInvites] = useState<TeamInviteDetailsDTO[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
   const fetchInvites = async () => {
     if (!session?.user?.email) return;
-    setIsLoading(true);
     try {
       const data = await getPendingInvitesUseCase.execute(session.user.email);
       setInvites(data);
     } catch (error) {
+      notify.error(error, "carregar convites");
       console.error("Failed to fetch invites", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 

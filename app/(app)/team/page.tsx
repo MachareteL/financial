@@ -12,7 +12,6 @@ import {
   Users,
   ShieldCheck,
   Settings,
-  CreditCard,
   Sparkles,
 } from "lucide-react";
 import { useTeam } from "@/app/(app)/team/team-provider";

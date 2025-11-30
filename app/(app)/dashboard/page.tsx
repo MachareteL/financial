@@ -10,7 +10,7 @@ import {
 } from "@/infrastructure/dependency-injection";
 import type { DashboardDataDTO } from "@/domain/dto/dashboard.types.d.ts";
 import { notify } from "@/lib/notify-helper";
-import { Loader2 } from "lucide-react";
+import { Loader2, Wallet } from "lucide-react";
 
 // Components
 import { DashboardHeader } from "./components/dashboard-header";

@@ -8,6 +8,7 @@ import {
 } from "react";
 import type { UserSession } from "@/domain/dto/user.types.d.ts";
 import { getCurrentAuthUserUseCase } from "@/infrastructure/dependency-injection";
+import { notify } from "@/lib/notify-helper";
 
 const AuthContext = createContext<{
   session: UserSession | null;
@@ -30,7 +31,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const sessionData = await getCurrentAuthUserUseCase.execute();
         setSession(sessionData);
-      } catch (err) {
+      } catch {
+        notify.error(
+          "Houve um erro ao carregar suas informações",
+          "carregar usuário"
+        );
         setSession(null);
       } finally {
         setLoading(false);

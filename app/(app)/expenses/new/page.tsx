@@ -32,7 +32,6 @@ import {
   ArrowLeft,
   Loader2,
   Sparkles,
-  ScanLine,
   Receipt,
   CalendarIcon,
   CreditCard,
@@ -519,8 +518,8 @@ export default function NewExpensePage() {
                                 {t === "weekly"
                                   ? "Semanal"
                                   : t === "monthly"
-                                  ? "Mensal"
-                                  : "Anual"}
+                                    ? "Mensal"
+                                    : "Anual"}
                               </button>
                             )
                           )}
