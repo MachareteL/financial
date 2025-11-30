@@ -5,7 +5,6 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/app/auth/auth-provider";
 import { ThemeProvider } from "@/components/theme-provider";
-import { PostHogProvider } from "@/components/providers/posthog-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,10 +27,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <PostHogProvider>
-            <AuthProvider>{children}</AuthProvider>
-            <Toaster />
-          </PostHogProvider>
+          <AuthProvider>{children}</AuthProvider>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

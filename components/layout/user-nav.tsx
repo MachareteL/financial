@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/app/auth/auth-provider";
-import { signOutAction } from "@/app/auth/_actions/auth.actions";
+import { signOutUseCase } from "@/infrastructure/dependency-injection";
 import { useRouter } from "next/navigation";
 import { LogOut, User, Settings } from "lucide-react";
 
@@ -25,7 +25,7 @@ export function UserNav() {
   if (!session) return null;
 
   const handleSignOut = async () => {
-    await signOutAction();
+    await signOutUseCase.execute();
     router.push("/auth");
   };
 

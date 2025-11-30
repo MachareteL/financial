@@ -28,8 +28,7 @@ export async function subscribeTeamAction(teamId: string, planId: string) {
     planId,
     user.email,
     successUrl,
-    cancelUrl,
-    user.id
+    cancelUrl
   );
   if (url) {
     redirect(url);

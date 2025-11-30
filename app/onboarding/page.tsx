@@ -17,11 +17,11 @@ import { Users, UserPlus } from "lucide-react";
 
 import { useAuth } from "@/app/auth/auth-provider";
 import {
-  createTeamAction,
-  getPendingInvitesAction,
-  acceptInviteAction,
-  declineInviteAction,
-} from "./_actions/onboarding.actions";
+  createTeamUseCase,
+  getPendingInvitesUseCase,
+  acceptInviteUseCase,
+  declineInviteUseCase,
+} from "@/infrastructure/dependency-injection";
 import { notify } from "@/lib/notify-helper";
 import type { TeamInviteDetailsDTO } from "@/domain/dto/team.types";
 
@@ -45,7 +45,7 @@ export default function OnboardingPage() {
     const fetchInvites = async () => {
       if (!session?.user?.email) return;
       try {
-        const data = await getPendingInvitesAction(session.user.email);
+        const data = await getPendingInvitesUseCase.execute(session.user.email);
         setInvites(data);
       } catch (error) {
         console.error("Erro ao buscar convites:", error);
@@ -70,7 +70,10 @@ export default function OnboardingPage() {
     const teamName = formData.get("teamName") as string;
 
     try {
-      await createTeamAction(teamName, session.user.id);
+      await createTeamUseCase.execute({
+        teamName,
+        userId: session.user.id,
+      });
 
       notify.success("Equipe criada com sucesso!", {
         description: `A equipe "${teamName}" foi criada.`,
@@ -88,7 +91,7 @@ export default function OnboardingPage() {
     if (!session?.user) return;
     setIsLoading(true);
     try {
-      await acceptInviteAction(inviteId, session.user.id);
+      await acceptInviteUseCase.execute(inviteId, session.user.id);
       notify.success("Convite aceito!", {
         description: "Você entrou para a equipe.",
       });
@@ -103,7 +106,7 @@ export default function OnboardingPage() {
   const handleDeclineInvite = async (inviteId: string) => {
     setIsLoading(true);
     try {
-      await declineInviteAction(inviteId);
+      await declineInviteUseCase.execute(inviteId);
       notify.success("Convite recusado.");
       // Atualiza lista
       setInvites((prev) => prev.filter((i) => i.id !== inviteId));

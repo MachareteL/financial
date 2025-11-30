@@ -7,7 +7,7 @@ import {
   ReactNode,
 } from "react";
 import type { UserSession } from "@/domain/dto/user.types.d.ts";
-import { getCurrentUserAction } from "./_actions/get-user.action";
+import { getCurrentAuthUserUseCase } from "@/infrastructure/dependency-injection";
 import { notify } from "@/lib/notify-helper";
 
 const AuthContext = createContext<{
@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const sessionData = await getCurrentUserAction();
+        const sessionData = await getCurrentAuthUserUseCase.execute();
         setSession(sessionData);
       } catch {
         notify.error(

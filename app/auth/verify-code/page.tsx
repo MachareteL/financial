@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { verifyRecoveryCodeAction } from "../_actions/auth.actions";
+import { verifyRecoveryCodeUseCase } from "@/infrastructure/dependency-injection";
 import { notify } from "@/lib/notify-helper";
 
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,7 @@ function VerifyCodeContent() {
 
     setIsLoading(true);
     try {
-      await verifyRecoveryCodeAction(email, code);
+      await verifyRecoveryCodeUseCase.execute(email, code);
 
       notify.success("Código verificado!", {
         description: "Agora você pode redefinir sua senha.",

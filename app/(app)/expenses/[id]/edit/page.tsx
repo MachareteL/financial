@@ -38,11 +38,11 @@ import { useAuth } from "@/app/auth/auth-provider";
 import { usePermission } from "@/hooks/use-permission";
 
 import {
-  getExpenseByIdAction,
-  updateExpenseAction,
-  deleteExpenseAction,
-} from "@/app/(app)/expenses/_actions/expenses.actions";
-import { getCategoriesAction } from "@/app/(app)/categories/_actions/categories.actions";
+  getCategoriesUseCase,
+  getExpenseByIdUseCase,
+  updateExpenseUseCase,
+  deleteExpenseUseCase,
+} from "@/infrastructure/dependency-injection";
 import type { CategoryDetailsDTO } from "@/domain/dto/category.types.d.ts";
 import type {
   ExpenseDetailsDTO,
@@ -101,8 +101,8 @@ export default function EditExpensePage() {
       setIsLoadingData(true);
       try {
         const [categoriesData, expenseData] = await Promise.all([
-          getCategoriesAction(teamId),
-          getExpenseByIdAction({ expenseId, teamId }),
+          getCategoriesUseCase.execute(teamId),
+          getExpenseByIdUseCase.execute({ expenseId, teamId }),
         ]);
 
         setCategories(categoriesData);
@@ -185,7 +185,7 @@ export default function EditExpensePage() {
         userId: userId!,
       };
 
-      await updateExpenseAction(dto);
+      await updateExpenseUseCase.execute(dto);
 
       notify.success("Despesa atualizada!", {
         description: "As alterações foram salvas com sucesso.",
@@ -203,7 +203,7 @@ export default function EditExpensePage() {
 
     setIsDeleting(true);
     try {
-      await deleteExpenseAction({
+      await deleteExpenseUseCase.execute({
         expenseId: expense.id,
         teamId,
         userId,

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/app/auth/auth-provider";
-import { updateProfileAction } from "../_actions/account.actions";
+import { updateProfileUseCase } from "@/infrastructure/dependency-injection";
 import { notify } from "@/lib/notify-helper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,9 +27,12 @@ export function ProfileTab() {
 
     setIsLoading(true);
     try {
-      const updatedSession = await updateProfileAction(session.user.id, {
-        name,
-      });
+      const updatedSession = await updateProfileUseCase.execute(
+        session.user.id,
+        {
+          name,
+        }
+      );
       setSession(updatedSession);
       notify.success("Perfil atualizado!");
     } catch (error: any) {

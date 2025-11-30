@@ -1,8 +1,3 @@
-import type { Team } from "@/domain/entities/team";
-import type { TeamRole } from "@/domain/entities/team-role";
-import type { TeamInvite } from "@/domain/entities/team-invite";
-import type { Subscription } from "@/domain/entities/subscription";
-
 export interface TeamMemberProfileDTO {
   id: string;
   name: string;
@@ -64,11 +59,3 @@ export type TeamInviteDetailsDTO = {
   invitedByName?: string;
   roleName?: string;
 };
-
-export interface TeamDataDTO {
-  team: Team | null;
-  members: TeamMemberProfileDTO[];
-  roles: TeamRole[];
-  invites: TeamInvite[];
-  subscription: Subscription | null;
-}

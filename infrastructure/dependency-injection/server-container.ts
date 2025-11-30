@@ -14,7 +14,6 @@ import { getSupabaseClient } from "../database/supabase.server";
 import { CategoryRepository } from "../repositories/supabase-category.repository";
 import { BudgetCategoryRepository } from "../repositories/supabase-budget-category.repository";
 import { CreateTeamUseCase } from "@/app/(app)/team/_use-case/create-team.use-case";
-import { PostHogAnalyticsService } from "@/infrastructure/services/posthog-analytics.service";
 
 const container = Container.getInstance();
 
@@ -64,8 +63,7 @@ export const getCreateTeamUseCase = async () => {
         teamRepo,
         categoryRepo,
         budgetCategoryRepo,
-        subscriptionRepo,
-        getAnalyticsService()
+        subscriptionRepo
       )
   );
 };
@@ -73,7 +71,7 @@ export const getCreateTeamUseCase = async () => {
 export const getSubscribeTeamUseCase = () => {
   return container.get(
     "subscribeTeamUseCase",
-    () => new SubscribeTeamUseCase(getPaymentGateway(), getAnalyticsService())
+    () => new SubscribeTeamUseCase(getPaymentGateway())
   );
 };
 
@@ -124,14 +122,10 @@ const getAiService = () => {
 export const getParseReceiptUseCase = () => {
   return container.get(
     "parseReceiptUseCase",
-    () => new ParseReceiptUseCase(getAiService(), getAnalyticsService())
+    () => new ParseReceiptUseCase(getAiService())
   );
 };
 
 export const getRateLimitService = () => {
   return container.get("rateLimitService", () => new RateLimitService());
-};
-
-export const getAnalyticsService = () => {
-  return container.get("analyticsService", () => new PostHogAnalyticsService());
 };

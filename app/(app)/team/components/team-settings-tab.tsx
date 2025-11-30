@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { useTeam } from "@/app/(app)/team/team-provider";
 import { notify } from "@/lib/notify-helper";
-import { updateTeamAction } from "../_actions/team.actions";
+import { updateTeamUseCase } from "@/infrastructure/dependency-injection";
 import { useAuth } from "@/app/auth/auth-provider";
 import { usePermission } from "@/hooks/use-permission";
 import { TeamBillingSection } from "./team-billing-section";
@@ -61,7 +61,11 @@ export function TeamSettingsTab({ team, subscription }: TeamSettingsTabProps) {
 
     setIsLoading(true);
     try {
-      await updateTeamAction(currentTeam.team.id, name, session.user.id);
+      await updateTeamUseCase.execute(
+        currentTeam.team.id,
+        name,
+        session.user.id
+      );
       notify.success("Configurações atualizadas com sucesso!");
       // Atualiza o contexto global do time
       window.location.reload();

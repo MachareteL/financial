@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { updatePasswordAction } from "../_actions/account.actions";
+import { updatePasswordUseCase } from "@/infrastructure/dependency-injection";
 import { notify } from "@/lib/notify-helper";
 
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,7 @@ export default function UpdatePasswordPage() {
 
     setIsLoading(true);
     try {
-      await updatePasswordAction(password);
+      await updatePasswordUseCase.execute(password);
 
       notify.success("Senha atualizada!", {
         description: "Você já pode usar sua nova senha.",

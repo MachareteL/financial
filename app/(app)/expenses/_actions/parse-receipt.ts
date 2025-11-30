@@ -67,7 +67,7 @@ export async function parseReceiptAction(
 
   try {
     const parseReceiptUseCase = getParseReceiptUseCase();
-    return await parseReceiptUseCase.execute(file, user.id);
+    return await parseReceiptUseCase.execute(file);
   } catch (error) {
     console.error("Erro ao processar recibo:", error);
     return null;

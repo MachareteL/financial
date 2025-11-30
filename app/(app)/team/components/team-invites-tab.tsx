@@ -9,7 +9,7 @@ import { useAuth } from "@/app/auth/auth-provider";
 import { useTeam } from "@/app/(app)/team/team-provider";
 import { usePermission } from "@/hooks/use-permission";
 import { notify } from "@/lib/notify-helper";
-import { cancelInviteAction } from "../_actions/team.actions";
+import { manageMembersUseCase } from "@/infrastructure/dependency-injection";
 import type { TeamInvite } from "@/domain/entities/team-invite";
 
 interface TeamInvitesTabProps {
@@ -27,7 +27,11 @@ export function TeamInvitesTab({ invites, onUpdate }: TeamInvitesTabProps) {
     if (!currentTeam || !session?.user) return;
     setLoadingId(inviteId);
     try {
-      await cancelInviteAction(inviteId, currentTeam.team.id, session.user.id);
+      await manageMembersUseCase.cancelInvite(
+        inviteId,
+        currentTeam.team.id,
+        session.user.id
+      );
       notify.success("Convite cancelado");
       await onUpdate();
     } catch (error: any) {

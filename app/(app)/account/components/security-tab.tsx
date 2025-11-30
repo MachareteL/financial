@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { updatePasswordAction } from "../_actions/account.actions";
+import { updatePasswordUseCase } from "@/infrastructure/dependency-injection";
 import { notify } from "@/lib/notify-helper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +29,7 @@ export function SecurityTab() {
 
     setIsLoading(true);
     try {
-      await updatePasswordAction(password);
+      await updatePasswordUseCase.execute(password);
       notify.success("Senha alterada com sucesso!");
       setPassword("");
       setConfirmPassword("");

@@ -13,8 +13,7 @@ export interface IPaymentGateway {
     planId: string,
     email: string,
     successUrl: string,
-    cancelUrl: string,
-    userId?: string
+    cancelUrl: string
   ): Promise<string>;
 
   /**

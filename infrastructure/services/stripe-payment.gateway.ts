@@ -20,8 +20,7 @@ export class StripePaymentGateway implements IPaymentGateway {
     planId: string,
     email: string,
     successUrl: string,
-    cancelUrl: string,
-    userId?: string
+    cancelUrl: string
   ): Promise<string> {
     const session = await this.stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -39,7 +38,6 @@ export class StripePaymentGateway implements IPaymentGateway {
       subscription_data: {
         metadata: {
           team_id: teamId,
-          user_id: userId || "",
         },
       },
     });
