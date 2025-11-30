@@ -19,7 +19,11 @@ import { useAuth } from "@/app/auth/auth-provider";
 import { useTeam } from "@/app/(app)/team/team-provider";
 import { usePermission } from "@/hooks/use-permission";
 import { notify } from "@/lib/notify-helper";
-import { manageRolesUseCase } from "@/infrastructure/dependency-injection";
+import {
+  updateRoleAction,
+  createRoleAction,
+  deleteRoleAction,
+} from "../_actions/team.actions";
 import type { TeamRole } from "@/domain/entities/team-role";
 
 interface TeamRolesTabProps {
@@ -95,7 +99,7 @@ export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
     setIsActionLoading(true);
     try {
       if (editingRole) {
-        await manageRolesUseCase.updateRole({
+        await updateRoleAction({
           roleId: editingRole.id,
           teamId: currentTeam.team.id,
           userId: session.user.id,
@@ -105,7 +109,7 @@ export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
         });
         notify.success("Cargo atualizado!");
       } else {
-        await manageRolesUseCase.createRole({
+        await createRoleAction({
           teamId: currentTeam.team.id,
           userId: session.user.id,
           name: newRoleName,
@@ -129,11 +133,7 @@ export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
       return;
     setIsActionLoading(true);
     try {
-      await manageRolesUseCase.deleteRole(
-        roleId,
-        currentTeam.team.id,
-        session.user.id
-      );
+      await deleteRoleAction(roleId, currentTeam.team.id, session.user.id);
       notify.success("Cargo excluído!");
       await onUpdate();
     } catch (error: any) {

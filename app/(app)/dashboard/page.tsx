@@ -4,10 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/auth/auth-provider";
 import { useTeam } from "@/app/(app)/team/team-provider";
-import {
-  getDashboardDataUseCase,
-  signOutUseCase,
-} from "@/infrastructure/dependency-injection";
+import { getDashboardDataAction } from "./_actions/dashboard.actions";
+import { signOutAction } from "@/app/auth/_actions/auth.actions";
 import type { DashboardDataDTO } from "@/domain/dto/dashboard.types.d.ts";
 import { notify } from "@/lib/notify-helper";
 import { Loader2, Wallet } from "lucide-react";
@@ -40,7 +38,7 @@ export default function DashboardPage() {
     const loadData = async () => {
       setIsLoadingData(true);
       try {
-        const result = await getDashboardDataUseCase.execute(
+        const result = await getDashboardDataAction(
           currentTeam.team.id,
           selectedMonth,
           selectedYear
@@ -58,7 +56,7 @@ export default function DashboardPage() {
   }, [currentTeam, selectedMonth, selectedYear, session, authLoading]);
 
   const handleLogout = async () => {
-    await signOutUseCase.execute();
+    await signOutAction();
     router.push("/auth");
   };
 

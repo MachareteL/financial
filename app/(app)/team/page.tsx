@@ -23,7 +23,7 @@ import type { TeamRole } from "@/domain/entities/team-role";
 import type { TeamInvite } from "@/domain/entities/team-invite";
 
 // Casos de Uso
-import { getTeamDataUseCase } from "@/infrastructure/dependency-injection";
+import { getTeamDataAction } from "./_actions/team.actions";
 
 // Componentes
 import { TeamMembersTab } from "./components/team-members-tab";
@@ -57,7 +57,7 @@ export default function TeamPage() {
     if (!currentTeam) return;
     setIsLoading(true);
     try {
-      const data = await getTeamDataUseCase.execute(currentTeam.team.id);
+      const data = await getTeamDataAction(currentTeam.team.id);
       setMembers(data.members);
       setRoles(data.roles);
       setInvites(data.invites);

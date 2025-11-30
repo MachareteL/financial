@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTeam } from "@/app/(app)/team/team-provider";
-import { checkFeatureAccessUseCase } from "@/infrastructure/dependency-injection";
+import { checkFeatureAccessAction } from "@/app/(app)/team/_actions/team.actions";
 
 export function useFeatureAccess(featureKey: string) {
   const { currentTeam } = useTeam();
@@ -13,7 +13,7 @@ export function useFeatureAccess(featureKey: string) {
     const check = async () => {
       setIsLoading(true);
       try {
-        const access = await checkFeatureAccessUseCase.execute(
+        const access = await checkFeatureAccessAction(
           currentTeam.team.id,
           featureKey
         );

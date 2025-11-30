@@ -6,12 +6,15 @@ import type { Team } from "@/domain/entities/team";
 
 import type { ISubscriptionRepository } from "@/domain/interfaces/subscription.repository.interface";
 
+import type { IAnalyticsService } from "@/domain/interfaces/analytics-service.interface";
+
 export class CreateTeamUseCase {
   constructor(
     private teamRepository: ITeamRepository,
     private categoryRepository: ICategoryRepository,
     private budgetCategoryRepository: IBudgetCategoryRepository,
-    private subscriptionRepository: ISubscriptionRepository
+    private subscriptionRepository: ISubscriptionRepository,
+    private analyticsService: IAnalyticsService
   ) {}
 
   async execute(dto: CreateTeamDTO): Promise<Team> {
@@ -64,6 +67,12 @@ export class CreateTeamUseCase {
       team.id,
       newBudgetCategories
     );
+
+    // Fire-and-forget analytics
+    this.analyticsService.group("team", team.id, {
+      name: team.name,
+      created_by: dto.userId,
+    });
 
     return team;
   }

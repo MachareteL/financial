@@ -40,7 +40,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-import { createTeamUseCase } from "@/infrastructure/dependency-injection";
+import { createTeamAction } from "@/app/onboarding/_actions/onboarding.actions";
 import { notify } from "@/lib/notify-helper";
 
 interface TeamSwitcherProps {
@@ -69,10 +69,7 @@ export function TeamSwitcher({ isMobile = false }: TeamSwitcherProps) {
     setIsLoading(true);
     try {
       // 1. Cria o time usando a arquitetura limpa
-      const newTeam = await createTeamUseCase.execute({
-        teamName: teamName,
-        userId: session.user.id,
-      });
+      const newTeam = await createTeamAction(teamName, session.user.id);
 
       // 2. Feedback
       notify.success("Equipe criada com sucesso!", {

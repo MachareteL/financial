@@ -10,11 +10,11 @@ import { notify } from "@/lib/notify-helper";
 
 // Use Cases
 import {
-  getInvestmentsUseCase,
-  createInvestmentUseCase,
-  updateInvestmentUseCase,
-  deleteInvestmentUseCase,
-} from "@/infrastructure/dependency-injection";
+  getInvestmentsAction,
+  createInvestmentAction,
+  updateInvestmentAction,
+  deleteInvestmentAction,
+} from "./_actions/investments.actions";
 import type {
   InvestmentDetailsDTO,
   CreateInvestmentDTO,
@@ -186,7 +186,7 @@ export default function InvestmentsPage() {
     if (!teamId) return;
     setIsDataLoading(true);
     try {
-      const data = await getInvestmentsUseCase.execute(teamId);
+      const data = await getInvestmentsAction(teamId);
       setInvestments(data);
     } catch (error: any) {
       notify.error(error, "carregar investimentos");
@@ -277,7 +277,7 @@ export default function InvestmentsPage() {
 
     try {
       if (editingInvestment) {
-        await updateInvestmentUseCase.execute({
+        await updateInvestmentAction({
           ...rawData,
           investmentId: editingInvestment.id,
           teamId,
@@ -285,7 +285,7 @@ export default function InvestmentsPage() {
         });
         notify.success("Investimento atualizado!");
       } else {
-        await createInvestmentUseCase.execute({
+        await createInvestmentAction({
           ...rawData,
           teamId,
           userId: userId!,
@@ -306,7 +306,7 @@ export default function InvestmentsPage() {
     if (!teamId) return;
     if (!confirm("Remover este investimento da carteira?")) return;
     try {
-      await deleteInvestmentUseCase.execute({
+      await deleteInvestmentAction({
         investmentId: id,
         teamId,
         userId: userId!,

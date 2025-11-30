@@ -6,18 +6,16 @@ import { useAuth } from "@/app/auth/auth-provider";
 import { useTeam } from "@/app/(app)/team/team-provider";
 import { usePermission } from "@/hooks/use-permission";
 import {
-  getIncomesUseCase,
-  createIncomeUseCase,
-  updateIncomeUseCase,
-  deleteIncomeUseCase,
-  getBudgetUseCase,
-  saveBudgetUseCase,
-  getBudgetCategoriesUseCase,
-  createBudgetCategoryUseCase,
-  updateBudgetCategoryUseCase,
-  deleteBudgetCategoryUseCase,
-  getCategoriesUseCase,
-} from "@/infrastructure/dependency-injection";
+  getIncomesAction,
+  createIncomeAction,
+  updateIncomeAction,
+  deleteIncomeAction,
+  getBudgetAction,
+  saveBudgetAction,
+  getBudgetCategoriesAction,
+  updateBudgetCategoryAction,
+} from "./_actions/budget.actions";
+import { getCategoriesAction } from "../categories/_actions/categories.actions";
 import { notify } from "@/lib/notify-helper";
 
 // UI Components
@@ -176,14 +174,14 @@ export default function BudgetPage() {
     try {
       const [incomesData, budgetData, budgetCatsData, catsData] =
         await Promise.all([
-          getIncomesUseCase.execute(teamId),
-          getBudgetUseCase.execute({
+          getIncomesAction(teamId),
+          getBudgetAction({
             teamId,
             month: selectedMonth,
             year: selectedYear,
           }),
-          getBudgetCategoriesUseCase.execute(teamId),
-          getCategoriesUseCase.execute(teamId),
+          getBudgetCategoriesAction(teamId),
+          getCategoriesAction(teamId),
         ]);
 
       setIncomes(incomesData);
@@ -256,7 +254,7 @@ export default function BudgetPage() {
 
     setIsSaving(true);
     try {
-      await saveBudgetUseCase.execute({
+      await saveBudgetAction({
         teamId,
         userId: userId!,
         month: selectedMonth,
@@ -268,7 +266,7 @@ export default function BudgetPage() {
         budgetCategories.map((bc) => {
           const newPerc = parseFloat(editedPercentages[bc.id]);
           if (!isNaN(newPerc) && newPerc !== bc.percentage * 100) {
-            return updateBudgetCategoryUseCase.execute({
+            return updateBudgetCategoryAction({
               teamId,
               userId: userId!,
               budgetCategoryId: bc.id,
@@ -313,7 +311,7 @@ export default function BudgetPage() {
 
     try {
       if (editingIncome) {
-        await updateIncomeUseCase.execute({
+        await updateIncomeAction({
           ...data,
           incomeId: editingIncome.id,
           teamId,
@@ -321,7 +319,7 @@ export default function BudgetPage() {
         });
         notify.success("Receita atualizada!");
       } else {
-        await createIncomeUseCase.execute({ ...data, teamId, userId });
+        await createIncomeAction({ ...data, teamId, userId });
         notify.success("Receita criada!");
       }
       setIsIncomeDialogOpen(false);
@@ -338,7 +336,7 @@ export default function BudgetPage() {
     if (!teamId || !userId) return;
     if (!confirm("Excluir esta receita?")) return;
     try {
-      await deleteIncomeUseCase.execute({ incomeId: id, teamId, userId });
+      await deleteIncomeAction({ incomeId: id, teamId, userId });
       notify.success("Receita excluída.");
       loadData();
     } catch (e: any) {

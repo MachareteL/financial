@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  getPendingInvitesUseCase,
-  acceptInviteUseCase,
-  declineInviteUseCase,
-} from "@/infrastructure/dependency-injection";
+  getPendingInvitesAction,
+  acceptInviteAction,
+  declineInviteAction,
+} from "./_actions/invites.actions";
 import { useAuth } from "@/app/auth/auth-provider";
 import { notify } from "@/lib/notify-helper";
 import type { TeamInviteDetailsDTO } from "@/domain/dto/team.types.d.ts";
@@ -31,7 +31,7 @@ export default function InvitesPage() {
     const fetchInvites = async () => {
       if (!session?.user?.email) return;
       try {
-        const data = await getPendingInvitesUseCase.execute(session.user.email);
+        const data = await getPendingInvitesAction(session.user.email);
         setInvites(data);
       } catch (error) {
         console.error("Erro ao buscar convites:", error);
@@ -47,7 +47,7 @@ export default function InvitesPage() {
     if (!session?.user) return;
     setActionLoading(true);
     try {
-      await acceptInviteUseCase.execute(inviteId, session.user.id);
+      await acceptInviteAction(inviteId, session.user.id);
       notify.success("Convite aceito!", {
         description: "Você entrou para a equipe.",
       });
@@ -62,7 +62,7 @@ export default function InvitesPage() {
   const handleDeclineInvite = async (inviteId: string) => {
     setActionLoading(true);
     try {
-      await declineInviteUseCase.execute(inviteId);
+      await declineInviteAction(inviteId);
       notify.success("Convite recusado.");
       setInvites((prev) => prev.filter((i) => i.id !== inviteId));
     } catch (error: any) {

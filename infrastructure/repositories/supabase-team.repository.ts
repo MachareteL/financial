@@ -435,11 +435,14 @@ export class TeamRepository implements ITeamRepository {
     }));
   }
 
-  async acceptInvite(inviteId: string, userId: string): Promise<void> {
+  async acceptInvite(
+    inviteId: string,
+    userId: string
+  ): Promise<{ teamId: string; teamName: string }> {
     // 1. Buscar convite
     const { data: invite, error: inviteError } = await this.supabase
       .from("team_invites")
-      .select("*")
+      .select("*, teams(name)")
       .eq("id", inviteId)
       .single();
 
@@ -462,6 +465,14 @@ export class TeamRepository implements ITeamRepository {
       .from("team_invites")
       .update({ status: "accepted" })
       .eq("id", inviteId);
+
+    // Cast to any because Supabase types might not infer the join correctly without explicit types
+    const teamName = (invite as any).teams?.name || "";
+
+    return {
+      teamId: invite.team_id!,
+      teamName,
+    };
   }
 
   async declineInvite(inviteId: string): Promise<void> {

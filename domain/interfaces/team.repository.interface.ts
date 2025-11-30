@@ -50,7 +50,10 @@ export interface ITeamRepository {
 
   // User Invites (Onboarding)
   getPendingInvitesByEmail(email: string): Promise<TeamInviteDetailsDTO[]>;
-  acceptInvite(inviteId: string, userId: string): Promise<void>;
+  acceptInvite(
+    inviteId: string,
+    userId: string
+  ): Promise<{ teamId: string; teamName: string }>;
   declineInvite(inviteId: string): Promise<void>;
 
   // Permissions

@@ -9,10 +9,10 @@ import { notify } from "@/lib/notify-helper";
 
 // Use Cases
 import {
-  signInUseCase,
-  signUpUseCase,
-  resetPasswordUseCase,
-} from "@/infrastructure/dependency-injection";
+  signInAction,
+  signUpAction,
+  resetPasswordAction,
+} from "./_actions/auth.actions";
 import { SignUpInputDTO } from "@/domain/dto/sign-up.dto";
 import { SignInInputDTO } from "@/domain/dto/sign-in.dto";
 
@@ -51,7 +51,7 @@ export default function AuthPage() {
     };
 
     try {
-      const session = await signInUseCase.execute(input);
+      const session = await signInAction(input);
       auth.setSession(session);
       notify.success("Bem-vindo de volta!", {
         description: "Login realizado com sucesso.",
@@ -75,7 +75,7 @@ export default function AuthPage() {
     };
 
     try {
-      await signUpUseCase.execute(input);
+      await signUpAction(input);
       notify.success("Conta criada com sucesso!", {
         description: "Seu acesso já está liberado. Bem-vindo ao time!",
       });
@@ -95,7 +95,7 @@ export default function AuthPage() {
 
     setIsLoading(true);
     try {
-      await resetPasswordUseCase.execute(resetEmail);
+      await resetPasswordAction(resetEmail);
       notify.success("Código enviado!", {
         description: "Verifique seu email para pegar o código de 6 dígitos.",
       });

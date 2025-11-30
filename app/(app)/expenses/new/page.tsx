@@ -7,10 +7,8 @@ import { useAuth } from "@/app/auth/auth-provider";
 import { notify } from "@/lib/notify-helper";
 
 // Use Cases e Actions
-import {
-  createExpenseUseCase,
-  getCategoriesUseCase,
-} from "@/infrastructure/dependency-injection";
+import { createExpenseAction } from "@/app/(app)/expenses/_actions/expenses.actions";
+import { getCategoriesAction } from "@/app/(app)/categories/_actions/categories.actions";
 import { parseReceiptAction } from "@/app/(app)/expenses/_actions/parse-receipt";
 import type { CategoryDetailsDTO } from "@/domain/dto/category.types.d.ts";
 import type { CreateExpenseDTO } from "@/domain/dto/expense.types.d.ts";
@@ -101,7 +99,7 @@ export default function NewExpensePage() {
     const loadCategories = async () => {
       setIsLoadingCategories(true);
       try {
-        const data = await getCategoriesUseCase.execute(teamId);
+        const data = await getCategoriesAction(teamId);
         setCategories(data);
         if (data.length > 0 && !categoryId) {
           // Tenta achar uma categoria "Outros" ou pega a primeira
@@ -231,7 +229,7 @@ export default function NewExpensePage() {
             : undefined,
       };
 
-      await createExpenseUseCase.execute(dto);
+      await createExpenseAction(dto);
 
       notify.success("Despesa registrada!", {
         description:

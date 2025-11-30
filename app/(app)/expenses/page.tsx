@@ -9,12 +9,12 @@ import { notify } from "@/lib/notify-helper";
 
 // Use Cases
 import {
-  getExpensesUseCase,
-  getCategoriesUseCase,
-  deleteExpenseUseCase,
-  getBudgetCategoriesUseCase,
-  getExpensesSummaryUseCase,
-} from "@/infrastructure/dependency-injection";
+  getExpensesAction,
+  deleteExpenseAction,
+  getExpensesSummaryAction,
+} from "./_actions/expenses.actions";
+import { getCategoriesAction } from "../categories/_actions/categories.actions";
+import { getBudgetCategoriesAction } from "../budget/_actions/budget.actions";
 
 // Types
 import type { ExpenseDetailsDTO } from "@/domain/dto/expense.types.d.ts";
@@ -110,8 +110,8 @@ export default function ExpensesPage() {
     const loadAuxData = async () => {
       try {
         const [cats] = await Promise.all([
-          getCategoriesUseCase.execute(teamId),
-          getBudgetCategoriesUseCase.execute(teamId),
+          getCategoriesAction(teamId),
+          getBudgetCategoriesAction(teamId),
         ]);
         setCategories(cats);
         // setBudgetCategories(budCats);
@@ -175,7 +175,7 @@ export default function ExpensesPage() {
         endDate = new Date(parseInt(filterYear), 11, 31, 23, 59, 59);
       }
 
-      const newExpenses = await getExpensesUseCase.execute({
+      const newExpenses = await getExpensesAction({
         teamId,
         startDate,
         endDate,
@@ -185,7 +185,7 @@ export default function ExpensesPage() {
 
       // Fetch Summary ONLY on reset (filter change)
       if (isReset) {
-        const summary = await getExpensesSummaryUseCase.execute({
+        const summary = await getExpensesSummaryAction({
           teamId,
           startDate,
           endDate,
@@ -260,7 +260,7 @@ export default function ExpensesPage() {
 
     setIsDeleting(expenseToDelete);
     try {
-      await deleteExpenseUseCase.execute({
+      await deleteExpenseAction({
         expenseId: expenseToDelete,
         teamId,
         userId,

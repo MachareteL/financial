@@ -82,6 +82,8 @@ import { ParseReceiptUseCase } from "@/app/(app)/expenses/_use-case/parse-receip
 // Subscription & Billing
 import { CheckFeatureAccessUseCase } from "@/app/(app)/team/_use-case/check-feature-access.use-case";
 
+import { PostHogAnalyticsService } from "../services/posthog-analytics.service";
+
 import { createBrowserClient } from "@supabase/ssr";
 
 const container = Container.getInstance();
@@ -144,6 +146,11 @@ const subscriptionRepository = container.get(
   () => new SupabaseSubscriptionRepository(supabase)
 );
 
+const analyticsService = container.get(
+  "analyticsService",
+  () => new PostHogAnalyticsService()
+);
+
 // Auth
 export const getCurrentAuthUserUseCase = container.get(
   "getCurrentAuthUserUseCase",
@@ -151,11 +158,11 @@ export const getCurrentAuthUserUseCase = container.get(
 );
 export const signInUseCase = container.get(
   "signInUseCase",
-  () => new SignInUseCase(authRepository)
+  () => new SignInUseCase(authRepository, analyticsService)
 );
 export const signUpUseCase = container.get(
   "signUpUseCase",
-  () => new SignUpUseCase(authRepository)
+  () => new SignUpUseCase(authRepository, analyticsService)
 );
 export const signOutUseCase = container.get(
   "signOutUseCase",
@@ -188,7 +195,8 @@ export const createTeamUseCase = container.get(
       teamRepository,
       categoryRepository,
       budgetCategoryRepository,
-      subscriptionRepository
+      subscriptionRepository,
+      analyticsService
     )
 );
 
@@ -219,7 +227,9 @@ export const createExpenseUseCase = container.get(
     new CreateExpenseUseCase(
       expenseRepository,
       storageRepository,
-      teamRepository
+      teamRepository,
+      analyticsService,
+      categoryRepository
     )
 );
 export const getExpensesUseCase = container.get(
@@ -307,7 +317,11 @@ export const getBudgetCategoriesUseCase = container.get(
 export const createBudgetCategoryUseCase = container.get(
   "createBudgetCategoryUseCase",
   () =>
-    new CreateBudgetCategoryUseCase(budgetCategoryRepository, teamRepository)
+    new CreateBudgetCategoryUseCase(
+      budgetCategoryRepository,
+      teamRepository,
+      analyticsService
+    )
 );
 export const updateBudgetCategoryUseCase = container.get(
   "updateBudgetCategoryUseCase",
@@ -357,7 +371,7 @@ export const manageMembersUseCase = container.get(
 // AI
 export const parseReceiptUseCase = container.get(
   "parseReceiptUseCase",
-  () => new ParseReceiptUseCase(aiService)
+  () => new ParseReceiptUseCase(aiService, analyticsService)
 );
 
 // Team Invites (Onboarding)
@@ -369,7 +383,7 @@ export const getPendingInvitesUseCase = container.get(
 
 export const acceptInviteUseCase = container.get(
   "acceptInviteUseCase",
-  () => new AcceptInviteUseCase(teamRepository)
+  () => new AcceptInviteUseCase(teamRepository, analyticsService)
 );
 
 export const declineInviteUseCase = container.get(

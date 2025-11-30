@@ -59,3 +59,11 @@ export type DeleteExpenseDTO = {
   teamId: string;
   userId: string;
 };
+
+export type GetExpensesFilters = {
+  teamId: string;
+  startDate?: Date;
+  endDate?: Date;
+  page?: number;
+  limit?: number;
+};

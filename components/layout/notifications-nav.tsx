@@ -10,10 +10,10 @@ import {
 } from "@/components/ui/popover";
 import { useAuth } from "@/app/auth/auth-provider";
 import {
-  getPendingInvitesUseCase,
-  acceptInviteUseCase,
-  declineInviteUseCase,
-} from "@/infrastructure/dependency-injection";
+  getPendingInvitesAction,
+  acceptInviteAction,
+  declineInviteAction,
+} from "@/app/(app)/invites/_actions/invites.actions";
 import type { TeamInviteDetailsDTO } from "@/domain/dto/team.types";
 import { notify } from "@/lib/notify-helper";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +26,7 @@ export function NotificationsNav() {
   const fetchInvites = async () => {
     if (!session?.user?.email) return;
     try {
-      const data = await getPendingInvitesUseCase.execute(session.user.email);
+      const data = await getPendingInvitesAction(session.user.email);
       setInvites(data);
     } catch (error) {
       notify.error(error, "carregar convites");
@@ -48,7 +48,7 @@ export function NotificationsNav() {
   const handleAccept = async (inviteId: string) => {
     if (!session?.user?.id) return;
     try {
-      await acceptInviteUseCase.execute(inviteId, session.user.id);
+      await acceptInviteAction(inviteId, session.user.id);
       notify.success("Convite aceito com sucesso!");
       setInvites((prev) => prev.filter((i) => i.id !== inviteId));
       // Opcional: Recarregar a página ou atualizar contexto de times
@@ -60,7 +60,7 @@ export function NotificationsNav() {
 
   const handleDecline = async (inviteId: string) => {
     try {
-      await declineInviteUseCase.execute(inviteId);
+      await declineInviteAction(inviteId);
       notify.success("Convite recusado.");
       setInvites((prev) => prev.filter((i) => i.id !== inviteId));
     } catch (error) {

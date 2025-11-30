@@ -26,7 +26,11 @@ import { useAuth } from "@/app/auth/auth-provider";
 import { useTeam } from "@/app/(app)/team/team-provider";
 import { usePermission } from "@/hooks/use-permission";
 import { notify } from "@/lib/notify-helper";
-import { manageMembersUseCase } from "@/infrastructure/dependency-injection";
+import {
+  inviteMemberAction,
+  updateMemberRoleAction,
+  removeMemberAction,
+} from "../_actions/team.actions";
 import type { TeamMemberProfileDTO } from "@/domain/dto/team.types.d.ts";
 import type { TeamRole } from "@/domain/entities/team-role";
 
@@ -64,7 +68,7 @@ export function TeamMembersTab({
 
     setIsActionLoading(true);
     try {
-      await manageMembersUseCase.inviteMember({
+      await inviteMemberAction({
         teamId: currentTeam.team.id,
         email: inviteEmail,
         roleId: inviteRoleId === "default" ? null : inviteRoleId,
@@ -89,7 +93,7 @@ export function TeamMembersTab({
   const handleUpdateMemberRole = async (memberId: string, roleId: string) => {
     if (!currentTeam || !session?.user) return;
     try {
-      await manageMembersUseCase.updateMemberRole({
+      await updateMemberRoleAction({
         teamId: currentTeam.team.id,
         memberId,
         userId: session.user.id,
@@ -109,11 +113,7 @@ export function TeamMembersTab({
 
     setIsActionLoading(true);
     try {
-      await manageMembersUseCase.removeMember(
-        currentTeam.team.id,
-        memberId,
-        session.user.id
-      );
+      await removeMemberAction(currentTeam.team.id, memberId, session.user.id);
       notify.success("Membro removido", {
         description: "A lista de acesso foi atualizada.",
       });

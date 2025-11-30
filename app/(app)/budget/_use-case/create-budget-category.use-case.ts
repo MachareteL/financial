@@ -1,12 +1,14 @@
 import type { IBudgetCategoryRepository } from "@/domain/interfaces/budget-category.repository.interface";
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 import type { CreateBudgetCategoryDTO } from "@/domain/dto/budget-category.types.d.ts";
+import type { IAnalyticsService } from "@/domain/interfaces/analytics-service.interface";
 import { BudgetCategory } from "@/domain/entities/budget-category";
 
 export class CreateBudgetCategoryUseCase {
   constructor(
     private budgetCategoryRepository: IBudgetCategoryRepository,
-    private teamRepository: ITeamRepository
+    private teamRepository: ITeamRepository,
+    private analyticsService: IAnalyticsService
   ) {}
 
   async execute(dto: CreateBudgetCategoryDTO): Promise<void> {
@@ -29,5 +31,12 @@ export class CreateBudgetCategoryUseCase {
       teamId: dto.teamId,
     });
     await this.budgetCategoryRepository.create(category);
+
+    // Fire-and-forget analytics
+    this.analyticsService.track(dto.userId, "budget_configured", {
+      category_name: dto.name,
+      percentage: dto.percentage,
+      team_id: dto.teamId,
+    });
   }
 }

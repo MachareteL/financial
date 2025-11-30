@@ -9,12 +9,12 @@ import { notify } from "@/lib/notify-helper";
 
 // Use Cases
 import {
-  getCategoriesUseCase,
-  getBudgetCategoriesUseCase,
-  createCategoryUseCase,
-  updateCategoryUseCase,
-  deleteCategoryUseCase,
-} from "@/infrastructure/dependency-injection";
+  getCategoriesAction,
+  createCategoryAction,
+  updateCategoryAction,
+  deleteCategoryAction,
+} from "./_actions/categories.actions";
+import { getBudgetCategoriesAction } from "../budget/_actions/budget.actions";
 
 // Types
 import type { CategoryDetailsDTO } from "@/domain/dto/category.types.d.ts";
@@ -161,8 +161,8 @@ export default function CategoriesPage() {
     setIsLoadingData(true);
     try {
       const [cats, budCats] = await Promise.all([
-        getCategoriesUseCase.execute(teamId!),
-        getBudgetCategoriesUseCase.execute(teamId!),
+        getCategoriesAction(teamId!),
+        getBudgetCategoriesAction(teamId!),
       ]);
       setCategories(cats);
       setBudgetCategories(budCats);
@@ -211,7 +211,7 @@ export default function CategoriesPage() {
 
     try {
       if (editingCategory) {
-        await updateCategoryUseCase.execute({
+        await updateCategoryAction({
           categoryId: editingCategory.id,
           teamId,
           userId,
@@ -220,7 +220,7 @@ export default function CategoriesPage() {
         });
         notify.success("Categoria atualizada!");
       } else {
-        await createCategoryUseCase.execute({
+        await createCategoryAction({
           name,
           budgetCategoryId,
           teamId,
@@ -242,7 +242,7 @@ export default function CategoriesPage() {
     if (!teamId || !userId || !confirm("Excluir esta categoria?")) return;
     setIsLoading(true);
     try {
-      await deleteCategoryUseCase.execute({ categoryId: id, teamId, userId });
+      await deleteCategoryAction({ categoryId: id, teamId, userId });
       notify.success("Categoria excluída.");
       await loadData();
     } catch (error: any) {

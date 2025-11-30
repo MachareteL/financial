@@ -1,6 +1,8 @@
 import type { IExpenseRepository } from "@/domain/interfaces/expense.repository.interface";
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 import type { IStorageRepository } from "@/domain/interfaces/storage.repository.interface";
+import type { IAnalyticsService } from "@/domain/interfaces/analytics-service.interface";
+import type { ICategoryRepository } from "@/domain/interfaces/category.repository.interface";
 import type { CreateExpenseDTO } from "@/domain/dto/expense.types.d.ts";
 import { Expense } from "@/domain/entities/expense";
 
@@ -8,7 +10,9 @@ export class CreateExpenseUseCase {
   constructor(
     private expenseRepository: IExpenseRepository,
     private storageRepository: IStorageRepository,
-    private teamRepository: ITeamRepository
+    private teamRepository: ITeamRepository,
+    private analyticsService: IAnalyticsService,
+    private categoryRepository: ICategoryRepository
   ) {}
 
   async execute(dto: CreateExpenseDTO): Promise<void> {
@@ -109,6 +113,30 @@ export class CreateExpenseUseCase {
 
     if (expensesToCreate.length > 0) {
       await this.expenseRepository.createMany(expensesToCreate);
+
+      // Fetch category name for analytics
+      let categoryName = "Unknown";
+      try {
+        const category = await this.categoryRepository.findById(
+          dto.categoryId,
+          dto.teamId
+        );
+        if (category) {
+          categoryName = category.name;
+        }
+      } catch (error) {
+        console.error("Failed to fetch category for analytics", error);
+      }
+
+      // Fire-and-forget analytics
+      expensesToCreate.forEach((expense) => {
+        this.analyticsService.track(dto.userId, "expense_created", {
+          method: dto.receiptFile ? "ai" : "manual",
+          category: categoryName,
+          category_id: expense.categoryId,
+          amount: expense.amount,
+        });
+      });
     }
   }
 }
