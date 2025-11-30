@@ -6,12 +6,14 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { InviteChecker } from "@/components/invite-checker";
 
 import { SubscriptionPromoModal } from "@/components/layout/subscription-promo-modal";
+import { ProCelebrationModal } from "@/components/subscription/pro-celebration-modal";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     // 1. O TeamProvider garante que temos um time selecionado
     <TeamProvider>
       <SubscriptionPromoModal />
+      <ProCelebrationModal />
       <div className="min-h-screen w-full bg-background">
         <InviteChecker />
         {/* 2. Sidebar (Visível apenas em Desktop) */}
