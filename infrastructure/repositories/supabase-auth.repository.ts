@@ -3,15 +3,15 @@ import type { UserSession, TeamMembership } from "@/domain/dto/user.types.d.ts";
 import { User } from "@/domain/entities/user";
 import { Team } from "@/domain/entities/team";
 import { Subscription } from "@/domain/entities/subscription";
-import { getSupabaseClient } from "../database/supabase.client";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export class AuthSupabaseRepository implements IAuthRepository {
+  constructor(private readonly supabase: SupabaseClient) {}
+
   private async getProfileAndTeams(
     userId: string
   ): Promise<UserSession | null> {
-    const supabase = getSupabaseClient();
-
-    const { data: profile, error } = await supabase
+    const { data, error } = await this.supabase
       .from("profiles")
       .select(
         `
@@ -43,13 +43,17 @@ export class AuthSupabaseRepository implements IAuthRepository {
             permissions
           )
         )
-      `
+        `
       )
       .eq("id", userId)
       .single();
 
     if (error) throw error;
-    if (!profile) return null;
+    if (!data) return null;
+
+    // Cast the result to our DTO
+    const profile =
+      data as unknown as import("@/domain/dto/supabase-joins.types").UserProfileWithTeams;
 
     const user = new User({
       id: profile.id,
@@ -60,9 +64,8 @@ export class AuthSupabaseRepository implements IAuthRepository {
 
     const teams: TeamMembership[] = profile.team_members.map((membership) => {
       const teamData = membership.teams;
-      const subData = Array.isArray(teamData.subscriptions)
-        ? teamData.subscriptions[0]
-        : teamData.subscriptions;
+      // Subscriptions is an array in the join result
+      const subData = teamData.subscriptions?.[0];
 
       const subscription = subData
         ? new Subscription({
@@ -71,7 +74,7 @@ export class AuthSupabaseRepository implements IAuthRepository {
             externalId: subData.external_id,
             externalCustomerId: subData.external_customer_id,
             gatewayId: subData.gateway_id,
-            status: subData.status as any,
+            status: subData.status as any, // Status enum cast
             planId: subData.plan_id,
             currentPeriodEnd: subData.current_period_end
               ? new Date(subData.current_period_end)
@@ -95,8 +98,8 @@ export class AuthSupabaseRepository implements IAuthRepository {
             ? new Date(teamData.trial_ends_at)
             : null,
         }),
-        role: membership.team_roles.name,
-        permissions: membership.team_roles.permissions || [],
+        role: membership.team_roles?.name || "",
+        permissions: membership.team_roles?.permissions || [],
         subscription,
       };
     });
@@ -108,16 +111,14 @@ export class AuthSupabaseRepository implements IAuthRepository {
   }
 
   async getCurrentAuthUser(): Promise<UserSession | null> {
-    const supabase = getSupabaseClient();
-    const { data } = await supabase.auth.getSession();
+    const { data } = await this.supabase.auth.getSession();
     if (!data.session?.user) return null;
 
     return await this.getProfileAndTeams(data.session.user.id);
   }
 
   async signIn(email: string, password: string): Promise<UserSession> {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await this.supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -131,21 +132,22 @@ export class AuthSupabaseRepository implements IAuthRepository {
   }
 
   async signUp(email: string, password: string, name: string): Promise<User> {
-    const supabase = getSupabaseClient();
-
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { name } },
-    });
+    const { data: authData, error: authError } =
+      await this.supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { name } },
+      });
     if (authError || !authData.user)
       throw authError || new Error("Falha no cadastro");
 
-    const { error: profileError } = await supabase.from("profiles").insert({
-      id: authData.user.id,
-      email: authData.user.email!,
-      name: name,
-    });
+    const { error: profileError } = await this.supabase
+      .from("profiles")
+      .insert({
+        id: authData.user.id,
+        email: authData.user.email!,
+        name: name,
+      });
 
     if (profileError) {
       throw new Error(`Falha ao criar perfil: ${profileError.message}`);
@@ -160,19 +162,16 @@ export class AuthSupabaseRepository implements IAuthRepository {
   }
 
   async signOut(): Promise<void> {
-    const supabase = getSupabaseClient();
-    await supabase.auth.signOut();
+    await this.supabase.auth.signOut();
   }
 
   async resetPassword(email: string): Promise<void> {
-    const supabase = getSupabaseClient();
-
     const baseUrl =
       typeof window !== "undefined"
         ? window.location.origin
         : process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${baseUrl}/auth/callback?next=/account/update-password`,
     });
 
@@ -180,9 +179,7 @@ export class AuthSupabaseRepository implements IAuthRepository {
   }
 
   async updatePassword(password: string): Promise<void> {
-    const supabase = getSupabaseClient();
-
-    const { error } = await supabase.auth.updateUser({
+    const { error } = await this.supabase.auth.updateUser({
       password: password,
     });
 
@@ -190,9 +187,7 @@ export class AuthSupabaseRepository implements IAuthRepository {
   }
 
   async sendRecoveryCode(email: string): Promise<void> {
-    const supabase = getSupabaseClient();
-
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await this.supabase.auth.signInWithOtp({
       email,
       options: {
         shouldCreateUser: false,
@@ -203,9 +198,7 @@ export class AuthSupabaseRepository implements IAuthRepository {
   }
 
   async verifyRecoveryCode(email: string, code: string): Promise<UserSession> {
-    const supabase = getSupabaseClient();
-
-    const { data, error } = await supabase.auth.verifyOtp({
+    const { data, error } = await this.supabase.auth.verifyOtp({
       email,
       token: code,
       type: "email",
@@ -225,9 +218,7 @@ export class AuthSupabaseRepository implements IAuthRepository {
     userId: string,
     data: { name: string }
   ): Promise<UserSession> {
-    const supabase = getSupabaseClient();
-
-    const { error } = await supabase
+    const { error } = await this.supabase
       .from("profiles")
       .update({ name: data.name })
       .eq("id", userId);

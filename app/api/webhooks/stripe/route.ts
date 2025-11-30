@@ -1,7 +1,8 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { AdminSupabaseSubscriptionRepository } from "@/infrastructure/repositories/admin-supabase-subscription.repository";
+import { createClient } from "@supabase/supabase-js";
+import { SupabaseSubscriptionRepository } from "@/infrastructure/repositories/supabase-subscription.repository";
 import { Subscription } from "@/domain/entities/subscription";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -14,6 +15,16 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 type StripeSubscription = Stripe.Subscription & {
   current_period_end: number;
 };
+
+// Create a Supabase client with the Service Role Key for admin access
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+const subscriptionRepository = new SupabaseSubscriptionRepository(
+  supabaseAdmin
+);
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -30,8 +41,6 @@ export async function POST(req: Request) {
     );
   }
 
-  const subscriptionRepository = new AdminSupabaseSubscriptionRepository();
-
   try {
     switch (event.type) {
       case "checkout.session.completed": {
@@ -41,7 +50,7 @@ export async function POST(req: Request) {
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
-        
+
         // Fix for missing types in Stripe SDK v20.0.0
         const typedSub = sub as unknown as StripeSubscription;
 
@@ -52,7 +61,9 @@ export async function POST(req: Request) {
           break;
         }
 
-        const existingSub = await subscriptionRepository.findByExternalId(sub.id);
+        const existingSub = await subscriptionRepository.findByExternalId(
+          sub.id
+        );
 
         const subscriptionData = new Subscription({
           id: existingSub ? existingSub.id : crypto.randomUUID(),

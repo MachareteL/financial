@@ -1,12 +1,14 @@
 import { ISubscriptionRepository } from "@/domain/interfaces/subscription.repository.interface";
 import { Subscription } from "@/domain/entities/subscription";
-import { getSupabaseClient } from "../database/supabase.client";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/domain/dto/database.types.d.ts";
+import type { SubscriptionRow } from "@/domain/dto/supabase-joins.types";
 
 export class SupabaseSubscriptionRepository implements ISubscriptionRepository {
+  constructor(private readonly supabase: SupabaseClient<Database>) {}
+
   async create(subscription: Subscription): Promise<void> {
-    const supabase = getSupabaseClient();
-    const { error } = await supabase.from("subscriptions").insert({
+    const { error } = await this.supabase.from("subscriptions").insert({
       id: subscription.id,
       team_id: subscription.teamId,
       external_id: subscription.externalId,
@@ -25,8 +27,7 @@ export class SupabaseSubscriptionRepository implements ISubscriptionRepository {
   }
 
   async update(subscription: Subscription): Promise<void> {
-    const supabase = getSupabaseClient();
-    const { error } = await supabase
+    const { error } = await this.supabase
       .from("subscriptions")
       .update({
         status: subscription.status,
@@ -34,7 +35,7 @@ export class SupabaseSubscriptionRepository implements ISubscriptionRepository {
         current_period_end: subscription.currentPeriodEnd
           ? subscription.currentPeriodEnd.toISOString()
           : null,
-        updated_at: new Date().toISOString(),
+        updated_at: subscription.updatedAt.toISOString(),
       })
       .eq("id", subscription.id);
 
@@ -42,8 +43,7 @@ export class SupabaseSubscriptionRepository implements ISubscriptionRepository {
   }
 
   async findByTeamId(teamId: string): Promise<Subscription | null> {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from("subscriptions")
       .select("*")
       .eq("team_id", teamId)
@@ -56,8 +56,7 @@ export class SupabaseSubscriptionRepository implements ISubscriptionRepository {
   }
 
   async findByExternalId(externalId: string): Promise<Subscription | null> {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from("subscriptions")
       .select("*")
       .eq("external_id", externalId)
@@ -69,20 +68,20 @@ export class SupabaseSubscriptionRepository implements ISubscriptionRepository {
     return this.mapToEntity(data);
   }
 
-  private mapToEntity(data: any): Subscription {
+  private mapToEntity(data: SubscriptionRow): Subscription {
     return new Subscription({
       id: data.id,
       teamId: data.team_id,
       externalId: data.external_id,
       externalCustomerId: data.external_customer_id,
       gatewayId: data.gateway_id,
-      status: data.status as any,
+      status: data.status as any, // Status enum might need explicit casting if not matching exactly string
       planId: data.plan_id,
       currentPeriodEnd: data.current_period_end
         ? new Date(data.current_period_end)
         : null,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
+      createdAt: data.created_at ? new Date(data.created_at) : new Date(),
+      updatedAt: data.updated_at ? new Date(data.updated_at) : new Date(),
     });
   }
 }

@@ -1,10 +1,10 @@
 "use server";
 
 import {
-  parseReceiptUseCase,
-  checkFeatureAccessUseCase,
-  verifyTeamPermissionUseCase,
-  rateLimitService,
+  getParseReceiptUseCase,
+  getCheckFeatureAccessUseCase,
+  getVerifyTeamPermissionUseCase,
+  getRateLimitService,
 } from "@/infrastructure/dependency-injection/server-container";
 import { getSupabaseClient } from "@/infrastructure/database/supabase.server";
 import type { ReceiptDataDTO } from "@/domain/entities/receipt";
@@ -32,6 +32,7 @@ export async function parseReceiptAction(
   }
 
   // --- RATE LIMITING ---
+  const rateLimitService = getRateLimitService();
   const isAllowed = await rateLimitService.checkLimit(teamId);
   if (!isAllowed) {
     throw new Error(
@@ -40,6 +41,7 @@ export async function parseReceiptAction(
   }
 
   // Verify if user belongs to the team (Security Check)
+  const verifyTeamPermissionUseCase = await getVerifyTeamPermissionUseCase();
   const hasPermission = await verifyTeamPermissionUseCase.execute(
     user.id,
     teamId,
@@ -53,6 +55,7 @@ export async function parseReceiptAction(
   }
 
   // Let's check feature access first.
+  const checkFeatureAccessUseCase = await getCheckFeatureAccessUseCase();
   const hasAccess = await checkFeatureAccessUseCase.execute(
     teamId,
     "ai_receipt_scanning"
@@ -63,6 +66,7 @@ export async function parseReceiptAction(
   }
 
   try {
+    const parseReceiptUseCase = getParseReceiptUseCase();
     return await parseReceiptUseCase.execute(file);
   } catch (error) {
     console.error("Erro ao processar recibo:", error);

@@ -5,7 +5,10 @@ import type { Database } from "@/domain/dto/database.types.d.ts";
 
 type InvestmentRow = Database["public"]["Tables"]["investments"]["Row"];
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 export class InvestmentRepository implements IInvestmentRepository {
+  constructor(private readonly supabase: SupabaseClient) {}
   private mapRowToEntity(row: InvestmentRow): Investment {
     return new Investment({
       id: row.id,
@@ -37,8 +40,7 @@ export class InvestmentRepository implements IInvestmentRepository {
   }
 
   async findByTeamId(teamId: string): Promise<Investment[]> {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from("investments")
       .select("*")
       .eq("team_id", teamId)
@@ -49,8 +51,7 @@ export class InvestmentRepository implements IInvestmentRepository {
   }
 
   async findById(id: string, teamId: string): Promise<Investment | null> {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from("investments")
       .select("*")
       .eq("id", id)
@@ -63,8 +64,7 @@ export class InvestmentRepository implements IInvestmentRepository {
 
   async create(investment: Investment): Promise<Investment> {
     const row = this.mapEntityToRow(investment);
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from("investments")
       .insert({
         ...row,
@@ -80,8 +80,7 @@ export class InvestmentRepository implements IInvestmentRepository {
 
   async update(investment: Investment): Promise<Investment> {
     const row = this.mapEntityToRow(investment);
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from("investments")
       .update(row)
       .eq("id", investment.id)
@@ -94,8 +93,7 @@ export class InvestmentRepository implements IInvestmentRepository {
   }
 
   async delete(id: string, teamId: string): Promise<void> {
-    const supabase = getSupabaseClient();
-    const { error } = await supabase
+    const { error } = await this.supabase
       .from("investments")
       .delete()
       .eq("id", id)

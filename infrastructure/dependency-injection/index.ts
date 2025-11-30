@@ -82,43 +82,50 @@ import { ParseReceiptUseCase } from "@/app/(app)/expenses/_use-case/parse-receip
 // Subscription & Billing
 import { CheckFeatureAccessUseCase } from "@/app/(app)/team/_use-case/check-feature-access.use-case";
 
+import { createBrowserClient } from "@supabase/ssr";
+
 const container = Container.getInstance();
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 const authRepository = container.get(
   "authRepository",
-  () => new AuthSupabaseRepository()
+  () => new AuthSupabaseRepository(supabase)
 );
 const categoryRepository = container.get(
   "categoryRepository",
-  () => new CategoryRepository()
+  () => new CategoryRepository(supabase)
 );
 const teamRepository = container.get(
   "teamRepository",
-  () => new TeamRepository()
+  () => new TeamRepository(supabase)
 );
 const expenseRepository = container.get(
   "expenseRepository",
-  () => new ExpenseRepository()
+  () => new ExpenseRepository(supabase)
 );
 const incomeRepository = container.get(
   "incomeRepository",
-  () => new IncomeRepository()
+  () => new IncomeRepository(supabase)
 );
 const storageRepository = container.get(
   "storageRepository",
-  () => new StorageRepository()
+  () => new StorageRepository(supabase)
 );
 const budgetRepository = container.get(
   "budgetRepository",
-  () => new BudgetRepository()
+  () => new BudgetRepository(supabase)
 );
 const budgetCategoryRepository = container.get(
   "budgetCategoryRepository",
-  () => new BudgetCategoryRepository()
+  () => new BudgetCategoryRepository(supabase)
 );
 const investmentRepository = container.get(
   "investmentRepository",
-  () => new InvestmentRepository()
+  () => new InvestmentRepository(supabase)
 );
 
 // Services
@@ -134,7 +141,7 @@ const aiService = container.get(
 
 const subscriptionRepository = container.get(
   "subscriptionRepository",
-  () => new SupabaseSubscriptionRepository()
+  () => new SupabaseSubscriptionRepository(supabase)
 );
 
 // Auth

@@ -1,91 +1,131 @@
 import { Container } from "./container";
 import { StripePaymentGateway } from "@/infrastructure/services/stripe-payment.gateway";
-import { ServerSupabaseSubscriptionRepository } from "../repositories/server-supabase-subscription.repository";
+import { SupabaseSubscriptionRepository } from "../repositories/supabase-subscription.repository";
 import { GetSubscriptionStatusUseCase } from "@/app/(app)/team/_use-case/get-subscription-status.use-case";
 import { SubscribeTeamUseCase } from "@/app/(app)/team/_use-case/subscribe-team.use-case";
 import { ManageSubscriptionUseCase } from "@/app/(app)/team/_use-case/manage-subscription.use-case";
 import { CheckFeatureAccessUseCase } from "@/app/(app)/team/_use-case/check-feature-access.use-case";
 import { VerifyTeamPermissionUseCase } from "@/app/(app)/team/_use-case/verify-team-permission.use-case";
-import { ServerSupabaseTeamRepository } from "../repositories/server-supabase-team.repository";
+import { TeamRepository } from "../repositories/supabase-team.repository";
 import { GeminiAiService } from "@/infrastructure/services/gemini-ai.service";
 import { ParseReceiptUseCase } from "@/app/(app)/expenses/_use-case/parse-receipt.use-case";
 import { RateLimitService } from "@/infrastructure/services/rate-limit.service";
+import { getSupabaseClient } from "../database/supabase.server";
+import { CategoryRepository } from "../repositories/supabase-category.repository";
+import { BudgetCategoryRepository } from "../repositories/supabase-budget-category.repository";
+import { CreateTeamUseCase } from "@/app/(app)/team/_use-case/create-team.use-case";
 
 const container = Container.getInstance();
 
-const paymentGateway = container.get(
-  "paymentGateway",
-  () => new StripePaymentGateway()
-);
+export const getPaymentGateway = () => {
+  return container.get("paymentGateway", () => new StripePaymentGateway());
+};
 
-const subscriptionRepository = container.get(
-  "subscriptionRepository",
-  () => new ServerSupabaseSubscriptionRepository()
-);
+export const getSubscriptionRepository = async () => {
+  const supabase = await getSupabaseClient();
+  return container.get(
+    "subscriptionRepository",
+    () => new SupabaseSubscriptionRepository(supabase)
+  );
+};
 
-const teamRepository = container.get(
-  "teamRepository",
-  () => new ServerSupabaseTeamRepository()
-);
+export const getTeamRepository = async () => {
+  const supabase = await getSupabaseClient();
+  return container.get("teamRepository", () => new TeamRepository(supabase));
+};
 
-import { ServerSupabaseCategoryRepository } from "../repositories/server-supabase-category.repository";
-import { ServerSupabaseBudgetCategoryRepository } from "../repositories/server-supabase-budget-category.repository";
-import { CreateTeamUseCase } from "@/app/(app)/team/_use-case/create-team.use-case";
+export const getCategoryRepository = async () => {
+  const supabase = await getSupabaseClient();
+  return container.get(
+    "categoryRepository",
+    () => new CategoryRepository(supabase)
+  );
+};
 
-const categoryRepository = new ServerSupabaseCategoryRepository();
-const budgetCategoryRepository = new ServerSupabaseBudgetCategoryRepository();
+export const getBudgetCategoryRepository = async () => {
+  const supabase = await getSupabaseClient();
+  return container.get(
+    "budgetCategoryRepository",
+    () => new BudgetCategoryRepository(supabase)
+  );
+};
 
-export const createTeamUseCase = container.get(
-  "createTeamUseCase",
-  () =>
-    new CreateTeamUseCase(
-      teamRepository,
-      categoryRepository,
-      budgetCategoryRepository,
-      subscriptionRepository
-    )
-);
+export const getCreateTeamUseCase = async () => {
+  const teamRepo = await getTeamRepository();
+  const categoryRepo = await getCategoryRepository();
+  const budgetCategoryRepo = await getBudgetCategoryRepository();
+  const subscriptionRepo = await getSubscriptionRepository();
 
-export const subscribeTeamUseCase = container.get(
-  "subscribeTeamUseCase",
-  () => new SubscribeTeamUseCase(paymentGateway)
-);
+  return container.get(
+    "createTeamUseCase",
+    () =>
+      new CreateTeamUseCase(
+        teamRepo,
+        categoryRepo,
+        budgetCategoryRepo,
+        subscriptionRepo
+      )
+  );
+};
 
-export const manageSubscriptionUseCase = container.get(
-  "manageSubscriptionUseCase",
-  () => new ManageSubscriptionUseCase(paymentGateway, subscriptionRepository)
-);
+export const getSubscribeTeamUseCase = () => {
+  return container.get(
+    "subscribeTeamUseCase",
+    () => new SubscribeTeamUseCase(getPaymentGateway())
+  );
+};
 
-export const getSubscriptionStatusUseCase = container.get(
-  "getSubscriptionStatusUseCase",
-  () => new GetSubscriptionStatusUseCase(subscriptionRepository)
-);
+export const getManageSubscriptionUseCase = async () => {
+  const subscriptionRepo = await getSubscriptionRepository();
+  return container.get(
+    "manageSubscriptionUseCase",
+    () => new ManageSubscriptionUseCase(getPaymentGateway(), subscriptionRepo)
+  );
+};
 
-export const checkFeatureAccessUseCase = container.get(
-  "checkFeatureAccessUseCase",
-  () => new CheckFeatureAccessUseCase(teamRepository, subscriptionRepository)
-);
+export const getGetSubscriptionStatusUseCase = async () => {
+  const subscriptionRepo = await getSubscriptionRepository();
+  return container.get(
+    "getSubscriptionStatusUseCase",
+    () => new GetSubscriptionStatusUseCase(subscriptionRepo)
+  );
+};
 
-export const verifyTeamPermissionUseCase = container.get(
-  "verifyTeamPermissionUseCase",
-  () => new VerifyTeamPermissionUseCase(teamRepository)
-);
+export const getCheckFeatureAccessUseCase = async () => {
+  const teamRepo = await getTeamRepository();
+  const subscriptionRepo = await getSubscriptionRepository();
+  return container.get(
+    "checkFeatureAccessUseCase",
+    () => new CheckFeatureAccessUseCase(teamRepo, subscriptionRepo)
+  );
+};
 
-const aiService = container.get(
-  "aiService",
-  () =>
-    new GeminiAiService(
-      process.env.GOOGLE_API_KEY!,
-      process.env.GOOGLE_GEMINI_MODEL
-    )
-);
+export const getVerifyTeamPermissionUseCase = async () => {
+  const teamRepo = await getTeamRepository();
+  return container.get(
+    "verifyTeamPermissionUseCase",
+    () => new VerifyTeamPermissionUseCase(teamRepo)
+  );
+};
 
-export const parseReceiptUseCase = container.get(
-  "parseReceiptUseCase",
-  () => new ParseReceiptUseCase(aiService)
-);
+const getAiService = () => {
+  return container.get(
+    "aiService",
+    () =>
+      new GeminiAiService(
+        process.env.GOOGLE_API_KEY!,
+        process.env.GOOGLE_GEMINI_MODEL
+      )
+  );
+};
 
-export const rateLimitService = container.get(
-  "rateLimitService",
-  () => new RateLimitService()
-);
+export const getParseReceiptUseCase = () => {
+  return container.get(
+    "parseReceiptUseCase",
+    () => new ParseReceiptUseCase(getAiService())
+  );
+};
+
+export const getRateLimitService = () => {
+  return container.get("rateLimitService", () => new RateLimitService());
+};
