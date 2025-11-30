@@ -50,14 +50,24 @@ export class UpdateExpenseUseCase {
       }
     }
 
-    const updatedExpense = existingExpense.update({
+    const updateProps: any = {
       description: dto.description,
       amount: dto.amount,
-      date: dto.date ? new Date(dto.date.replace(/-/g, "/")) : undefined,
       categoryId: dto.categoryId,
       receiptUrl: finalReceiptUrl,
       installmentValue: dto.installmentValue,
-    });
+    };
+
+    if (dto.date) {
+      updateProps.date = new Date(dto.date.replace(/-/g, "/"));
+    }
+
+    // Remove undefined keys so they don't overwrite existing values
+    Object.keys(updateProps).forEach(
+      (key) => updateProps[key] === undefined && delete updateProps[key]
+    );
+
+    const updatedExpense = existingExpense.update(updateProps);
 
     await this.expenseRepository.update(updatedExpense);
   }
