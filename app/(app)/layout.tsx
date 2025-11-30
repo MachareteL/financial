@@ -1,4 +1,4 @@
-import type React from "react";
+import { Suspense } from "react";
 import { TeamProvider } from "@/app/(app)/team/team-provider";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -13,7 +13,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     // 1. O TeamProvider garante que temos um time selecionado
     <TeamProvider>
       <SubscriptionPromoModal />
-      <ProCelebrationModal />
+      <Suspense fallback={null}>
+        <ProCelebrationModal />
+      </Suspense>
       <div className="min-h-screen w-full bg-background">
         <InviteChecker />
         {/* 2. Sidebar (Visível apenas em Desktop) */}
