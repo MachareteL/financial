@@ -11,14 +11,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useTeam } from "@/app/(app)/team/team-provider";
-import { CheckCircle2, Sparkles, Zap } from "lucide-react";
+import { CheckCircle2, Sparkles } from "lucide-react";
 import { subscribeTeamAction } from "@/app/(app)/team/_actions/subscription.actions";
 import { notify } from "@/lib/notify-helper";
 
 export function SubscriptionPromoModal() {
   const { currentTeam } = useTeam();
   const [isOpen, setIsOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!currentTeam) return;
@@ -31,11 +30,6 @@ export function SubscriptionPromoModal() {
 
     // Don't show if already PRO (unless trial is ending soon, logic below)
     if (hasActiveSub) return;
-
-    const trialEndsAt = currentTeam.team.trialEndsAt
-      ? new Date(currentTeam.team.trialEndsAt)
-      : null;
-    const isTrialActive = trialEndsAt ? trialEndsAt > new Date() : false;
 
     // Show for Free users or Trial users
     if (!hasActiveSub) {
@@ -50,7 +44,6 @@ export function SubscriptionPromoModal() {
 
   const handleSubscribe = async (interval: "month" | "year") => {
     if (!currentTeam) return;
-    setLoading(true);
     try {
       // TODO: Support multiple price IDs in environment variables
       // For now, we fallback to the default price ID or a placeholder
@@ -66,7 +59,6 @@ export function SubscriptionPromoModal() {
       await subscribeTeamAction(currentTeam.team.id, priceId);
     } catch (error: any) {
       notify.error(error, "iniciar assinatura");
-      setLoading(false);
     }
   };
 
