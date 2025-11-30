@@ -30,6 +30,7 @@ import { TeamMembersTab } from "./components/team-members-tab";
 import { TeamRolesTab } from "./components/team-roles-tab";
 import { TeamSettingsTab } from "./components/team-settings-tab";
 import { TeamInvitesTab } from "./components/team-invites-tab";
+import { TeamSubscriptionTab } from "./components/team-subscription-tab";
 
 import type { Subscription } from "@/domain/entities/subscription";
 import type { Team } from "@/domain/entities/team";
@@ -140,13 +141,19 @@ export default function TeamPage() {
                   </Badge>
                 )}
               </TabsTrigger>
+              <TabsTrigger
+                value="subscription"
+                className="text-xs sm:text-sm px-4"
+              >
+                <Sparkles className="w-4 h-4 mr-2 hidden sm:inline-block" />
+                Assinatura
+              </TabsTrigger>
               <TabsTrigger value="settings" className="text-xs sm:text-sm px-4">
                 <Settings className="w-4 h-4 mr-2 hidden sm:inline-block" />
                 Configurações
               </TabsTrigger>
             </TabsList>
           </div>
-
           <TabsContent value="members" className="outline-none mt-0">
             <TeamMembersTab
               members={members}
@@ -154,15 +161,20 @@ export default function TeamPage() {
               onUpdate={loadTeamData}
             />
           </TabsContent>
-
           <TabsContent value="roles" className="outline-none mt-0">
             <TeamRolesTab roles={roles} onUpdate={loadTeamData} />
           </TabsContent>
-
           <TabsContent value="invites" className="outline-none mt-0">
             <TeamInvitesTab invites={invites} onUpdate={loadTeamData} />
           </TabsContent>
-
+          <TabsContent value="subscription" className="outline-none mt-0">
+            {teamDetails && (
+              <TeamSubscriptionTab
+                team={teamDetails}
+                subscription={subscription}
+              />
+            )}
+          </TabsContent>
           <TabsContent value="settings" className="outline-none mt-0">
             {teamDetails && (
               <TeamSettingsTab team={teamDetails} subscription={subscription} />

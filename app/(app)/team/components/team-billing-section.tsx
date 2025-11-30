@@ -22,6 +22,8 @@ import {
   Headphones,
   Zap,
   X,
+  Check,
+  Bot,
 } from "lucide-react";
 import { notify } from "@/lib/notify-helper";
 import {
@@ -30,6 +32,7 @@ import {
 } from "../_actions/subscription.actions";
 import type { Subscription } from "@/domain/entities/subscription";
 import type { Team } from "@/domain/entities/team";
+import { cn } from "@/lib/utils";
 
 interface TeamBillingSectionProps {
   team: Team;
@@ -84,7 +87,7 @@ export function TeamBillingSection({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Status Banner */}
       {isTrialActive && !subscription && (
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-6 flex flex-col sm:flex-row items-start gap-4 shadow-sm">
@@ -120,8 +123,44 @@ export function TeamBillingSection({
         </div>
       )}
 
+      {/* Toggle Switch */}
+      {!isPro && (
+        <div className="flex justify-center">
+          <div className="bg-muted p-1 rounded-full inline-flex relative">
+            <button
+              onClick={() => setBillingInterval("month")}
+              className={cn(
+                "px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 z-10",
+                billingInterval === "month"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Mensal
+            </button>
+            <button
+              onClick={() => setBillingInterval("year")}
+              className={cn(
+                "px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 z-10 flex items-center gap-2",
+                billingInterval === "year"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Anual
+              <Badge
+                variant="secondary"
+                className="bg-green-100 text-green-700 hover:bg-green-100 border-0 text-[10px] px-1.5 h-5"
+              >
+                -25%
+              </Badge>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Pricing / Plan Card */}
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
         {/* Free Plan (Comparison) */}
         {!isPro && (
           <Card className="border-muted bg-muted/30 opacity-75 hover:opacity-100 transition-opacity">
@@ -133,21 +172,21 @@ export function TeamBillingSection({
               <CardDescription>Para uso pessoal simples</CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-3 text-sm text-muted-foreground">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+              <ul className="space-y-4 text-sm text-muted-foreground">
+                <li className="flex items-center gap-3">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
                   Até 3 membros
                 </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                <li className="flex items-center gap-3">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
                   Gestão de despesas básica
                 </li>
-                <li className="flex items-center gap-2 text-muted-foreground/50">
-                  <X className="w-4 h-4" />
+                <li className="flex items-center gap-3 text-muted-foreground/50">
+                  <X className="w-4 h-4 shrink-0" />
                   Sem leitura de recibos com IA
                 </li>
-                <li className="flex items-center gap-2 text-muted-foreground/50">
-                  <X className="w-4 h-4" />
+                <li className="flex items-center gap-3 text-muted-foreground/50">
+                  <X className="w-4 h-4 shrink-0" />
                   Sem suporte prioritário
                 </li>
               </ul>
@@ -157,136 +196,161 @@ export function TeamBillingSection({
 
         {/* PRO Plan (Main Focus) */}
         <Card
-          className={`border-2 relative overflow-hidden ${
+          className={cn(
+            "border-2 relative overflow-hidden transition-all duration-300",
             isPro
-              ? "border-green-500 shadow-md"
-              : "border-indigo-500 shadow-xl scale-105 md:scale-105 z-10"
-          }`}
+              ? "border-green-500 shadow-md md:col-span-2 lg:col-span-3"
+              : "border-primary shadow-xl scale-105 md:scale-110 z-10 lg:col-span-2"
+          )}
         >
           {!isPro && (
-            <div className="absolute top-0 right-0 bg-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+            <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-4 py-1.5 rounded-bl-xl shadow-sm">
               RECOMENDADO
             </div>
           )}
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="text-2xl flex items-center gap-2">
-                  PRO
-                  {isPro && (
-                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">
-                      ATIVO
-                    </Badge>
-                  )}
-                </CardTitle>
-                <CardDescription className="mt-1">
-                  Poder total para sua equipe
-                </CardDescription>
-              </div>
-              {!isPro && (
-                <div className="bg-indigo-50 p-1 rounded-lg flex flex-col gap-1">
-                  <button
-                    onClick={() => setBillingInterval("month")}
-                    className={`text-xs px-3 py-1.5 rounded-md transition-all font-medium ${
-                      billingInterval === "month"
-                        ? "bg-indigo-500 text-white shadow-sm"
-                        : "text-indigo-700 hover:bg-indigo-100"
-                    }`}
+
+          <div
+            className={cn(
+              "grid gap-6",
+              isPro ? "md:grid-cols-2" : "md:grid-cols-5"
+            )}
+          >
+            <div className={cn("p-6", isPro ? "" : "md:col-span-3")}>
+              <CardHeader className="p-0 mb-6">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-2xl flex items-center gap-2">
+                      PRO
+                      {isPro && (
+                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">
+                          ATIVO
+                        </Badge>
+                      )}
+                    </CardTitle>
+                    <CardDescription className="mt-1 text-base">
+                      Poder total para sua equipe com IA e automação
+                    </CardDescription>
+                  </div>
+                </div>
+                {!isPro && (
+                  <div className="mt-6">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-5xl font-bold text-foreground tracking-tight">
+                        {billingInterval === "month" ? "R$ 39,90" : "R$ 29,90"}
+                      </span>
+                      <span className="text-muted-foreground font-medium">
+                        /mês
+                      </span>
+                    </div>
+                    {billingInterval === "year" && (
+                      <p className="text-sm text-green-600 font-medium mt-2 flex items-center gap-1">
+                        <Check className="w-3 h-3" />
+                        Economia de R$ 120,00 por ano
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent className="p-0 space-y-6">
+                <div className="space-y-4">
+                  <ul className="grid gap-3 text-sm sm:grid-cols-2">
+                    <li className="flex items-center gap-3">
+                      <div className="bg-primary/10 p-1 rounded-full">
+                        <Infinity className="w-3 h-3 text-primary" />
+                      </div>
+                      <span>Membros ilimitados</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <div className="bg-primary/10 p-1 rounded-full">
+                        <Bot className="w-3 h-3 text-primary" />
+                      </div>
+                      <span>Leitura de recibos com IA</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <div className="bg-primary/10 p-1 rounded-full">
+                        <Zap className="w-3 h-3 text-primary" />
+                      </div>
+                      <span>Insights Financeiros</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <div className="bg-primary/10 p-1 rounded-full">
+                        <Shield className="w-3 h-3 text-primary" />
+                      </div>
+                      <span>Permissões avançadas</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <div className="bg-primary/10 p-1 rounded-full">
+                        <Headphones className="w-3 h-3 text-primary" />
+                      </div>
+                      <span>Suporte prioritário</span>
+                    </li>
+                  </ul>
+                </div>
+              </CardContent>
+            </div>
+
+            <div
+              className={cn(
+                "p-6 flex flex-col justify-center bg-muted/20",
+                isPro
+                  ? "border-l"
+                  : "md:col-span-2 border-t md:border-t-0 md:border-l"
+              )}
+            >
+              {subscription ? (
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-muted-foreground mb-1">
+                      Status da Assinatura
+                    </p>
+                    <p className="text-lg font-semibold text-green-600 flex items-center justify-center gap-2">
+                      <CheckCircle2 className="w-5 h-5" /> Ativa
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleManage}
+                    disabled={isLoading}
+                    variant="outline"
+                    className="w-full"
                   >
-                    Mensal
-                  </button>
-                  <button
-                    onClick={() => setBillingInterval("year")}
-                    className={`text-xs px-3 py-1.5 rounded-md transition-all font-medium ${
-                      billingInterval === "year"
-                        ? "bg-indigo-500 text-white shadow-sm"
-                        : "text-indigo-700 hover:bg-indigo-100"
-                    }`}
+                    {isLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <CreditCard className="w-4 h-4 mr-2" />
+                    )}
+                    Gerenciar Assinatura
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="text-center mb-2">
+                    <p className="text-sm text-muted-foreground">
+                      Comece agora e transforme a gestão financeira da sua
+                      equipe.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleSubscribe}
+                    disabled={isLoading}
+                    className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white shadow-lg transition-all hover:shadow-xl hover:scale-[1.02]"
+                    size="lg"
                   >
-                    Anual (-25%)
-                  </button>
+                    {isLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Assinar Agora
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-xs text-center text-muted-foreground">
+                    Cancele a qualquer momento.
+                  </p>
                 </div>
               )}
             </div>
-            {!isPro && (
-              <div className="mt-4">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-foreground">
-                    {billingInterval === "month" ? "R$ 39,90" : "R$ 29,90"}
-                  </span>
-                  <span className="text-muted-foreground">/mês</span>
-                </div>
-                {billingInterval === "year" && (
-                  <p className="text-xs text-indigo-600 font-medium mt-1">
-                    Cobrado anualmente (R$ 358,80)
-                  </p>
-                )}
-              </div>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <ul className="space-y-3 text-sm">
-                <li className="flex items-center gap-3">
-                  <div className="bg-green-100 p-1 rounded-full">
-                    <Infinity className="w-3 h-3 text-green-600" />
-                  </div>
-                  <span>Membros e times ilimitados</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <div className="bg-green-100 p-1 rounded-full">
-                    <Shield className="w-3 h-3 text-green-600" />
-                  </div>
-                  <span>Permissões avançadas</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <div className="bg-green-100 p-1 rounded-full">
-                    <Zap className="w-3 h-3 text-green-600" />
-                  </div>
-                  <span>Sincronização em tempo real</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <div className="bg-green-100 p-1 rounded-full">
-                    <Headphones className="w-3 h-3 text-green-600" />
-                  </div>
-                  <span>Suporte prioritário</span>
-                </li>
-              </ul>
-            </div>
-          </CardContent>
-          <CardFooter>
-            {subscription ? (
-              <Button
-                onClick={handleManage}
-                disabled={isLoading}
-                variant="outline"
-                className="w-full"
-              >
-                {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <CreditCard className="w-4 h-4 mr-2" />
-                )}
-                Gerenciar Assinatura
-              </Button>
-            ) : (
-              <Button
-                onClick={handleSubscribe}
-                disabled={isLoading}
-                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-md transition-all hover:shadow-lg"
-                size="lg"
-              >
-                {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Assinar Agora
-                  </>
-                )}
-              </Button>
-            )}
-          </CardFooter>
+          </div>
         </Card>
       </div>
     </div>

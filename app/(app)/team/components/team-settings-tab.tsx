@@ -13,30 +13,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Loader2,
   Save,
   Bot,
   Sparkles,
   Zap,
-  Globe,
   Bell,
-  DollarSign,
+  BrainCircuit,
+  LineChart,
 } from "lucide-react";
 import { useTeam } from "@/app/(app)/team/team-provider";
 import { notify } from "@/lib/notify-helper";
 import { updateTeamUseCase } from "@/infrastructure/dependency-injection";
 import { useAuth } from "@/app/auth/auth-provider";
 import { usePermission } from "@/hooks/use-permission";
-import { TeamBillingSection } from "./team-billing-section";
 import type { Subscription } from "@/domain/entities/subscription";
 import type { Team } from "@/domain/entities/team";
+import { Badge } from "@/components/ui/badge";
 
 interface TeamSettingsTabProps {
   team?: Team;
@@ -51,8 +44,6 @@ export function TeamSettingsTab({ team, subscription }: TeamSettingsTabProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   // Mocked states for new settings
-  const [currency, setCurrency] = useState("BRL");
-  const [timezone, setTimezone] = useState("America/Sao_Paulo");
   const [emailDigest, setEmailDigest] = useState(true);
 
   const handleUpdateTeam = async (e: React.FormEvent) => {
@@ -79,73 +70,120 @@ export function TeamSettingsTab({ team, subscription }: TeamSettingsTabProps) {
   const isPro = team?.isPro(!!subscription && subscription.isActive());
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-10 animate-in fade-in duration-500">
       {/* AI Powered Section */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" />
-          <h3 className="text-lg font-semibold text-foreground">AI Powered</h3>
+      <section className="space-y-6">
+        <div className="flex items-center gap-3 border-b pb-4">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <Sparkles className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">
+              Inteligência Artificial
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Potencialize sua gestão financeira com nossos recursos de IA
+            </p>
+          </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+
+        <div className="grid gap-6 md:grid-cols-2">
           <Card
-            className={`border-primary/20 bg-primary/5 ${
-              !isPro ? "opacity-75 grayscale" : ""
+            className={`relative overflow-hidden border-primary/20 transition-all duration-300 hover:shadow-lg ${
+              !isPro
+                ? "bg-muted/30"
+                : "bg-gradient-to-br from-primary/5 to-transparent"
             }`}
           >
-            <CardHeader className="pb-2">
-              <Bot className="w-8 h-8 text-primary mb-2" />
-              <CardTitle className="text-base">Leitura de Recibos</CardTitle>
+            <div className="absolute top-0 right-0 p-3 opacity-10">
+              <Bot className="w-24 h-24" />
+            </div>
+            <CardHeader>
+              <div className="flex justify-between items-start mb-2">
+                <div className="p-2 bg-primary/10 rounded-lg w-fit">
+                  <BrainCircuit className="w-6 h-6 text-primary" />
+                </div>
+                {!isPro && (
+                  <Badge
+                    variant="outline"
+                    className="border-primary/50 text-primary"
+                  >
+                    PRO
+                  </Badge>
+                )}
+              </div>
+              <CardTitle className="text-xl">Leitura de Recibos</CardTitle>
+              <CardDescription>
+                Automação inteligente para seus documentos
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Extraia automaticamente data, valor e categoria de fotos de
-                recibos.
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Nossa IA analisa fotos de recibos e extrai automaticamente data,
+                valor e categoria, eliminando a digitação manual e reduzindo
+                erros.
               </p>
-              {!isPro && (
-                <div className="mt-3 text-xs font-medium text-primary bg-primary/10 inline-block px-2 py-1 rounded">
-                  Disponível no PRO
-                </div>
-              )}
             </CardContent>
           </Card>
 
           <Card
-            className={`border-primary/20 bg-primary/5 ${
-              !isPro ? "opacity-75 grayscale" : ""
+            className={`relative overflow-hidden border-amber-500/20 transition-all duration-300 hover:shadow-lg ${
+              !isPro
+                ? "bg-muted/30"
+                : "bg-gradient-to-br from-amber-500/5 to-transparent"
             }`}
           >
-            <CardHeader className="pb-2">
-              <Zap className="w-8 h-8 text-amber-500 mb-2" />
-              <CardTitle className="text-base">Insights Inteligentes</CardTitle>
+            <div className="absolute top-0 right-0 p-3 opacity-10">
+              <Zap className="w-24 h-24" />
+            </div>
+            <CardHeader>
+              <div className="flex justify-between items-start mb-2">
+                <div className="p-2 bg-amber-500/10 rounded-lg w-fit">
+                  <LineChart className="w-6 h-6 text-amber-600" />
+                </div>
+                {!isPro && (
+                  <Badge
+                    variant="outline"
+                    className="border-amber-500/50 text-amber-600"
+                  >
+                    PRO
+                  </Badge>
+                )}
+              </div>
+              <CardTitle className="text-xl">Insights Financeiros</CardTitle>
+              <CardDescription>
+                Análise preditiva e detecção de anomalias
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Receba alertas sobre gastos anômalos e oportunidades de
-                economia.
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Receba alertas proativos sobre gastos incomuns, previsões de
+                fluxo de caixa e sugestões personalizadas de economia baseadas
+                no seu histórico.
               </p>
-              {!isPro && (
-                <div className="mt-3 text-xs font-medium text-primary bg-primary/10 inline-block px-2 py-1 rounded">
-                  Disponível no PRO
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>
       </section>
 
       {/* General Settings */}
-      <section className="space-y-4">
-        <h3 className="text-lg font-semibold text-foreground">Geral</h3>
+      <section className="space-y-6">
+        <div className="flex items-center gap-3 border-b pb-4">
+          <div className="p-2 bg-muted rounded-lg">
+            <Save className="w-5 h-5 text-muted-foreground" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">Geral</h3>
+            <p className="text-sm text-muted-foreground">
+              Informações básicas e preferências da equipe
+            </p>
+          </div>
+        </div>
+
         <Card>
-          <CardHeader>
-            <CardTitle>Preferências da Equipe</CardTitle>
-            <CardDescription>
-              Personalize como sua equipe opera.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <form onSubmit={handleUpdateTeam} className="space-y-6 max-w-2xl">
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="team-name">Nome da Equipe</Label>
                   <Input
@@ -157,82 +195,36 @@ export function TeamSettingsTab({ team, subscription }: TeamSettingsTabProps) {
                     minLength={3}
                     disabled={!can("MANAGE_TEAM")}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Este é o nome visível para todos os membros da equipe.
+                  </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="currency" className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-muted-foreground" />
-                    Moeda Padrão
-                  </Label>
-                  <Select
-                    value={currency}
-                    onValueChange={setCurrency}
-                    disabled={!can("MANAGE_TEAM")}
-                  >
-                    <SelectTrigger id="currency">
-                      <SelectValue placeholder="Selecione a moeda" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="BRL">Real Brasileiro (BRL)</SelectItem>
-                      <SelectItem value="USD">Dólar Americano (USD)</SelectItem>
-                      <SelectItem value="EUR">Euro (EUR)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="timezone" className="flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-muted-foreground" />
-                    Fuso Horário
-                  </Label>
-                  <Select
-                    value={timezone}
-                    onValueChange={setTimezone}
-                    disabled={!can("MANAGE_TEAM")}
-                  >
-                    <SelectTrigger id="timezone">
-                      <SelectValue placeholder="Selecione o fuso" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="America/Sao_Paulo">
-                        Brasília (GMT-3)
-                      </SelectItem>
-                      <SelectItem value="America/New_York">
-                        Nova York (GMT-5)
-                      </SelectItem>
-                      <SelectItem value="Europe/London">
-                        Londres (GMT+0)
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2 flex flex-col justify-end pb-2">
-                  <div className="flex items-center justify-between border rounded-lg p-3">
-                    <div className="space-y-0.5">
-                      <Label
-                        htmlFor="digest"
-                        className="text-base flex items-center gap-2"
-                      >
-                        <Bell className="w-4 h-4 text-muted-foreground" />
-                        Resumo Semanal
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        Receba um resumo por email.
-                      </p>
-                    </div>
-                    <Switch
-                      id="digest"
-                      checked={emailDigest}
-                      onCheckedChange={setEmailDigest}
-                      disabled={!can("MANAGE_TEAM")}
-                    />
+                <div className="flex items-center justify-between border rounded-lg p-4">
+                  <div className="space-y-0.5">
+                    <Label
+                      htmlFor="digest"
+                      className="text-base flex items-center gap-2"
+                    >
+                      <Bell className="w-4 h-4 text-muted-foreground" />
+                      Resumo Semanal
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receba um relatório de atividades por email toda
+                      segunda-feira.
+                    </p>
                   </div>
+                  <Switch
+                    id="digest"
+                    checked={emailDigest}
+                    onCheckedChange={setEmailDigest}
+                    disabled={!can("MANAGE_TEAM")}
+                  />
                 </div>
               </div>
 
               {can("MANAGE_TEAM") && (
-                <div className="flex justify-end pt-4 border-t">
+                <div className="flex justify-end pt-2">
                   <Button type="submit" disabled={isLoading}>
                     {isLoading ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -247,16 +239,6 @@ export function TeamSettingsTab({ team, subscription }: TeamSettingsTabProps) {
           </CardContent>
         </Card>
       </section>
-
-      {/* Billing Section */}
-      {team && (
-        <section className="space-y-4 pt-4 border-t">
-          <h3 className="text-lg font-semibold text-foreground">
-            Assinatura e Cobrança
-          </h3>
-          <TeamBillingSection team={team} subscription={subscription || null} />
-        </section>
-      )}
     </div>
   );
 }
