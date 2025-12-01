@@ -10,7 +10,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_POSTHOG_KEY) {
       posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
         api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || "/ingest",
-        capture_pageview: false, // Manual control if needed, keeping it light
+        capture_pageview: true,
         ui_host: "https://us.posthog.com",
       });
     }
