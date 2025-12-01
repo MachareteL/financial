@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -559,12 +560,18 @@ export default function LandingPage() {
             © 2025 Lemon Financial. Todos os direitos reservados.
           </div>
           <div className="flex gap-6 text-sm font-medium text-muted-foreground">
-            <a href="#" className="hover:text-primary transition-colors">
+            <Link
+              href="/terms"
+              className="hover:text-primary transition-colors"
+            >
               Termos
-            </a>
-            <a href="#" className="hover:text-primary transition-colors">
+            </Link>
+            <Link
+              href="/privacy"
+              className="hover:text-primary transition-colors"
+            >
               Privacidade
-            </a>
+            </Link>
             <a href="#" className="hover:text-primary transition-colors">
               Contato
             </a>

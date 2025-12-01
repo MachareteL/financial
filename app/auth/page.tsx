@@ -30,6 +30,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Loader2, TrendingUp, CheckCircle2 } from "lucide-react";
+import { LegalDisclaimer } from "@/components/auth/legal-disclaimer";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -319,17 +320,7 @@ export default function AuthPage() {
             </TabsContent>
           </Tabs>
 
-          <p className="text-center text-xs text-muted-foreground px-8">
-            Ao continuar, você concorda com nossos{" "}
-            <Link href="#" className="underline hover:text-foreground">
-              Termos de Serviço
-            </Link>{" "}
-            e{" "}
-            <Link href="#" className="underline hover:text-foreground">
-              Política de Privacidade
-            </Link>
-            .
-          </p>
+          <LegalDisclaimer />
         </div>
       </div>
     </div>
