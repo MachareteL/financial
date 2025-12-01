@@ -24,7 +24,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
             </CardTitle>
             <Button
               size="icon"
-              className="h-8 w-8 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-200"
+              className="h-8 w-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm shadow-primary/20"
               onClick={() => router.push("/expenses/new")}
               title="Novo Gasto"
             >
@@ -34,16 +34,16 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
         </CardHeader>
         <CardContent className="p-0 flex-1">
           {transactions && transactions.length > 0 ? (
-            <div className="divide-y divide-slate-50">
+            <div className="divide-y divide-border">
               {transactions.map((tx) => (
                 <div
                   key={tx.id}
-                  className="flex items-center justify-between p-4 hover:bg-slate-50/50 transition-colors group cursor-pointer"
+                  className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors group cursor-pointer"
                   onClick={() => router.push(`/expenses/${tx.id}/edit`)}
                 >
                   <div className="flex flex-col gap-1 max-w-[60%]">
                     <span
-                      className="font-semibold text-sm text-slate-800 truncate group-hover:text-blue-600 transition-colors"
+                      className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors"
                       title={tx.description || ""}
                     >
                       {tx.description || "Sem descrição"}

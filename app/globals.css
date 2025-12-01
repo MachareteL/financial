@@ -49,6 +49,26 @@
     --chart-3: 330 80% 60%; /* Hot Pink (Variável) */
     --chart-4: 173 58% 39%; /* Teal/Ciano (Investimentos/Futuro) */
     --chart-5: 24 96% 53%; /* Tangerine (Alerta/Gastos) */
+
+    /* --- TOKENS SEMÂNTICOS (Novos) --- */
+    /* Success: positivo, receitas, confirmações */
+    --success: 173 58% 39%; /* = chart-4 (Teal) */
+    --success-foreground: 0 0% 100%;
+
+    /* Warning: alertas leves, atenção */
+    --warning: 24 96% 53%; /* = chart-5 (Tangerine) */
+    --warning-foreground: 0 0% 100%;
+
+    /* Info: informações neutras */
+    --info: 84 81% 44%; /* = primary (Lime) */
+    --info-foreground: 240 5.9% 10%;
+
+    /* Folder Colors (Budget Categories) */
+    --folder-necessities: 84 81% 44%; /* Primary (Lime) - Essenciais */
+    --folder-desires: 262 83% 58%; /* Chart-2 (Purple) - Lazer */
+    --folder-savings: 173 58% 39%; /* Chart-4 (Teal) - Futuro */
+    --folder-generic: 240 5% 64.9%; /* Muted - Outros */
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -98,6 +118,23 @@
     --chart-3: 330 80% 65%; /* Neon Pink */
     --chart-4: 173 70% 50%; /* Cyan */
     --chart-5: 24 90% 60%; /* Orange */
+
+    /* --- TOKENS SEMÂNTICOS (Dark Mode) --- */
+    --success: 173 70% 50%; /* Teal mais brilhante */
+    --success-foreground: 0 0% 100%;
+
+    --warning: 24 90% 60%; /* Orange mais brilhante */
+    --warning-foreground: 0 0% 100%;
+
+    --info: 84 81% 55%; /* = primary neon */
+    --info-foreground: 240 5.9% 10%;
+
+    /* Folder Colors (Dark Neon) */
+    --folder-necessities: 84 81% 55%; /* Neon Lime */
+    --folder-desires: 262 80% 65%; /* Neon Purple */
+    --folder-savings: 173 70% 50%; /* Neon Teal */
+    --folder-generic: 240 5% 65%; /* Muted mais claro */
+
     --sidebar-background: 240 10% 11%;
     --sidebar-foreground: 240 5% 90%;
     --sidebar-primary: 84 81% 55%;

@@ -57,91 +57,106 @@ export function ExpensesTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {displayedExpenses.map((expense, index) => {
-                const isLastItem = index === displayedExpenses.length - 1;
-                const { theme } = getCategoryStyle(
-                  expense.category?.budgetCategoryName || null
-                );
+              {displayedExpenses.length === 0 && !hasMore ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-32 text-center">
+                    <div className="flex flex-col items-center justify-center text-muted-foreground">
+                      <p className="text-lg font-medium">
+                        Nenhuma despesa cadastrada!
+                      </p>
+                      <p className="text-sm">
+                        As despesas mais recentes aparecerão aqui.
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                displayedExpenses.map((expense, index) => {
+                  const isLastItem = index === displayedExpenses.length - 1;
+                  const { theme } = getCategoryStyle(
+                    expense.category?.budgetCategoryName || null
+                  );
 
-                return (
-                  <TableRow
-                    key={expense.id}
-                    className="group hover:bg-slate-50/80 transition-colors border-slate-50"
-                    ref={isLastItem ? lastExpenseElementRef : null}
-                  >
-                    <TableCell className="text-slate-500 font-medium text-xs whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-slate-100 p-1.5 rounded-md text-slate-500">
-                          <Calendar className="w-3 h-3" />
+                  return (
+                    <TableRow
+                      key={expense.id}
+                      className="group hover:bg-slate-50/80 transition-colors border-slate-50"
+                      ref={isLastItem ? lastExpenseElementRef : null}
+                    >
+                      <TableCell className="text-slate-500 font-medium text-xs whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <div className="bg-slate-100 p-1.5 rounded-md text-slate-500">
+                            <Calendar className="w-3 h-3" />
+                          </div>
+                          {new Date(
+                            expense.date.replace(/-/g, "/")
+                          ).toLocaleDateString()}
                         </div>
-                        {new Date(
-                          expense.date.replace(/-/g, "/")
-                        ).toLocaleDateString()}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-slate-700 text-sm group-hover:text-blue-700 transition-colors">
-                          {expense.description}
-                        </span>
-                        {expense.isInstallment && (
-                          <span className="text-[10px] text-purple-600 font-bold flex items-center gap-1 mt-0.5">
-                            <CreditCard className="w-2.5 h-2.5" /> Parcela{" "}
-                            {expense.installmentNumber}/
-                            {expense.totalInstallments}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-slate-700 text-sm group-hover:text-blue-700 transition-colors">
+                            {expense.description}
                           </span>
+                          {expense.isInstallment && (
+                            <span className="text-[10px] text-purple-600 font-bold flex items-center gap-1 mt-0.5">
+                              <CreditCard className="w-2.5 h-2.5" /> Parcela{" "}
+                              {expense.installmentNumber}/
+                              {expense.totalInstallments}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={`font-medium border border-transparent ${theme.badge} py-1`}
+                        >
+                          {expense.category?.name}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {expense.receiptUrl ? (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-blue-500 bg-blue-50/50 hover:bg-blue-100 rounded-lg mx-auto transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedReceipt(expense.receiptUrl!);
+                            }}
+                            title="Ver Comprovante"
+                          >
+                            <FileText className="w-4 h-4" />
+                          </Button>
+                        ) : (
+                          <span className="text-slate-300 text-xs">-</span>
                         )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={`font-medium border border-transparent ${theme.badge} py-1`}
-                      >
-                        {expense.category?.name}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {expense.receiptUrl ? (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-blue-500 bg-blue-50/50 hover:bg-blue-100 rounded-lg mx-auto transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedReceipt(expense.receiptUrl!);
-                          }}
-                          title="Ver Comprovante"
-                        >
-                          <FileText className="w-4 h-4" />
-                        </Button>
-                      ) : (
-                        <span className="text-slate-300 text-xs">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right font-bold text-slate-900 tabular-nums">
-                      R${" "}
-                      {expense.amount.toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </TableCell>
-                    <TableCell>
-                      {can("MANAGE_EXPENSES") && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-slate-300 opacity-0 group-hover:opacity-100 hover:text-blue-600 transition-all"
-                          onClick={() =>
-                            router.push(`/expenses/${expense.id}/edit`)
-                          }
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+                      </TableCell>
+                      <TableCell className="text-right font-bold text-slate-900 tabular-nums">
+                        R${" "}
+                        {expense.amount.toLocaleString("pt-BR", {
+                          minimumFractionDigits: 2,
+                        })}
+                      </TableCell>
+                      <TableCell>
+                        {can("MANAGE_EXPENSES") && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-slate-300 opacity-0 group-hover:opacity-100 hover:text-blue-600 transition-all"
+                            onClick={() =>
+                              router.push(`/expenses/${expense.id}/edit`)
+                            }
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
               {hasMore && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-4">

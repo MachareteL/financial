@@ -28,17 +28,17 @@ const getFolderConfig = (name: string) => {
   if (n.includes("necessidades") || n.includes("fixo")) {
     return {
       icon: Home,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
-      bar: "bg-blue-600",
+      color: "text-folder-necessities",
+      bg: "bg-folder-necessities/10",
+      bar: "bg-folder-necessities",
     };
   }
   if (n.includes("desejos") || n.includes("lazer") || n.includes("variável")) {
     return {
       icon: ShoppingBag,
-      color: "text-purple-600",
-      bg: "bg-purple-50",
-      bar: "bg-purple-600",
+      color: "text-folder-desires",
+      bg: "bg-folder-desires/10",
+      bar: "bg-folder-desires",
     };
   }
   if (
@@ -48,16 +48,16 @@ const getFolderConfig = (name: string) => {
   ) {
     return {
       icon: PiggyBank,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-      bar: "bg-emerald-600",
+      color: "text-folder-savings",
+      bg: "bg-folder-savings/10",
+      bar: "bg-folder-savings",
     };
   }
   return {
     icon: Wallet,
-    color: "text-slate-600",
-    bg: "bg-slate-50",
-    bar: "bg-slate-600",
+    color: "text-muted-foreground",
+    bg: "bg-muted/10",
+    bar: "bg-muted",
   };
 };
 
@@ -66,19 +66,19 @@ const getStatusConfig = (status: "good" | "warning" | "danger") => {
     case "good":
       return {
         label: "No Caminho",
-        color: "text-emerald-700 bg-emerald-50 border-emerald-200",
+        color: "text-success bg-success/10 border-success/20",
         icon: CheckCircle2,
       };
     case "warning":
       return {
         label: "Atenção",
-        color: "text-amber-700 bg-amber-50 border-amber-200",
+        color: "text-warning bg-warning/10 border-warning/20",
         icon: AlertTriangle,
       };
     case "danger":
       return {
-        label: "Estourou",
-        color: "text-rose-700 bg-rose-50 border-rose-200",
+        label: "Excedido",
+        color: "text-destructive bg-destructive/10 border-destructive/20",
         icon: AlertTriangle,
       };
   }

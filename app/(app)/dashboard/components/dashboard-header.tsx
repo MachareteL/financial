@@ -47,8 +47,8 @@ export function DashboardHeader({
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card/50 backdrop-blur-sm p-4 rounded-2xl border border-border shadow-sm">
       <div>
-        <h1 className="text-2xl font-bold text-foreground tracking-tight flex items-center gap-2">
-          Olá, {userName}! <span className="text-2xl">👋</span>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">
+          Olá, {userName}!
         </h1>
         <p className="text-muted-foreground text-sm">
           Visão geral de <strong>{teamName}</strong>

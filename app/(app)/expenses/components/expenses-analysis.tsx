@@ -32,14 +32,14 @@ export function ExpensesAnalysis({
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-none shadow-lg">
+        <Card className="border-none shadow-lg bg-gradient-to-br from-primary to-chart-2 text-primary-foreground">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
                 <Wallet className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-blue-100 text-sm font-medium">
+                <p className="text-primary-foreground/80 text-sm font-medium">
                   Total do Período
                 </p>
                 <h3 className="text-2xl font-bold">
@@ -53,17 +53,17 @@ export function ExpensesAnalysis({
           </CardContent>
         </Card>
 
-        <Card className="bg-white border-slate-100 shadow-sm">
+        <Card className="bg-card border-border shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-purple-50 rounded-xl">
-                <TrendingUp className="w-6 h-6 text-purple-600" />
+              <div className="p-3 bg-chart-2/10 rounded-xl">
+                <TrendingUp className="w-6 h-6 text-chart-2" />
               </div>
               <div>
-                <p className="text-slate-500 text-sm font-medium">
+                <p className="text-muted-foreground text-sm font-medium">
                   Média por Item
                 </p>
-                <h3 className="text-2xl font-bold text-slate-900">
+                <h3 className="text-2xl font-bold text-foreground">
                   R${" "}
                   {(
                     summaryData.total / (summaryData.count || 1)
@@ -76,17 +76,17 @@ export function ExpensesAnalysis({
           </CardContent>
         </Card>
 
-        <Card className="bg-white border-slate-100 shadow-sm">
+        <Card className="bg-card border-border shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-emerald-50 rounded-xl">
-                <PieChartIcon className="w-6 h-6 text-emerald-600" />
+              <div className="p-3 bg-success/10 rounded-xl">
+                <PieChartIcon className="w-6 h-6 text-success" />
               </div>
               <div>
-                <p className="text-slate-500 text-sm font-medium">
+                <p className="text-muted-foreground text-sm font-medium">
                   Maior Categoria
                 </p>
-                <h3 className="text-lg font-bold text-slate-900 truncate max-w-[150px]">
+                <h3 className="text-lg font-bold text-foreground truncate max-w-[150px]">
                   {(() => {
                     const catTotals: Record<string, number> = {};
                     displayedExpenses.forEach((e) => {
@@ -107,10 +107,10 @@ export function ExpensesAnalysis({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Chart: Daily Trend */}
-        <Card className="border-slate-100 shadow-sm overflow-hidden">
+        <Card className="border-border shadow-sm overflow-hidden">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-blue-500" />
+            <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-primary" />
               Tendência Diária
             </CardTitle>
           </CardHeader>
@@ -142,19 +142,19 @@ export function ExpensesAnalysis({
                 <CartesianGrid
                   strokeDasharray="3 3"
                   vertical={false}
-                  stroke="#f1f5f9"
+                  stroke="hsl(var(--border))"
                 />
                 <XAxis
                   dataKey="date"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 10, fill: "#64748b" }}
+                  tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                   dy={10}
                 />
                 <YAxis
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 10, fill: "#64748b" }}
+                  tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                 />
                 <Tooltip
                   cursor={{ fill: "#f8fafc" }}
@@ -167,7 +167,7 @@ export function ExpensesAnalysis({
                 />
                 <Bar
                   dataKey="amount"
-                  fill="#3b82f6"
+                  fill="hsl(var(--primary))"
                   radius={[4, 4, 0, 0]}
                   maxBarSize={40}
                 />
@@ -177,10 +177,10 @@ export function ExpensesAnalysis({
         </Card>
 
         {/* Chart: Category Distribution */}
-        <Card className="border-slate-100 shadow-sm overflow-hidden">
+        <Card className="border-border shadow-sm overflow-hidden">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
-              <PieChartIcon className="w-4 h-4 text-purple-500" />
+            <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
+              <PieChartIcon className="w-4 h-4 text-chart-2" />
               Por Categoria
             </CardTitle>
           </CardHeader>
@@ -211,12 +211,12 @@ export function ExpensesAnalysis({
                       key={`cell-${index}`}
                       fill={
                         [
-                          "#3b82f6",
-                          "#8b5cf6",
-                          "#10b981",
-                          "#f59e0b",
-                          "#ef4444",
-                          "#64748b",
+                          "hsl(var(--chart-1))", // Lime
+                          "hsl(var(--chart-2))", // Purple
+                          "hsl(var(--chart-4))", // Teal
+                          "hsl(var(--chart-5))", // Tangerine
+                          "hsl(var(--destructive))", // Red
+                          "hsl(var(--muted))", // Muted
                         ][index % 6]
                       }
                     />
@@ -251,9 +251,9 @@ export function ExpensesAnalysis({
       </div>
 
       {/* Top Expenses */}
-      <Card className="border-slate-100 shadow-sm">
+      <Card className="border-border shadow-sm">
         <CardHeader>
-          <CardTitle className="text-base font-bold text-slate-800">
+          <CardTitle className="text-base font-bold text-foreground">
             Maiores Despesas do Período
           </CardTitle>
         </CardHeader>
@@ -269,10 +269,10 @@ export function ExpensesAnalysis({
                 return (
                   <div
                     key={expense.id}
-                    className="flex items-center justify-between p-3 bg-slate-50/50 rounded-xl border border-slate-100"
+                    className="flex items-center justify-between p-3 bg-muted/50 rounded-xl border border-border"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-200 text-slate-600 font-bold text-xs">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-muted-foreground font-bold text-xs">
                         {i + 1}
                       </div>
                       <div
@@ -281,7 +281,7 @@ export function ExpensesAnalysis({
                         <Icon className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="font-semibold text-slate-800 text-sm">
+                        <p className="font-semibold text-foreground text-sm">
                           {expense.description}
                         </p>
                         <p className="text-xs text-slate-500">
@@ -291,7 +291,7 @@ export function ExpensesAnalysis({
                         </p>
                       </div>
                     </div>
-                    <span className="font-bold text-slate-900">
+                    <span className="font-bold text-foreground">
                       R${" "}
                       {expense.amount.toLocaleString("pt-BR", {
                         minimumFractionDigits: 2,

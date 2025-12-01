@@ -84,31 +84,28 @@ const FOLDER_CONFIG: Record<
   { color: string; bg: string; border: string; iconColor: string }
 > = {
   Necessidades: {
-    color: "text-blue-700 dark:text-blue-400",
-    bg: "bg-blue-50/50 dark:bg-blue-900/10",
-    border: "border-blue-200 dark:border-blue-800",
-    iconColor:
-      "bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400",
+    color: "text-folder-necessities",
+    bg: "bg-folder-necessities/10",
+    border: "border-folder-necessities/20",
+    iconColor: "bg-folder-necessities/20 text-folder-necessities",
   },
   Desejos: {
-    color: "text-purple-700 dark:text-purple-400",
-    bg: "bg-purple-50/50 dark:bg-purple-900/10",
-    border: "border-purple-200 dark:border-purple-800",
-    iconColor:
-      "bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400",
+    color: "text-folder-desires",
+    bg: "bg-folder-desires/10",
+    border: "border-folder-desires/20",
+    iconColor: "bg-folder-desires/20 text-folder-desires",
   },
   Poupança: {
-    color: "text-emerald-700 dark:text-emerald-400",
-    bg: "bg-emerald-50/50 dark:bg-emerald-900/10",
-    border: "border-emerald-200 dark:border-emerald-800",
-    iconColor:
-      "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400",
+    color: "text-folder-savings",
+    bg: "bg-folder-savings/10",
+    border: "border-folder-savings/20",
+    iconColor: "bg-folder-savings/20 text-folder-savings",
   },
   Default: {
-    color: "text-zinc-700 dark:text-zinc-400",
-    bg: "bg-zinc-50/50 dark:bg-zinc-900/10",
-    border: "border-zinc-200 dark:border-zinc-800",
-    iconColor: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+    color: "text-folder-generic",
+    bg: "bg-folder-generic/10",
+    border: "border-folder-generic/20",
+    iconColor: "bg-folder-generic/20 text-folder-generic",
   },
 };
 
@@ -504,7 +501,7 @@ export default function BudgetPage() {
                 variant={isValidTotal ? "outline" : "destructive"}
                 className={
                   isValidTotal
-                    ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800"
+                    ? "bg-success/10 text-success border-success/20"
                     : ""
                 }
               >

@@ -29,7 +29,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Loader2, TrendingUp, CheckCircle2 } from "lucide-react";
+import { Loader2, TrendingUp, CheckCircle2, Sparkles } from "lucide-react";
 import { LegalDisclaimer } from "@/components/auth/legal-disclaimer";
 
 export default function AuthPage() {
@@ -113,40 +113,64 @@ export default function AuthPage() {
   return (
     <div className="w-full h-screen lg:grid lg:grid-cols-2 overflow-hidden bg-background">
       {/* --- ESQUERDA: BRANDING (Visível apenas em Desktop) --- */}
-      <div className="hidden lg:flex flex-col justify-between bg-muted text-foreground p-10 relative overflow-hidden">
-        <div className="absolute top-10 left-10 z-10 flex items-center gap-2 font-bold text-2xl text-foreground">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <TrendingUp className="w-5 h-5 text-primary-foreground" />
+      <div className="hidden lg:flex flex-col justify-between bg-zinc-900 text-white p-10 relative overflow-hidden">
+        <div className="absolute top-10 left-10 z-10 flex items-center gap-2 font-bold text-2xl">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-zinc-900">
+            <TrendingUp className="w-5 h-5" />
           </div>
           Lemon
         </div>
 
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/20 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2"></div>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2"></div>
+        {/* Visual Background Effects */}
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] translate-y-1/4 -translate-x-1/4 pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[100px] -translate-y-1/4 translate-x-1/4 pointer-events-none"></div>
 
-        <div className="relative z-10 mt-auto mb-20">
-          <blockquote className="space-y-2">
-            <p className="text-lg">
-              &ldquo;O Lemon transformou a maneira como gerenciamos nossas
-              finanças em família. Simples, intuitivo e poderoso.&rdquo;
+        {/* Abstract Grid Pattern */}
+        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-10 pointer-events-none"></div>
+
+        <div className="relative z-10 mt-auto mb-20 max-w-lg">
+          <div className="space-y-6">
+            <h2 className="text-3xl font-bold leading-tight">
+              A causa <span className="text-primary">#1</span> de estresse entre
+              casais é financeira.
+            </h2>
+            <p className="text-lg text-zinc-300 leading-relaxed">
+              Assumam o controle da própria vida financeira. Insights realistas
+              e personalizados mostram exatamente onde cortar, sem sacrificar o
+              que importa.
             </p>
-            <footer className="text-sm text-muted-foreground">
-              Sofia & Marcos
-              <br />
-              <span className="text-muted-foreground/80">
-                Usuários desde 2024
-              </span>
-            </footer>
-          </blockquote>
+
+            <div className="mt-8 bg-zinc-800/50 border border-zinc-700 p-6 rounded-xl backdrop-blur-sm relative overflow-hidden group hover:border-primary/50 transition-colors">
+              <div className="absolute -right-6 -bottom-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                <Sparkles className="w-32 h-32 text-primary" />
+              </div>
+
+              <div className="flex items-start gap-4 relative z-10">
+                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-lg mb-1">
+                    Lemon AI impulsiona seus resultados
+                  </h3>
+                  <p className="text-zinc-400 text-sm leading-relaxed">
+                    Teste gratuitamente e receba insights automáticos: descubra
+                    onde o dinheiro está vazando e como otimizar o orçamento do
+                    casal sem esforço.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="relative z-10 text-xs text-muted-foreground">
-          © 2025 Lemon Inc.
+        <div className="relative z-10 text-xs text-zinc-500">
+          © 2025 Lemon Financial Inc.
         </div>
       </div>
 
       {/* --- DIREITA: FORMULÁRIOS --- */}
-      <div className="flex items-center justify-center p-6 lg:p-10 bg-muted/30">
+      <div className="flex items-center justify-center p-6 lg:p-10 bg-background">
         <div className="mx-auto w-full max-w-[400px] space-y-8">
           <div className="flex flex-col space-y-2 text-center">
             <div className="lg:hidden flex justify-center mb-4">
@@ -154,18 +178,18 @@ export default function AuthPage() {
                 <TrendingUp className="w-6 h-6" />
               </div>
             </div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              Acesse sua conta
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Bem-vindo ao Lemon
             </h1>
             <p className="text-sm text-muted-foreground">
-              Gerencie as finanças da sua família em um só lugar.
+              Sua jornada para a liberdade financeira começa aqui.
             </p>
           </div>
 
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="signin">Entrar</TabsTrigger>
-              <TabsTrigger value="signup">Cadastrar</TabsTrigger>
+              <TabsTrigger value="signup">Criar Conta</TabsTrigger>
             </TabsList>
 
             {/* LOGIN */}
@@ -243,7 +267,7 @@ export default function AuthPage() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full shadow-sm"
+                  className="w-full shadow-sm font-bold"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -294,26 +318,35 @@ export default function AuthPage() {
                   />
                 </div>
 
-                <div className="text-xs text-muted-foreground space-y-2 py-2">
-                  <p className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3 h-3 text-primary" /> Gestão de
-                    time familiar
+                <div className="bg-muted/40 p-4 rounded-lg space-y-3 border border-border/50">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    O que você ganha:
                   </p>
-                  <p className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3 h-3 text-primary" /> Leitura de
-                    recibos com IA
-                  </p>
+                  <div className="text-sm space-y-2">
+                    <p className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary" />
+                      <span>IA que lê seus recibos</span>
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary" />
+                      <span>Método 50/30/20 automático</span>
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary" />
+                      <span>Gestão compartilhada (Casal)</span>
+                    </p>
+                  </div>
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full shadow-sm"
+                  className="w-full shadow-sm font-bold"
                   disabled={isLoading}
                 >
                   {isLoading ? (
                     <Loader2 className="animate-spin mr-2 h-4 w-4" />
                   ) : (
-                    "Criar Conta Grátis"
+                    "Começar Grátis"
                   )}
                 </Button>
               </form>

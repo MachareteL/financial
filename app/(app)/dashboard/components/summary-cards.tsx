@@ -46,7 +46,7 @@ export function SummaryCards({ data, isLoading }: SummaryCardsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {/* BALANCE CARD */}
-      <Card className="border-none shadow-lg bg-gradient-to-br from-primary via-primary/80 to-purple-600 text-primary-foreground relative overflow-hidden group">
+      <Card className="border-none shadow-lg bg-gradient-to-br from-primary via-primary/80 to-chart-2 text-primary-foreground relative overflow-hidden group">
         <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-700" />
         <div className="absolute bottom-0 left-0 -mb-8 -ml-8 w-24 h-24 bg-primary/30 rounded-full blur-xl" />
 
@@ -77,12 +77,14 @@ export function SummaryCards({ data, isLoading }: SummaryCardsProps) {
                 <Progress
                   value={(data.balance / data.totalIncome) * 100}
                   className="h-1.5 bg-primary-foreground/20"
-                  indicatorClassName="bg-emerald-400"
+                  indicatorClassName="bg-success"
                 />
               </div>
             ) : (
               <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm w-fit">
-                <span className="text-xs font-medium">Sem orçamento</span>
+                <span className="text-xs font-medium">
+                  Orçamento não definido
+                </span>
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="hover:bg-white/20 p-1 rounded-full transition-colors">
@@ -127,12 +129,12 @@ export function SummaryCards({ data, isLoading }: SummaryCardsProps) {
                 {formatCurrency(data.totalIncome)}
               </h2>
             </div>
-            <div className="bg-emerald-50 dark:bg-emerald-900/20 p-2.5 rounded-xl">
-              <TrendingUp className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            <div className="bg-success/10 p-2.5 rounded-xl">
+              <TrendingUp className="w-5 h-5 text-success" />
             </div>
           </div>
 
-          <div className="mt-4 flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-50/50 dark:bg-emerald-900/10 px-2 py-1 rounded-md w-fit">
+          <div className="mt-4 flex items-center gap-2 text-xs text-success font-medium bg-success/10 px-2 py-1 rounded-md w-fit">
             <ArrowUpRight className="w-3 h-3" />
             <span>Receitas do mês</span>
           </div>
