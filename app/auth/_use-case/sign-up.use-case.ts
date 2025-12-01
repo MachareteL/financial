@@ -1,10 +1,18 @@
 import type { User } from "@/domain/entities/user";
 import type { IAuthRepository } from "@/domain/interfaces/auth.repository.interface";
 
-import { SignUpInputSchema, type SignUpInputDTO } from "@/domain/dto/sign-up.dto"
+import {
+  SignUpInputSchema,
+  type SignUpInputDTO,
+} from "@/domain/dto/sign-up.dto";
+
+import type { AnalyticsService } from "@/domain/interfaces/analytics-service.interface";
 
 export class SignUpUseCase {
-  constructor(private authRepository: IAuthRepository) {}
+  constructor(
+    private authRepository: IAuthRepository,
+    private analyticsService: AnalyticsService
+  ) {}
 
   async execute(input: SignUpInputDTO): Promise<User> {
     const validation = SignUpInputSchema.safeParse(input);
@@ -18,6 +26,11 @@ export class SignUpUseCase {
       validation.data.password,
       validation.data.name
     );
+
+    await this.analyticsService.identify(user.id, {
+      email: user.email,
+      name: user.name,
+    });
 
     return user;
   }

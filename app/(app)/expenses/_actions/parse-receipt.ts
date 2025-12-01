@@ -58,7 +58,8 @@ export async function parseReceiptAction(
   const checkFeatureAccessUseCase = await getCheckFeatureAccessUseCase();
   const hasAccess = await checkFeatureAccessUseCase.execute(
     teamId,
-    "ai_receipt_scanning"
+    "ai_receipt_scanning",
+    user.id
   );
 
   if (!hasAccess) {
@@ -67,7 +68,7 @@ export async function parseReceiptAction(
 
   try {
     const parseReceiptUseCase = getParseReceiptUseCase();
-    return await parseReceiptUseCase.execute(file);
+    return await parseReceiptUseCase.execute(file, user.id);
   } catch (error) {
     console.error("Erro ao processar recibo:", error);
     return null;

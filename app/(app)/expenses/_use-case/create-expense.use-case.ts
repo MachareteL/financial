@@ -4,11 +4,14 @@ import type { IStorageRepository } from "@/domain/interfaces/storage.repository.
 import type { CreateExpenseDTO } from "@/domain/dto/expense.types.d.ts";
 import { Expense } from "@/domain/entities/expense";
 
+import type { AnalyticsService } from "@/domain/interfaces/analytics-service.interface";
+
 export class CreateExpenseUseCase {
   constructor(
     private expenseRepository: IExpenseRepository,
     private storageRepository: IStorageRepository,
-    private teamRepository: ITeamRepository
+    private teamRepository: ITeamRepository,
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(dto: CreateExpenseDTO): Promise<void> {
@@ -109,6 +112,9 @@ export class CreateExpenseUseCase {
 
     if (expensesToCreate.length > 0) {
       await this.expenseRepository.createMany(expensesToCreate);
+      await this.analyticsService.track(dto.userId, "feature_used", {
+        feature: "manual_expense",
+      });
     }
   }
 }

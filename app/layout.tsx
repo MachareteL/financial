@@ -5,6 +5,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/app/auth/auth-provider";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AnalyticsProvider } from "@/components/providers/analytics-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,7 +28,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>{children}</AuthProvider>
+          <AnalyticsProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </AnalyticsProvider>
           <Toaster />
         </ThemeProvider>
       </body>

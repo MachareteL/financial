@@ -14,8 +14,20 @@ import { getSupabaseClient } from "../database/supabase.server";
 import { CategoryRepository } from "../repositories/supabase-category.repository";
 import { BudgetCategoryRepository } from "../repositories/supabase-budget-category.repository";
 import { CreateTeamUseCase } from "@/app/(app)/team/_use-case/create-team.use-case";
+import { PostHogAnalyticsService } from "@/infrastructure/services/posthog-analytics.service";
 
 const container = Container.getInstance();
+
+export const getAnalyticsService = () => {
+  return container.get(
+    "analyticsService",
+    () =>
+      new PostHogAnalyticsService(
+        process.env.NEXT_PUBLIC_POSTHOG_KEY!,
+        process.env.NEXT_PUBLIC_POSTHOG_HOST
+      )
+  );
+};
 
 export const getPaymentGateway = () => {
   return container.get("paymentGateway", () => new StripePaymentGateway());
@@ -71,7 +83,7 @@ export const getCreateTeamUseCase = async () => {
 export const getSubscribeTeamUseCase = () => {
   return container.get(
     "subscribeTeamUseCase",
-    () => new SubscribeTeamUseCase(getPaymentGateway())
+    () => new SubscribeTeamUseCase(getPaymentGateway(), getAnalyticsService())
   );
 };
 
@@ -96,7 +108,12 @@ export const getCheckFeatureAccessUseCase = async () => {
   const subscriptionRepo = await getSubscriptionRepository();
   return container.get(
     "checkFeatureAccessUseCase",
-    () => new CheckFeatureAccessUseCase(teamRepo, subscriptionRepo)
+    () =>
+      new CheckFeatureAccessUseCase(
+        teamRepo,
+        subscriptionRepo,
+        getAnalyticsService()
+      )
   );
 };
 
@@ -122,7 +139,7 @@ const getAiService = () => {
 export const getParseReceiptUseCase = () => {
   return container.get(
     "parseReceiptUseCase",
-    () => new ParseReceiptUseCase(getAiService())
+    () => new ParseReceiptUseCase(getAiService(), getAnalyticsService())
   );
 };
 

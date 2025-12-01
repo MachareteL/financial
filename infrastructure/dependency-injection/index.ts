@@ -1,4 +1,5 @@
 import { Container } from "./container";
+import { ClientAnalyticsService } from "@/infrastructure/services/client-analytics.service";
 import {
   AuthSupabaseRepository,
   CategoryRepository,
@@ -151,11 +152,11 @@ export const getCurrentAuthUserUseCase = container.get(
 );
 export const signInUseCase = container.get(
   "signInUseCase",
-  () => new SignInUseCase(authRepository)
+  () => new SignInUseCase(authRepository, new ClientAnalyticsService())
 );
 export const signUpUseCase = container.get(
   "signUpUseCase",
-  () => new SignUpUseCase(authRepository)
+  () => new SignUpUseCase(authRepository, new ClientAnalyticsService())
 );
 export const signOutUseCase = container.get(
   "signOutUseCase",
@@ -219,7 +220,8 @@ export const createExpenseUseCase = container.get(
     new CreateExpenseUseCase(
       expenseRepository,
       storageRepository,
-      teamRepository
+      teamRepository,
+      new ClientAnalyticsService()
     )
 );
 export const getExpensesUseCase = container.get(
@@ -357,7 +359,7 @@ export const manageMembersUseCase = container.get(
 // AI
 export const parseReceiptUseCase = container.get(
   "parseReceiptUseCase",
-  () => new ParseReceiptUseCase(aiService)
+  () => new ParseReceiptUseCase(aiService, new ClientAnalyticsService())
 );
 
 // Team Invites (Onboarding)
@@ -380,5 +382,10 @@ export const declineInviteUseCase = container.get(
 // Subscription & Billing
 export const checkFeatureAccessUseCase = container.get(
   "checkFeatureAccessUseCase",
-  () => new CheckFeatureAccessUseCase(teamRepository, subscriptionRepository)
+  () =>
+    new CheckFeatureAccessUseCase(
+      teamRepository,
+      subscriptionRepository,
+      new ClientAnalyticsService()
+    )
 );
