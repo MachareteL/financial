@@ -19,6 +19,8 @@ export default function PublicLayout({
     { name: "Segurança", href: "/security" },
   ];
 
+  const isBlog = pathname?.startsWith("/blog");
+
   return (
     <div className="min-h-screen bg-background font-sans selection:bg-primary/30">
       {/* Header */}
@@ -38,7 +40,7 @@ export default function PublicLayout({
             </Link>
             <div className="hidden sm:block h-6 w-px bg-border mx-2" />
             <span className="hidden sm:block text-sm font-medium text-muted-foreground">
-              Centro Legal
+              {isBlog ? "Blog" : "Centro Legal"}
             </span>
           </div>
 
@@ -60,22 +62,24 @@ export default function PublicLayout({
 
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
           {/* Navigation Tabs */}
-          <div className="flex flex-wrap gap-2 mb-12 border-b border-border/50 pb-1">
-            {tabs.map((tab) => (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                className={cn(
-                  "px-4 py-2 text-sm font-medium rounded-t-lg transition-colors relative top-px border-b-2",
-                  pathname === tab.href
-                    ? "border-primary text-primary bg-primary/5"
-                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                )}
-              >
-                {tab.name}
-              </Link>
-            ))}
-          </div>
+          {!isBlog && (
+            <div className="flex flex-wrap gap-2 mb-12 border-b border-border/50 pb-1">
+              {tabs.map((tab) => (
+                <Link
+                  key={tab.href}
+                  href={tab.href}
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium rounded-t-lg transition-colors relative top-px border-b-2",
+                    pathname === tab.href
+                      ? "border-primary text-primary bg-primary/5"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  )}
+                >
+                  {tab.name}
+                </Link>
+              ))}
+            </div>
+          )}
 
           {/* Content */}
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
