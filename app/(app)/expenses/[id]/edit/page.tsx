@@ -50,6 +50,7 @@ import type {
 } from "@/domain/dto/expense.types.d.ts";
 import { useTeam } from "@/app/(app)/team/team-provider";
 import { notify } from "@/lib/notify-helper";
+import { compressImage } from "@/lib/compression";
 
 export default function EditExpensePage() {
   const { session, loading: authLoading } = useAuth();
@@ -132,16 +133,26 @@ export default function EditExpensePage() {
   }, [teamId, expenseId]);
 
   // --- Lógica de Upload ---
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
         notify.error(new Error("Arquivo muito grande"), "selecionar o arquivo");
         return;
       }
-      setSelectedFile(file);
+
+      // Preview imediato
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
+
+      // Comprime a imagem
+      try {
+        const compressedFile = await compressImage(file);
+        setSelectedFile(compressedFile);
+      } catch (error) {
+        console.error("Erro na compressão:", error);
+        setSelectedFile(file);
+      }
     }
   };
 

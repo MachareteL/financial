@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/auth/auth-provider";
 import { notify } from "@/lib/notify-helper";
+import { compressImage } from "@/lib/compression";
 
 // Use Cases e Actions
 import {
@@ -134,14 +135,18 @@ export default function NewExpensePage() {
       return;
     }
 
-    setSelectedFile(file);
+    // Preview imediato com arquivo original
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
 
     setIsParsingReceipt(true);
     try {
+      // Comprime a imagem antes do envio
+      const compressedFile = await compressImage(file);
+      setSelectedFile(compressedFile);
+
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", compressedFile);
       if (teamId) {
         formData.append("teamId", teamId);
       }
