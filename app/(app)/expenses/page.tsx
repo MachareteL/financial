@@ -303,169 +303,233 @@ export default function ExpensesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 pb-20 animate-in fade-in">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground tracking-tight">
-              Extrato Financeiro
+    <div className="min-h-screen bg-background animate-in fade-in duration-500">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12 space-y-6 sm:space-y-8">
+        {/* Header Section */}
+        <div className="flex flex-col gap-6 md:flex-row md:justify-between md:items-center">
+          <div className="space-y-1">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+              Despesas
             </h1>
-            <p className="text-muted-foreground text-sm flex items-center gap-2 mt-1">
-              <span className="font-semibold text-foreground bg-card px-2 py-0.5 rounded border border-border shadow-sm">
+            <p className="text-muted-foreground text-sm sm:text-base">
+              Gerencie seus gastos e acompanhe o fluxo.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto bg-muted/20 p-2 rounded-2xl md:bg-transparent md:p-0">
+            <div className="flex flex-col items-start md:items-end mr-2 pl-2 md:pl-0">
+              <span className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                Total do período
+              </span>
+              <span className="text-base sm:text-lg font-semibold text-foreground tabular-nums">
                 R${" "}
                 {summaryData.total.toLocaleString("pt-BR", {
                   minimumFractionDigits: 2,
                 })}
               </span>
-              <span className="text-xs">• {summaryData.count} itens</span>
-            </p>
+            </div>
+            {can("MANAGE_EXPENSES") && (
+              <Button
+                onClick={() => router.push("/expenses/new")}
+                className="rounded-xl md:rounded-full px-4 sm:px-6 shadow-button hover:shadow-button-hover transition-all duration-300 bg-primary text-primary-foreground hover:bg-primary/90 text-sm sm:text-base h-10 sm:h-11"
+              >
+                <Plus className="w-4 h-4 mr-1.5 sm:mr-2" />
+                <span className="inline">Nova Despesa</span>
+              </Button>
+            )}
           </div>
-          {can("MANAGE_EXPENSES") && (
-            <Button
-              onClick={() => router.push("/expenses/new")}
-              className="shadow-md shadow-primary/20"
-            >
-              <Plus className="w-4 h-4 mr-2" /> Nova Despesa
-            </Button>
-          )}
         </div>
 
-        {/* Toolbar (Non-Sticky) */}
-        <div className="bg-card p-3 rounded-xl border border-border shadow-sm space-y-3">
-          <div className="flex flex-col md:flex-row gap-3">
-            {/* Busca */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        {/* Controls & Filters */}
+        <div className="flex flex-col gap-4 sm:gap-6">
+          {/* Top Bar: Search & View Toggle */}
+          <div className="flex flex-col md:flex-row justify-between items-center gap-3 md:gap-4">
+            <div className="relative w-full md:max-w-md group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors duration-300" />
               <Input
                 placeholder="Buscar despesas..."
-                className="pl-9 bg-background border-input focus:ring-primary transition-all"
+                className="pl-10 h-10 sm:h-11 bg-muted/30 border-transparent focus:bg-background focus:border-input focus:ring-2 focus:ring-primary/20 transition-all duration-300 rounded-xl text-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
 
-            {/* Filtros */}
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-              <Select value={filterMonth} onValueChange={handleMonthChange}>
-                <SelectTrigger className="w-[140px] bg-background">
-                  <SelectValue placeholder="Mês" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">📅 Todos</SelectItem>
-                  {[...Array(12)].map((_, i) => (
-                    <SelectItem key={i} value={(i + 1).toString()}>
-                      {new Date(0, i).toLocaleString("pt-BR", {
-                        month: "long",
-                      })}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={filterYear} onValueChange={setFilterYear}>
-                <SelectTrigger className="w-[100px] bg-background">
-                  <SelectValue placeholder="Ano" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {[2023, 2024, 2025, 2026].map((y) => (
-                    <SelectItem key={y} value={y.toString()}>
-                      {y}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger className="w-[150px] bg-background">
-                  <div className="flex items-center gap-2 truncate">
-                    <Filter className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span className="truncate">
-                      {filterCategory === "all"
-                        ? "Categoria"
-                        : categories.find((c) => c.id === filterCategory)?.name}
-                    </span>
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  {categories.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex items-center bg-muted/30 p-1 rounded-lg border border-border/50 w-full md:w-auto">
+              <Tabs
+                value={viewMode}
+                onValueChange={(v) =>
+                  setViewMode(v as "list" | "table" | "analysis")
+                }
+                className="w-full md:w-auto"
+              >
+                <TabsList className="bg-transparent p-0 h-8 sm:h-9 gap-1 w-full md:w-auto grid grid-cols-3 md:flex">
+                  <TabsTrigger
+                    value="list"
+                    className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md px-2 sm:px-4 text-[10px] sm:text-xs font-medium transition-all"
+                  >
+                    Timeline
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="table"
+                    className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md px-2 sm:px-4 text-[10px] sm:text-xs font-medium transition-all"
+                  >
+                    Tabela
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="analysis"
+                    className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md px-2 sm:px-4 text-[10px] sm:text-xs font-medium transition-all"
+                  >
+                    Análise
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
           </div>
 
-          <Tabs
-            value={viewMode}
-            onValueChange={(v) =>
-              setViewMode(v as "list" | "table" | "analysis")
-            }
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-3 h-9 bg-muted p-1">
-              <TabsTrigger value="list" className="text-xs font-medium">
-                Timeline
-              </TabsTrigger>
-              <TabsTrigger value="table" className="text-xs font-medium">
-                Tabela
-              </TabsTrigger>
-              <TabsTrigger value="analysis" className="text-xs font-medium">
-                Análise
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          {/* Filters Row - Horizontal Scroll on Mobile */}
+          <div className="flex items-center gap-2 sm:gap-3 pb-2 overflow-x-auto no-scrollbar mask-linear-fade -mx-4 px-4 sm:mx-0 sm:px-0 justify-between md:justify-start">
+            <Select value={filterMonth} onValueChange={handleMonthChange}>
+              <SelectTrigger className="w-[110px] sm:w-[130px] h-9 rounded-lg border-border/60 bg-background hover:bg-muted/30 transition-colors text-xs sm:text-sm flex-shrink-0">
+                <SelectValue placeholder="Mês" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">📅 Todos</SelectItem>
+                {[...Array(12)].map((_, i) => (
+                  <SelectItem key={i} value={(i + 1).toString()}>
+                    {new Date(0, i).toLocaleString("pt-BR", { month: "long" })}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterYear} onValueChange={setFilterYear}>
+              <SelectTrigger className="w-[80px] sm:w-[100px] h-9 rounded-lg border-border/60 bg-background hover:bg-muted/30 transition-colors text-xs sm:text-sm flex-shrink-0">
+                <SelectValue placeholder="Ano" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {[2023, 2024, 2025, 2026].map((y) => (
+                  <SelectItem key={y} value={y.toString()}>
+                    {y}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterCategory} onValueChange={setFilterCategory}>
+              <SelectTrigger className="w-[130px] sm:w-[160px] h-9 rounded-lg border-border/60 bg-background hover:bg-muted/30 transition-colors text-xs sm:text-sm flex-shrink-0">
+                <div className="flex items-center gap-2 truncate">
+                  <Filter className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground" />
+                  <span className="truncate">
+                    {filterCategory === "all"
+                      ? "Categoria"
+                      : categories.find((c) => c.id === filterCategory)?.name}
+                  </span>
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as categorias</SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {(filterMonth !== "all" ||
+              filterYear !== "all" ||
+              filterCategory !== "all" ||
+              searchTerm) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearFilters}
+                className="h-9 px-3 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg text-xs flex-shrink-0"
+              >
+                Limpar
+              </Button>
+            )}
+          </div>
         </div>
 
-        {/* --- MAIN CONTENT --- */}
-        {isLoadingInitial ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <Loader2 className="animate-spin text-primary w-10 h-10" />
-            <p className="text-muted-foreground text-sm">
-              Carregando transações...
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* 1. VIEW: TIMELINE */}
-            {viewMode === "list" && (
-              <ExpensesList
-                groupedExpenses={groupedExpenses}
-                lastExpenseElementRef={lastExpenseElementRef}
-                setSelectedReceipt={setSelectedReceipt}
-                handleDelete={handleDelete}
-                router={router}
-                hasMore={hasMore}
-                onClearFilters={handleClearFilters}
-              />
-            )}
+        {/* Content Area */}
+        <div className="min-h-[400px]">
+          {isLoadingInitial ? (
+            <div className="flex flex-col items-center justify-center py-32 gap-4 animate-in fade-in duration-700">
+              <Loader2 className="animate-spin text-primary w-8 h-8" />
+              <p className="text-muted-foreground text-sm font-medium">
+                Carregando suas despesas...
+              </p>
+            </div>
+          ) : (
+            <div className="animate-in slide-in-from-bottom-4 duration-500 fade-in">
+              {expenses.length === 0 && !isLoadingInitial ? (
+                <div className="flex flex-col items-center justify-center py-24 text-center space-y-4 border-2 border-dashed border-muted rounded-2xl bg-muted/5">
+                  <div className="bg-muted rounded-full p-4">
+                    <Search className="w-8 h-8 text-muted-foreground/50" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-semibold text-foreground">
+                      Nenhuma despesa encontrada
+                    </h3>
+                    <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+                      Tente ajustar os filtros ou crie uma nova despesa para
+                      começar.
+                    </p>
+                  </div>
+                  {can("MANAGE_EXPENSES") && (
+                    <Button
+                      variant="outline"
+                      onClick={handleClearFilters}
+                      className="mt-2"
+                    >
+                      Limpar filtros
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {/* 1. VIEW: TIMELINE */}
+                  {viewMode === "list" && (
+                    <ExpensesList
+                      groupedExpenses={groupedExpenses}
+                      lastExpenseElementRef={lastExpenseElementRef}
+                      setSelectedReceipt={setSelectedReceipt}
+                      handleDelete={handleDelete}
+                      router={router}
+                      hasMore={hasMore}
+                      onClearFilters={handleClearFilters}
+                    />
+                  )}
 
-            {/* 2. VIEW: TABLE */}
-            {viewMode === "table" && (
-              <ExpensesTable
-                displayedExpenses={displayedExpenses}
-                lastExpenseElementRef={lastExpenseElementRef}
-                setSelectedReceipt={setSelectedReceipt}
-                router={router}
-                hasMore={hasMore}
-              />
-            )}
+                  {/* 2. VIEW: TABLE */}
+                  {viewMode === "table" && (
+                    <ExpensesTable
+                      displayedExpenses={displayedExpenses}
+                      lastExpenseElementRef={lastExpenseElementRef}
+                      setSelectedReceipt={setSelectedReceipt}
+                      router={router}
+                      hasMore={hasMore}
+                    />
+                  )}
 
-            {/* 3. VIEW: ANALYSIS */}
-            {viewMode === "analysis" && (
-              <ExpensesAnalysis
-                summaryData={summaryData}
-                displayedExpenses={displayedExpenses}
-                categories={categories}
-              />
-            )}
-          </>
-        )}
+                  {/* 3. VIEW: ANALYSIS */}
+                  {viewMode === "analysis" && (
+                    <ExpensesAnalysis
+                      summaryData={summaryData}
+                      displayedExpenses={displayedExpenses}
+                      categories={categories}
+                    />
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* MODAL DE COMPROVANTE */}
+      {/* Dialogs */}
       <ReceiptViewer
         selectedReceipt={selectedReceipt}
         onClose={() => setSelectedReceipt(null)}

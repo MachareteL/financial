@@ -1,3 +1,6 @@
+/* --- TIPOGRAFIA PREMIUM --- */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:wght@500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -19,55 +22,51 @@
     --popover-foreground: 240 10% 3.9%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
+
+    /* ---  RAIOS E BORDAS REFINADOS --- */
     --radius: 0.75rem;
+    --radius-card: 1rem; /* 16px - Cards principais */
+    --radius-button: 0.75rem; /* 12px - Botões e inputs */
+    --radius-badge: 0.5rem; /* 8px - Badges e tags */
 
     /* --- MARCA PRINCIPAL (Electric Lime) --- */
-    /* HSL(84, 81%, 44%) -> Um verde lima sólido e legível */
     --primary: 84 81% 44%;
     --primary-foreground: 0 0% 100%;
     --ring: 84 81% 44%;
 
-    /* --- PALETA DE SUPORTE (Evitar monotonia) --- */
-    /* Usar para botões secundários, fundos suaves e detalhes */
-    --secondary: 262 80% 96%; /* Um lilás bem suave (fundo) */
-    --secondary-foreground: 262 47% 30%; /* Roxo profundo (texto) */
+    /* --- PALETA DE SUPORTE --- */
+    --secondary: 262 80% 96%;
+    --secondary-foreground: 262 47% 30%;
 
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
 
-    /* Acentuações (Hover/Selection) */
-    --accent: 84 81% 96%; /* Lima muito claro */
+    --accent: 84 81% 96%;
     --accent-foreground: 84 81% 25%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    /* --- CORES DE GRÁFICOS E CATEGORIAS --- */
-    /* Mantém a variedade visual, mas com tons vibrantes que combinam com Lima */
-    --chart-1: 84 81% 44%; /* Lemon (Principal) */
-    --chart-2: 262 83% 58%; /* Electric Purple (Desejos/Lazer) - Ótimo contraste com Lima */
-    --chart-3: 330 80% 60%; /* Hot Pink (Variável) */
-    --chart-4: 173 58% 39%; /* Teal/Ciano (Investimentos/Futuro) */
-    --chart-5: 24 96% 53%; /* Tangerine (Alerta/Gastos) */
+    /* --- CORES DE GRÁFICOS --- */
+    --chart-1: 84 81% 44%;
+    --chart-2: 262 83% 58%;
+    --chart-3: 330 80% 60%;
+    --chart-4: 173 58% 39%;
+    --chart-5: 24 96% 53%;
 
-    /* --- TOKENS SEMÂNTICOS (Novos) --- */
-    /* Success: positivo, receitas, confirmações */
-    --success: 173 58% 39%; /* = chart-4 (Teal) */
+    /* --- TOKENS SEMÂNTICOS --- */
+    --success: 173 58% 39%;
     --success-foreground: 0 0% 100%;
-
-    /* Warning: alertas leves, atenção */
-    --warning: 24 96% 53%; /* = chart-5 (Tangerine) */
+    --warning: 24 96% 53%;
     --warning-foreground: 0 0% 100%;
-
-    /* Info: informações neutras */
-    --info: 84 81% 44%; /* = primary (Lime) */
+    --info: 84 81% 44%;
     --info-foreground: 240 5.9% 10%;
 
-    /* Folder Colors (Budget Categories) */
-    --folder-necessities: 84 81% 44%; /* Primary (Lime) - Essenciais */
-    --folder-desires: 262 83% 58%; /* Chart-2 (Purple) - Lazer */
-    --folder-savings: 173 58% 39%; /* Chart-4 (Teal) - Futuro */
-    --folder-generic: 240 5% 64.9%; /* Muted - Outros */
+    /* --- FOLDER COLORS --- */
+    --folder-necessities: 84 81% 44%;
+    --folder-desires: 262 83% 58%;
+    --folder-savings: 173 58% 39%;
+    --folder-generic: 240 5% 64.9%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -77,63 +76,75 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* --- TIPOGRAFIA --- */
+    --font-display: "DM Sans", sans-serif;
+    --font-body: "Inter", sans-serif;
+
+    /* --- ESPAÇAMENTO --- */
+    --space-section: 3rem;
+    --space-card: 1.5rem;
+    --space-element: 1rem;
+    --space-compact: 0.75rem;
+    --space-tight: 0.5rem;
+
+    /* --- SOMBRAS PREMIUM --- */
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+    --shadow-card-hover:
+      0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03);
+    --shadow-elevated:
+      0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-button: 0 2px 8px rgba(84, 81%, 44%, 0.15);
   }
 
   .dark {
-    /* --- BASE NEUTRA (Soft Dark) --- */
-    /* Usando tons de Zinc/Slate escuros, mas não preto absoluto */
-    --background: 240 10% 10%; /* #1a1a1c - Cinza escuro suave */
-    --foreground: 0 0% 98%;
+    /* --- DARK MODE com legibilidade melhorada --- */
+    --background: 240 10% 8%;
+    --foreground: 0 0% 95%;
 
-    --card: 240 10% 12%; /* #1f1f22 - Um pouco mais claro que o fundo */
-    --card-foreground: 0 0% 98%;
+    --card: 240 8% 12%;
+    --card-foreground: 0 0% 95%;
 
     --popover: 240 10% 10%;
-    --popover-foreground: 0 0% 98%;
+    --popover-foreground: 0 0% 95%;
 
-    /* No Dark Mode, o Lima brilha (Neon) */
     --primary: 84 81% 55%;
     --primary-foreground: 240 5.9% 10%;
 
-    /* Suporte Dark */
-    --secondary: 240 5% 18%; /* Cinza médio para elementos secundários */
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 240 5% 18%;
+    --secondary-foreground: 0 0% 95%;
 
     --muted: 240 5% 18%;
-    --muted-foreground: 240 5% 65%;
+    --muted-foreground: 240 5% 75%; /* Melhor contraste */
 
     --accent: 240 5% 18%;
-    --accent-foreground: 0 0% 98%;
+    --accent-foreground: 0 0% 95%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62.8% 45%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 5% 18%;
-    --input: 240 5% 18%;
+    --border: 240 5% 22%;
+    --input: 240 5% 22%;
     --ring: 84 81% 55%;
 
-    /* Gráficos Neon */
-    --chart-1: 84 81% 55%; /* Neon Lime */
-    --chart-2: 262 80% 65%; /* Neon Purple */
-    --chart-3: 330 80% 65%; /* Neon Pink */
-    --chart-4: 173 70% 50%; /* Cyan */
-    --chart-5: 24 90% 60%; /* Orange */
+    /* --- GRÁFICOS NEON --- */
+    --chart-1: 84 81% 55%;
+    --chart-2: 262 80% 65%;
+    --chart-3: 330 80% 65%;
+    --chart-4: 173 70% 50%;
+    --chart-5: 24 90% 60%;
 
-    /* --- TOKENS SEMÂNTICOS (Dark Mode) --- */
-    --success: 173 70% 50%; /* Teal mais brilhante */
+    --success: 173 70% 50%;
     --success-foreground: 0 0% 100%;
-
-    --warning: 24 90% 60%; /* Orange mais brilhante */
+    --warning: 24 90% 60%;
     --warning-foreground: 0 0% 100%;
-
-    --info: 84 81% 55%; /* = primary neon */
+    --info: 84 81% 55%;
     --info-foreground: 240 5.9% 10%;
 
-    /* Folder Colors (Dark Neon) */
-    --folder-necessities: 84 81% 55%; /* Neon Lime */
-    --folder-desires: 262 80% 65%; /* Neon Purple */
-    --folder-savings: 173 70% 50%; /* Neon Teal */
-    --folder-generic: 240 5% 65%; /* Muted mais claro */
+    --folder-necessities: 84 81% 55%;
+    --folder-desires: 262 80% 65%;
+    --folder-savings: 173 70% 50%;
+    --folder-generic: 240 5% 65%;
 
     --sidebar-background: 240 10% 11%;
     --sidebar-foreground: 240 5% 90%;
@@ -143,6 +154,14 @@
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 240 5% 18%;
     --sidebar-ring: 84 81% 55%;
+
+    /* --- SOMBRAS DARK MODE --- */
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1);
+    --shadow-card-hover:
+      0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.15);
+    --shadow-elevated:
+      0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
+    --shadow-button: 0 2px 8px rgba(84, 81%, 55%, 0.25);
   }
 }
 
@@ -150,7 +169,74 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+  }
+
+  /* --- OVERRIDE SLATE CORES PARA DARK MODE (Solução para legibilidade) --- */
+  .dark .text-slate-900 {
+    color: hsl(var(--foreground));
+  }
+  .dark .text-slate-800 {
+    color: hsl(var(--foreground));
+  }
+  .dark .text-slate-700 {
+    color: hsl(var(--card-foreground));
+  }
+  .dark .text-slate-600 {
+    color: hsl(var(--muted-foreground));
+  }
+  .dark .text-slate-500 {
+    color: hsl(var(--muted-foreground));
+  }
+  .dark .text-slate-400 {
+    color: hsl(var(--muted-foreground));
+    opacity: 0.9;
+  }
+
+  .dark .border-slate-100 {
+    border-color: hsl(var(--border));
+  }
+  .dark .border-slate-200 {
+    border-color: hsl(var(--border));
+  }
+
+  .dark .bg-slate-100 {
+    background-color: hsl(var(--muted));
+  }
+  .dark .bg-slate-50 {
+    background-color: hsl(var(--muted) / 0.5);
+  }
+}
+
+/* --- CLASSES UTILITÁRIAS PERSONALIZADAS --- */
+@layer utilities {
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .shadow-card-hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .shadow-button {
+    box-shadow: var(--shadow-button);
   }
 }

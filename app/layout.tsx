@@ -1,13 +1,24 @@
 import type React from "react";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/app/auth/auth-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AnalyticsProvider } from "@/components/providers/analytics-provider";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-display",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://lemonfinancas.com.br"),
@@ -43,7 +54,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${inter.variable} ${dmSans.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

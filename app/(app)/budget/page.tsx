@@ -19,6 +19,13 @@ import {
   getCategoriesUseCase,
 } from "@/infrastructure/dependency-injection";
 import { notify } from "@/lib/notify-helper";
+import {
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip as RechartsTooltip,
+} from "recharts";
 
 // UI Components
 import {
@@ -69,6 +76,17 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 // Types
 import type {
   IncomeDetailsDTO,
@@ -110,8 +128,11 @@ const FOLDER_CONFIG: Record<
 };
 
 const getFolderStyle = (name: string) => {
+  const normalizedName = name.toLowerCase();
   const key =
-    Object.keys(FOLDER_CONFIG).find((k) => name.includes(k)) || "Default";
+    Object.keys(FOLDER_CONFIG).find((k) =>
+      normalizedName.includes(k.toLowerCase())
+    ) || "Default";
   return FOLDER_CONFIG[key];
 };
 
@@ -145,6 +166,7 @@ export default function BudgetPage() {
   const [editingIncome, setEditingIncome] = useState<IncomeDetailsDTO | null>(
     null
   );
+  const [incomeToDelete, setIncomeToDelete] = useState<string | null>(null);
 
   const teamId = currentTeam?.team.id;
   const userId = session?.user.id;
@@ -162,6 +184,7 @@ export default function BudgetPage() {
     }
   }, [session, authLoading, userId, teamId, router]);
 
+  // 2. Carregar Dados
   // 2. Carregar Dados
   useEffect(() => {
     if (teamId) loadData();
@@ -227,6 +250,27 @@ export default function BudgetPage() {
   }, [editedPercentages]);
 
   const isValidTotal = Math.abs(totalPercentage - 100) < 0.1;
+
+  // --- Chart Data ---
+  const chartData = useMemo(() => {
+    return budgetCategories
+      .map((bc) => {
+        const style = getFolderStyle(bc.name);
+        return {
+          name: bc.name,
+          value: parseFloat(editedPercentages[bc.id] || "0"),
+          color: `hsl(var(--${style.color.replace("text-", "")}))`, // Extract variable name
+          fill: style.color.includes("necessities")
+            ? "hsl(var(--folder-necessities))"
+            : style.color.includes("desires")
+              ? "hsl(var(--folder-desires))"
+              : style.color.includes("savings")
+                ? "hsl(var(--folder-savings))"
+                : "hsl(var(--folder-generic))",
+        };
+      })
+      .filter((d) => d.value > 0);
+  }, [budgetCategories, editedPercentages]);
 
   // --- Handlers ---
 
@@ -331,15 +375,24 @@ export default function BudgetPage() {
     }
   };
 
-  const handleDeleteIncome = async (id: string) => {
-    if (!teamId || !userId) return;
-    if (!confirm("Excluir esta receita?")) return;
+  const handleDeleteIncome = (id: string) => {
+    setIncomeToDelete(id);
+  };
+
+  const confirmDeleteIncome = async () => {
+    if (!teamId || !userId || !incomeToDelete) return;
     try {
-      await deleteIncomeUseCase.execute({ incomeId: id, teamId, userId });
+      await deleteIncomeUseCase.execute({
+        incomeId: incomeToDelete,
+        teamId,
+        userId,
+      });
       notify.success("Receita excluída.");
       loadData();
     } catch (e: any) {
       notify.error(e, "excluir receita");
+    } finally {
+      setIncomeToDelete(null);
     }
   };
 
@@ -352,231 +405,309 @@ export default function BudgetPage() {
   }
 
   return (
-    <div className="space-y-8 pb-24 animate-in fade-in duration-500">
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.push("/dashboard")}
-          >
-            <ArrowLeft className="h-5 w-5 text-muted-foreground" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground tracking-tight">
-              Planejamento
-            </h1>
-            <p className="text-muted-foreground">
-              Defina as metas para o seu dinheiro.
-            </p>
+    <div className="min-h-screen bg-background pb-20 animate-in fade-in duration-500">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* HEADER */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full hover:bg-muted"
+              onClick={() => router.push("/dashboard")}
+            >
+              <ArrowLeft className="h-5 w-5 text-muted-foreground" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                Planejamento Financeiro
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Defina suas metas e acompanhe sua distribuição.
+              </p>
+            </div>
+          </div>
+
+          {/* Date Selector Pill */}
+          <div className="flex items-center bg-muted/50 p-1 rounded-full border border-border/50 shadow-sm">
+            <Select
+              value={selectedMonth.toString()}
+              onValueChange={(v) => setSelectedMonth(Number(v))}
+            >
+              <SelectTrigger className="w-[140px] border-0 h-9 rounded-full focus:ring-0 bg-background shadow-sm text-sm font-medium px-4">
+                <CalendarDays className="w-4 h-4 mr-2 text-primary" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
+                  <SelectItem key={m} value={m.toString()}>
+                    {new Date(0, m - 1).toLocaleString("pt-BR", {
+                      month: "long",
+                    })}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="w-px h-4 bg-border mx-1" />
+            <Select
+              value={selectedYear.toString()}
+              onValueChange={(v) => setSelectedYear(Number(v))}
+            >
+              <SelectTrigger className="w-[90px] border-0 h-9 rounded-full focus:ring-0 bg-transparent text-sm text-muted-foreground hover:text-foreground transition-colors px-3">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[2023, 2024, 2025, 2026].map((y) => (
+                  <SelectItem key={y} value={y.toString()}>
+                    {y}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        {/* Seletor de Data Limpo */}
-        <div className="flex items-center bg-card p-1 rounded-full border border-border shadow-sm">
-          <Select
-            value={selectedMonth.toString()}
-            onValueChange={(v) => setSelectedMonth(Number(v))}
-          >
-            <SelectTrigger className="w-[140px] border-0 h-9 rounded-l-full focus:ring-0 bg-transparent">
-              <CalendarDays className="w-4 h-4 mr-2 text-muted-foreground" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
-                <SelectItem key={m} value={m.toString()}>
-                  {new Date(0, m - 1).toLocaleString("pt-BR", {
-                    month: "long",
-                  })}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="h-4 w-[1px] bg-border" />
-          <Select
-            value={selectedYear.toString()}
-            onValueChange={(v) => setSelectedYear(Number(v))}
-          >
-            <SelectTrigger className="w-[80px] border-0 h-9 rounded-r-full focus:ring-0 bg-transparent">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {[2023, 2024, 2025, 2026].map((y) => (
-                <SelectItem key={y} value={y.toString()}>
-                  {y}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <Tabs defaultValue="planning" className="w-full">
-        <TabsList className="w-full max-w-md grid grid-cols-2 mb-8 p-1 bg-muted/80 backdrop-blur rounded-xl">
-          <TabsTrigger
-            value="planning"
-            className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"
-          >
-            Distribuição
-          </TabsTrigger>
-          <TabsTrigger
-            value="incomes"
-            className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"
-          >
-            Receitas
-          </TabsTrigger>
-        </TabsList>
-
-        {/* --- TAB 1: PLANEJAMENTO FINANCEIRO --- */}
-        <TabsContent value="planning" className="space-y-8">
-          {/* HERO CARD: RENDA PLANEJADA */}
-          <div className="relative overflow-hidden bg-card rounded-2xl border border-border shadow-sm p-8">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
-
-            <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-8">
-              <div className="space-y-4 flex-1">
-                <Label
-                  htmlFor="income-input"
-                  className="text-muted-foreground font-medium uppercase tracking-wide text-xs flex items-center gap-2"
-                >
-                  <Wallet className="w-4 h-4" /> Renda total disponível para{" "}
-                  {new Date(0, selectedMonth - 1).toLocaleString("pt-BR", {
-                    month: "long",
-                  })}
-                </Label>
-                <div className="relative group">
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-4xl font-bold text-muted-foreground/30 group-focus-within:text-primary transition-colors">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* LEFT COLUMN - STICKY SIDEBAR */}
+          <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-8">
+            {/* Income Card */}
+            <Card className="border-border/50 shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden relative">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-primary/50" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                  <Wallet className="w-4 h-4" /> Renda Planejada
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-baseline gap-1 mb-2">
+                  <span className="text-xl md:text-2xl font-medium text-muted-foreground">
                     R$
                   </span>
                   <Input
-                    id="income-input"
                     type="number"
-                    className="ml-14 text-5xl md:text-6xl font-bold h-auto border-none shadow-none bg-transparent focus-visible:ring-0 p-0 text-foreground placeholder:text-muted-foreground/20"
+                    className="text-3xl md:text-4xl font-bold border-none shadow-none p-0 h-auto focus-visible:ring-0 bg-transparent placeholder:text-muted-foreground/20"
+                    placeholder="0"
                     value={plannedIncome}
                     onChange={(e) => setPlannedIncome(e.target.value)}
-                    placeholder="0"
                   />
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Defina quanto dinheiro vai entrar. O app distribuirá
-                  automaticamente abaixo.
-                </p>
-              </div>
+                {suggestedIncome > 0 && suggestedIncome !== numericIncome && (
+                  <div
+                    onClick={handleUseSuggestedIncome}
+                    className="mt-4 flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10 cursor-pointer hover:bg-primary/10 transition-colors group"
+                  >
+                    <div className="p-2 bg-background rounded-full shadow-sm">
+                      <Sparkles className="w-4 h-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-primary">
+                        Sugestão Inteligente
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Usar R${" "}
+                        {suggestedIncome.toLocaleString("pt-BR", {
+                          minimumFractionDigits: 2,
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-              {/* Sugestão Inteligente */}
-              {suggestedIncome > 0 && suggestedIncome !== numericIncome && (
-                <div
-                  className="flex items-center gap-3 bg-primary/10 backdrop-blur-sm p-3 pr-4 rounded-xl border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors group"
-                  onClick={handleUseSuggestedIncome}
-                >
-                  <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                    <Sparkles className="w-5 h-5 text-primary" />
+            {/* Distribution Chart */}
+            <Card className="border-border/50 shadow-card overflow-hidden">
+              <CardHeader className="pb-0">
+                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                  <PieChart className="w-4 h-4" /> Distribuição
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="h-[200px] w-full relative">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <Pie
+                        data={chartData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                        stroke="none"
+                      >
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip
+                        formatter={(value: number) => [`${value}%`, ""]}
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--popover))",
+                          borderColor: "hsl(var(--border))",
+                          borderRadius: "8px",
+                          boxShadow: "var(--shadow-card)",
+                        }}
+                        itemStyle={{ color: "hsl(var(--foreground))" }}
+                      />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                  {/* Center Text */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-3xl font-bold text-foreground">
+                      {totalPercentage.toFixed(0)}%
+                    </span>
+                    <span className="text-xs text-muted-foreground font-medium">
+                      Alocado
+                    </span>
                   </div>
-                  <div>
-                    <p className="text-xs font-bold text-primary uppercase">
-                      Sugestão Detectada
-                    </p>
-                    <p className="text-sm text-foreground font-medium">
-                      Usar R${" "}
-                      {suggestedIncome.toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </p>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-primary/60 ml-2" />
                 </div>
+
+                {/* Legend */}
+                <div className="mt-6 space-y-3">
+                  {chartData.map((item) => (
+                    <div
+                      key={item.name}
+                      className="flex items-center justify-between text-sm"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: item.fill }}
+                        />
+                        <span className="text-muted-foreground font-medium">
+                          {item.name}
+                        </span>
+                      </div>
+                      <span className="font-bold text-foreground">
+                        {item.value}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Save Action (Desktop Only) */}
+            <div className="hidden lg:block bg-card border border-border/50 rounded-xl p-4 shadow-card sticky bottom-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  {isValidTotal ? (
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                  ) : (
+                    <AlertCircle className="w-5 h-5 text-destructive" />
+                  )}
+                  <span
+                    className={`text-sm font-medium ${
+                      isValidTotal ? "text-emerald-600" : "text-destructive"
+                    }`}
+                  >
+                    {isValidTotal ? "Orçamento Válido" : "Ajuste para 100%"}
+                  </span>
+                </div>
+              </div>
+              {!isValidTotal && (
+                <p className="text-xs text-muted-foreground mb-4">
+                  A soma das porcentagens deve completar os 100% para salvar.
+                </p>
               )}
+              <Button
+                className="w-full font-bold shadow-button hover:shadow-lg transition-all"
+                size="lg"
+                onClick={handleSaveBudget}
+                disabled={isSaving || !isValidTotal}
+              >
+                {isSaving ? (
+                  <Loader2 className="animate-spin w-4 h-4 mr-2" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                Salvar Planejamento
+              </Button>
             </div>
           </div>
 
-          {/* SLIDERS DE DISTRIBUIÇÃO */}
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                <PieChart className="w-5 h-5 text-muted-foreground" />{" "}
-                Distribuição do Orçamento
-              </h3>
-              <Badge
-                variant={isValidTotal ? "outline" : "destructive"}
-                className={
-                  isValidTotal
-                    ? "bg-success/10 text-success border-success/20"
-                    : ""
-                }
-              >
-                Total: {totalPercentage.toFixed(0)}%
-              </Badge>
-            </div>
+          {/* RIGHT COLUMN - CONTENT */}
+          <div className="lg:col-span-8 space-y-10">
+            {/* Categories Grid */}
+            <section>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <Target className="w-5 h-5 text-primary" /> Categorias de
+                  Orçamento
+                </h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push("/categories")}
+                >
+                  Gerenciar Categorias
+                </Button>
+              </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {budgetCategories.map((bc) => {
-                const percStr = editedPercentages[bc.id] || "0";
-                const percNum = parseFloat(percStr) || 0;
-                const amount = (numericIncome * percNum) / 100;
-                const style = getFolderStyle(bc.name);
-                const catsInFolder = categories.filter(
-                  (c) => c.budgetCategoryId === bc.id
-                );
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {budgetCategories.map((bc) => {
+                  const percStr = editedPercentages[bc.id] || "0";
+                  const percNum = parseFloat(percStr) || 0;
+                  const amount = (numericIncome * percNum) / 100;
+                  const style = getFolderStyle(bc.name);
+                  const catsInFolder = categories.filter(
+                    (c) => c.budgetCategoryId === bc.id
+                  );
 
-                return (
-                  <Card
-                    key={bc.id}
-                    className={`group border-2 hover:border-opacity-100 transition-all duration-300 ${
-                      style.bg
-                    } border-transparent hover:${style.border.replace(
-                      "border-",
-                      "border-"
-                    )}`}
-                  >
-                    <CardHeader className="pb-2">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${style.iconColor}`}>
-                            <Target className="w-5 h-5" />
+                  return (
+                    <Card
+                      key={bc.id}
+                      className={`group border border-border/50 hover:border-border transition-all duration-300 shadow-sm hover:shadow-card-hover ${style.bg.replace(
+                        "/10",
+                        "/5"
+                      )}`}
+                    >
+                      <CardHeader className="pb-2">
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`p-2.5 rounded-xl ${style.iconColor} bg-opacity-15 shadow-sm`}
+                            >
+                              <Target className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <h4
+                                className={`font-bold text-lg leading-none ${style.color}`}
+                              >
+                                {bc.name}
+                              </h4>
+                              <p className="text-muted-foreground text-xs font-medium mt-1">
+                                Meta: {percNum}%
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className={`font-bold text-lg ${style.color}`}>
-                              {bc.name}
-                            </h4>
-                            <p className="text-muted-foreground text-xs font-medium">
-                              Meta de alocação
-                            </p>
+                          <div className="flex items-center bg-background/50 rounded-lg border border-border/50 px-2 py-1">
+                            <Input
+                              type="number"
+                              className="w-12 text-right font-bold h-auto p-0 border-none bg-transparent focus-visible:ring-0 text-foreground"
+                              value={percStr}
+                              onChange={(e) =>
+                                handlePercentageChange(bc.id, e.target.value)
+                              }
+                            />
+                            <span className="text-xs font-bold text-muted-foreground ml-1">
+                              %
+                            </span>
                           </div>
                         </div>
-
-                        {/* Input Manual de Porcentagem */}
-                        <div className="flex items-baseline gap-1 bg-background/50 rounded-lg px-2 border border-transparent hover:border-border focus-within:border-primary transition-colors">
-                          <Input
-                            type="number"
-                            className="w-14 text-right text-2xl font-bold h-auto p-0 border-none bg-transparent focus-visible:ring-0 text-foreground placeholder:text-muted-foreground"
-                            value={percStr}
-                            onChange={(e) =>
-                              handlePercentageChange(bc.id, e.target.value)
-                            }
-                            min={0}
-                            max={100}
-                            disabled={!can("MANAGE_BUDGET")}
-                          />
-                          <span className="text-sm font-bold text-muted-foreground">
-                            %
-                          </span>
+                      </CardHeader>
+                      <CardContent className="p-4 md:p-5 pt-2 space-y-4">
+                        <div className="flex items-end justify-between">
+                          <p className="text-xl md:text-2xl font-bold text-foreground tracking-tight">
+                            {amount.toLocaleString("pt-BR", {
+                              style: "currency",
+                              currency: "BRL",
+                              maximumFractionDigits: 0,
+                            })}
+                          </p>
                         </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-5 pt-2 space-y-6">
-                      <div className="text-center py-2">
-                        <p className="text-2xl font-bold text-foreground">
-                          {amount.toLocaleString("pt-BR", {
-                            style: "currency",
-                            currency: "BRL",
-                            maximumFractionDigits: 0,
-                          })}
-                        </p>
-                      </div>
 
-                      {/* Slider Interativo */}
-                      <div className="space-y-2">
                         <Slider
                           value={[percNum]}
                           max={100}
@@ -585,306 +716,330 @@ export default function BudgetPage() {
                             handleSliderChange(bc.id, vals[0])
                           }
                           disabled={!can("MANAGE_BUDGET")}
-                          className="cursor-grab active:cursor-grabbing py-2"
+                          className="cursor-grab active:cursor-grabbing"
                         />
-                      </div>
 
-                      {/* Categorias Inclusas */}
-                      <div className="pt-4 border-t border-border/60">
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase mb-2">
-                          Inclui gastos como:
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {catsInFolder.slice(0, 4).map((c) => (
-                            <span
-                              key={c.id}
-                              className="text-[11px] px-2 py-1 bg-background border border-border text-muted-foreground rounded-md shadow-sm"
-                            >
-                              {c.name}
-                            </span>
-                          ))}
-                          {catsInFolder.length > 4 && (
-                            <span className="text-[11px] px-2 py-1 text-muted-foreground">
-                              +{catsInFolder.length - 4}
-                            </span>
-                          )}
-                          <button
-                            onClick={() => router.push("/categories")}
-                            className="text-[11px] px-2 py-1 bg-muted hover:bg-muted/80 text-muted-foreground rounded-md transition-colors"
-                          >
-                            <Edit2 className="w-3 h-3" />
-                          </button>
+                        <div className="pt-3 border-t border-border/30">
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase mb-2">
+                            Inclui
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {catsInFolder.slice(0, 3).map((c) => (
+                              <span
+                                key={c.id}
+                                className="text-[10px] px-2 py-0.5 bg-muted/50 border border-border/30 text-muted-foreground rounded-full"
+                              >
+                                {c.name}
+                              </span>
+                            ))}
+                            {catsInFolder.length > 3 && (
+                              <span className="text-[10px] px-2 py-0.5 text-muted-foreground font-medium">
+                                +{catsInFolder.length - 3}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* FLOAT SAVE BAR */}
-          <div className="fixed bottom-20 right-0 z-20 w-full max-w-md px-4">
-            <div
-              className={`bg-foreground text-background p-2 pr-3 rounded-full shadow-2xl flex items-center justify-between transition-all duration-300 ${
-                isValidTotal
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-24 opacity-0"
-              }`}
-            >
-              <div className="flex items-center gap-3 pl-4">
-                <CheckCircle2 className="w-5 h-5 text-green-400" />
-                <span className="text-sm font-medium">Pronto para salvar</span>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
-              {can("MANAGE_BUDGET") && (
-                <Button
-                  size="sm"
-                  onClick={handleSaveBudget}
-                  disabled={isSaving}
-                  className="bg-background text-foreground hover:bg-muted rounded-full px-6 font-bold"
-                >
-                  {isSaving ? (
-                    <Loader2 className="animate-spin w-4 h-4" />
-                  ) : (
-                    "Confirmar"
-                  )}
-                </Button>
-              )}
-            </div>
+            </section>
 
-            {/* Mensagem de Erro Flutuante se inválido */}
-            {!isValidTotal && (
-              <div className="bg-destructive text-destructive-foreground px-4 py-2 rounded-full shadow-lg flex items-center justify-center gap-2 text-sm font-medium animate-pulse">
-                <AlertCircle className="w-4 h-4" />
-                Ajuste os percentuais para somar 100% (Atual:{" "}
-                {totalPercentage.toFixed(0)}%)
-              </div>
-            )}
-          </div>
-        </TabsContent>
-
-        {/* --- TAB 2: RECEITAS --- */}
-        <TabsContent value="incomes" className="space-y-6">
-          <div className="flex justify-between items-end mb-4">
-            <div>
-              <h3 className="text-xl font-bold text-foreground">
-                Minhas Fontes de Renda
-              </h3>
-              <p className="text-muted-foreground text-sm">
-                Cadastre aqui o que compõe sua renda mensal.
-              </p>
-            </div>
-            <Dialog
-              open={isIncomeDialogOpen}
-              onOpenChange={setIsIncomeDialogOpen}
-            >
-              {can("MANAGE_BUDGET") && (
-                <DialogTrigger asChild>
+            {/* Income Sources Section */}
+            <section className="bg-muted/30 rounded-2xl p-6 border border-border/50">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-emerald-500" /> Fontes
+                    de Renda
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Gerencie suas entradas recorrentes e extras.
+                  </p>
+                </div>
+                {can("MANAGE_BUDGET") && (
                   <Button
-                    onClick={() => setEditingIncome(null)}
+                    onClick={() => {
+                      setEditingIncome(null);
+                      setIsIncomeDialogOpen(true);
+                    }}
+                    size="sm"
                     className="rounded-full"
                   >
                     <Plus className="w-4 h-4 mr-2" /> Nova Receita
                   </Button>
-                </DialogTrigger>
-              )}
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingIncome ? "Editar Receita" : "Adicionar Receita"}
-                  </DialogTitle>
-                  <DialogDescription>
-                    Informe os detalhes da entrada.
-                  </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSaveIncome} className="space-y-4 mt-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Valor (R$)</Label>
-                      <Input
-                        name="amount"
-                        type="number"
-                        step="0.01"
-                        required
-                        defaultValue={editingIncome?.amount}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Data</Label>
-                      <Input
-                        name="date"
-                        type="date"
-                        required
-                        defaultValue={
-                          editingIncome?.date ||
-                          new Date().toISOString().split("T")[0]
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Descrição</Label>
-                    <Input
-                      name="description"
-                      placeholder="Ex: Salário Mensal"
-                      required
-                      defaultValue={editingIncome?.description || ""}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Tipo</Label>
-                      <Select
-                        name="type"
-                        defaultValue={editingIncome?.type || "recurring"}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="recurring">Recorrente</SelectItem>
-                          <SelectItem value="one_time">Única</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Frequência</Label>
-                      <Select
-                        name="frequency"
-                        defaultValue={editingIncome?.frequency || "monthly"}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="monthly">Mensal</SelectItem>
-                          <SelectItem value="weekly">Semanal</SelectItem>
-                          <SelectItem value="yearly">Anual</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="pt-4 flex justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      type="button"
-                      onClick={() => setIsIncomeDialogOpen(false)}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button type="submit" disabled={isSaving}>
-                      {isSaving ? (
-                        <Loader2 className="animate-spin" />
-                      ) : (
-                        "Salvar"
-                      )}
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
+                )}
+              </div>
 
-          {isLoading ? (
-            <div className="text-center py-12">
-              <Loader2 className="animate-spin mx-auto text-muted-foreground w-8 h-8" />
-            </div>
-          ) : incomes.length === 0 ? (
-            <Card className="border-dashed bg-muted/50 border-border">
-              <CardContent className="py-16 text-center text-muted-foreground flex flex-col items-center">
-                <div className="bg-background p-4 rounded-full shadow-sm mb-4">
-                  <Wallet className="w-8 h-8 text-muted-foreground/50" />
-                </div>
-                <p className="font-medium text-foreground">
-                  Nenhuma receita cadastrada.
-                </p>
-                <p className="text-sm mb-4">
-                  Adicione seu salário ou rendas extras para começar.
-                </p>
-                {can("MANAGE_BUDGET") && (
+              {incomes.length === 0 ? (
+                <div className="text-center py-10 border-2 border-dashed border-border/50 rounded-xl bg-background/50">
+                  <div className="bg-muted/50 p-3 rounded-full w-fit mx-auto mb-3">
+                    <Wallet className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-sm font-bold text-foreground">
+                    Nenhuma receita cadastrada
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1 mb-4 max-w-[200px] mx-auto">
+                    Adicione suas fontes de renda para começar a planejar.
+                  </p>
                   <Button
                     variant="outline"
-                    onClick={() => setIsIncomeDialogOpen(true)}
+                    size="sm"
+                    onClick={() => {
+                      setEditingIncome(null);
+                      setIsIncomeDialogOpen(true);
+                    }}
                   >
-                    Adicionar Agora
+                    Adicionar Receita
                   </Button>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-3">
-              {incomes.map((inc) => (
-                <div
-                  key={inc.id}
-                  className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-card border border-border rounded-xl hover:shadow-md hover:border-primary/20 transition-all"
-                >
-                  <div className="flex items-center gap-4 mb-3 sm:mb-0">
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {incomes.map((income) => (
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        inc.type === "recurring"
-                          ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
-                          : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                      }`}
+                      key={income.id}
+                      className="bg-background border border-border/50 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:shadow-card-hover transition-all duration-300 group"
                     >
-                      {inc.type === "recurring" ? (
-                        <RefreshCw className="w-5 h-5" />
-                      ) : (
-                        <DollarSign className="w-5 h-5" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-bold text-foreground text-base">
-                        {inc.description}
-                      </p>
-                      <p className="text-xs text-muted-foreground flex gap-2 items-center mt-0.5">
-                        <CalendarDays className="w-3 h-3" />
-                        <span>{new Date(inc.date).toLocaleDateString()}</span>
-                        <span className="w-1 h-1 bg-muted-foreground/30 rounded-full"></span>
-                        <span className="capitalize">
-                          {inc.type === "recurring" ? "Recorrente" : "Pontual"}
+                      <div className="flex items-start gap-4">
+                        <div className="p-2 bg-emerald-500/10 text-emerald-600 rounded-lg shrink-0">
+                          <DollarSign className="w-5 h-5" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="font-bold text-foreground line-clamp-1 break-all">
+                            {income.description}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] h-5"
+                            >
+                              {income.type === "recurring"
+                                ? "Recorrente"
+                                : "Única"}
+                            </Badge>
+                            <span>
+                              {new Date(
+                                income.date.replace(/-/g, "/")
+                              ).toLocaleDateString("pt-BR")}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between sm:justify-end gap-4 pl-14 sm:pl-0">
+                        <span className="font-bold text-foreground text-lg whitespace-nowrap">
+                          R${" "}
+                          {income.amount.toLocaleString("pt-BR", {
+                            minimumFractionDigits: 2,
+                          })}
                         </span>
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end pl-14 sm:pl-0">
-                    <span className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
-                      {inc.amount.toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      })}
-                    </span>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {can("MANAGE_BUDGET") && (
-                        <>
+                        <div className="flex gap-1">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8"
+                            className="h-8 w-8 text-muted-foreground hover:text-primary"
                             onClick={() => {
-                              setEditingIncome(inc);
+                              setEditingIncome(income);
                               setIsIncomeDialogOpen(true);
                             }}
                           >
-                            <Edit2 className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                            <Edit2 className="w-4 h-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleDeleteIncome(inc.id)}
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => handleDeleteIncome(income.id)}
                           >
-                            <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                            <Trash2 className="w-4 h-4" />
                           </Button>
-                        </>
-                      )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              )}
+            </section>
+          </div>
+        </div>
+
+        {/* Mobile Floating Save Bar */}
+        <div className="lg:hidden fixed bottom-24 left-4 right-4 z-50 flex flex-col gap-2">
+          {!isValidTotal && (
+            <div className="mx-auto">
+              <p className="text-[10px] text-muted-foreground bg-background/95 backdrop-blur-md px-3 py-1.5 rounded-full border border-border/50 shadow-sm text-center">
+                A soma das porcentagens deve completar os 100% para salvar.
+              </p>
             </div>
           )}
-        </TabsContent>
-      </Tabs>
+          <div
+            className={`bg-background/80 backdrop-blur-md border border-border/50 p-3 rounded-2xl shadow-lg flex items-center justify-between transition-all duration-300 ${
+              isValidTotal
+                ? "translate-y-0 opacity-100"
+                : "translate-y-0 opacity-100"
+            }`}
+          >
+            <div className="flex items-center gap-3 pl-2">
+              <div
+                className={`p-2 rounded-full ${isValidTotal ? "bg-emerald-500/10 text-emerald-600" : "bg-destructive/10 text-destructive"}`}
+              >
+                {isValidTotal ? (
+                  <CheckCircle2 className="w-5 h-5" />
+                ) : (
+                  <AlertCircle className="w-5 h-5" />
+                )}
+              </div>
+              <div className="flex flex-col">
+                <span
+                  className={`text-sm font-bold leading-none ${isValidTotal ? "text-emerald-600" : "text-destructive"}`}
+                >
+                  {isValidTotal ? "Orçamento Válido" : "Ajuste Necessário"}
+                </span>
+                <span className="text-[10px] text-muted-foreground font-medium">
+                  {isValidTotal
+                    ? "Pronto para salvar"
+                    : `Total atual: ${totalPercentage.toFixed(0)}%`}
+                </span>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              onClick={handleSaveBudget}
+              disabled={isSaving || !isValidTotal}
+              className={`rounded-xl px-6 font-bold h-10 shadow-sm ${isValidTotal ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-muted text-muted-foreground"}`}
+            >
+              {isSaving ? (
+                <Loader2 className="animate-spin w-4 h-4" />
+              ) : (
+                "Salvar"
+              )}
+            </Button>
+          </div>
+        </div>
+
+        <AlertDialog
+          open={!!incomeToDelete}
+          onOpenChange={(open) => !open && setIncomeToDelete(null)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir receita?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação não pode ser desfeita. Isso excluirá permanentemente a
+                receita do seu planejamento.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDeleteIncome}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Income Dialog (Hidden) */}
+        <Dialog open={isIncomeDialogOpen} onOpenChange={setIsIncomeDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {editingIncome ? "Editar Receita" : "Adicionar Receita"}
+              </DialogTitle>
+              <DialogDescription>
+                Informe os detalhes da entrada.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSaveIncome} className="space-y-4 mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Valor (R$)</Label>
+                  <Input
+                    name="amount"
+                    type="number"
+                    step="0.01"
+                    required
+                    defaultValue={editingIncome?.amount}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Data</Label>
+                  <Input
+                    name="date"
+                    type="date"
+                    required
+                    defaultValue={
+                      editingIncome?.date ||
+                      new Date().toISOString().split("T")[0]
+                    }
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Descrição</Label>
+                <Input
+                  name="description"
+                  placeholder="Ex: Salário Mensal"
+                  required
+                  defaultValue={editingIncome?.description || ""}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Tipo</Label>
+                  <Select
+                    name="type"
+                    defaultValue={editingIncome?.type || "recurring"}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="recurring">Recorrente</SelectItem>
+                      <SelectItem value="one_time">Única</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Frequência</Label>
+                  <Select
+                    name="frequency"
+                    defaultValue={editingIncome?.frequency || "monthly"}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Mensal</SelectItem>
+                      <SelectItem value="weekly">Semanal</SelectItem>
+                      <SelectItem value="yearly">Anual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="pt-4 flex justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  type="button"
+                  onClick={() => setIsIncomeDialogOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={isSaving}>
+                  {isSaving ? (
+                    <Loader2 className="animate-spin w-4 h-4 mr-2" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  Salvar
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }

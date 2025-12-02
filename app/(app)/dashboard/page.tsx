@@ -10,9 +10,13 @@ import {
 } from "@/infrastructure/dependency-injection";
 import type { DashboardDataDTO } from "@/domain/dto/dashboard.types.d.ts";
 import { notify } from "@/lib/notify-helper";
-import { Loader2, Wallet } from "lucide-react";
 
-// Components
+// Layout Components
+import { PageContainer, Section } from "@/components/layout";
+import { LoadingState, EmptyState } from "@/components/lemon";
+import { Button } from "@/components/ui/button";
+
+// Dashboard Components
 import { DashboardHeader } from "./components/dashboard-header";
 import { SummaryCards } from "./components/summary-cards";
 import { BudgetHealth } from "./components/budget-health";
@@ -63,16 +67,11 @@ export default function DashboardPage() {
   };
 
   if (authLoading || !session || !currentTeam) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="animate-spin h-8 w-8 text-primary" />
-      </div>
-    );
+    return <LoadingState message="Preparando seu painel financeiro..." />;
   }
 
   return (
-    <div className="space-y-8 pb-20 animate-in fade-in duration-500 max-w-7xl mx-auto p-4 md:p-8">
-      {/* HEADER */}
+    <PageContainer>
       <DashboardHeader
         userName={session.user.name.split(" ")[0]}
         teamName={currentTeam.team.name}
@@ -84,22 +83,51 @@ export default function DashboardPage() {
         onLogout={handleLogout}
       />
 
-      {/* SUMMARY CARDS */}
-      <SummaryCards data={data} isLoading={isLoadingData} />
+      <Section
+        title="Resumo Financeiro"
+        description="Suas principais métricas deste mês"
+      >
+        {isLoadingData ? (
+          <LoadingState message="Carregando resumo..." />
+        ) : (
+          <SummaryCards data={data} isLoading={false} />
+        )}
+      </Section>
 
-      {/* BUDGET HEALTH */}
-      {data && data.folders.length > 0 && (
-        <BudgetHealth folders={data.folders} />
-      )}
+      <Section
+        title="Saúde do Orçamento"
+        description="Acompanhe seus limites de gastos"
+      >
+        {isLoadingData ? (
+          <LoadingState message="Verificando orçamentos..." />
+        ) : data && data.folders.length > 0 ? (
+          <BudgetHealth folders={data.folders} />
+        ) : (
+          <EmptyState
+            title="Nenhum orçamento configurado"
+            message="Configure seus primeiros limites de gastos para acompanhar a saúde financeira do casal."
+            action={
+              <Button onClick={() => router.push("/budget")}>
+                Criar primeiro orçamento
+              </Button>
+            }
+          />
+        )}
+      </Section>
 
-      {/* CHARTS & TRANSACTIONS */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Daily Flow Chart */}
-        <DailyFlowChart data={data?.dailySpending || []} />
-
-        {/* Recent Transactions */}
-        <RecentTransactions transactions={data?.recentTransactions || []} />
-      </div>
-    </div>
+      <Section
+        title="Atividade Recente"
+        description="Fluxo diário e últimas transações"
+      >
+        {isLoadingData ? (
+          <LoadingState message="Buscando transações..." />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <DailyFlowChart data={data?.dailySpending || []} />
+            <RecentTransactions transactions={data?.recentTransactions || []} />
+          </div>
+        )}
+      </Section>
+    </PageContainer>
   );
 }
