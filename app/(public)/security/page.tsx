@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import {
   ShieldCheck,
-  Lock,
   Server,
   RefreshCw,
   FileKey,

@@ -6,19 +6,16 @@ import { useAuth } from "@/app/auth/auth-provider";
 import { useTeam } from "../team/team-provider";
 import { usePermission } from "@/hooks/use-permission";
 import { notify } from "@/lib/notify-helper";
-
-// Use Cases
 import {
-  getCategoriesUseCase,
-  getBudgetCategoriesUseCase,
-  createCategoryUseCase,
-  updateCategoryUseCase,
-  deleteCategoryUseCase,
-} from "@/infrastructure/dependency-injection";
+  useCategories,
+  useBudgetCategories,
+  useCreateCategory,
+  useUpdateCategory,
+  useDeleteCategory,
+} from "@/hooks/use-categories";
 
 // Types
 import type { CategoryDetailsDTO } from "@/domain/dto/category.types.d.ts";
-import type { BudgetCategoryDetailsDTO } from "@/domain/dto/budget-category.types.d.ts";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -37,7 +34,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -62,12 +58,13 @@ import {
   Wallet,
   Sparkles,
 } from "lucide-react";
+import { LoadingState } from "@/components/lemon/loading-state";
 
 // --- Visual Configuration ---
 const FOLDER_CONFIG: Record<
   string,
   {
-    icon: any;
+    icon: React.ElementType;
     bg: string;
     text: string;
     border: string;
@@ -128,13 +125,26 @@ export default function CategoriesPage() {
   const { can } = usePermission();
   const router = useRouter();
 
+  const teamId = currentTeam?.team.id;
+  const userId = session?.user.id;
+
+  // React Query Hooks
+  const { data: categories = [], isLoading: isLoadingCategories } =
+    useCategories(teamId);
+  const { data: budgetCategories = [], isLoading: isLoadingBudgetCats } =
+    useBudgetCategories(teamId);
+
+  const createCategoryMutation = useCreateCategory();
+  const updateCategoryMutation = useUpdateCategory();
+  const deleteCategoryMutation = useDeleteCategory();
+
+  const isLoading = isLoadingCategories || isLoadingBudgetCats;
+  const isMutating =
+    createCategoryMutation.isPending ||
+    updateCategoryMutation.isPending ||
+    deleteCategoryMutation.isPending;
+
   // --- State Management ---
-  const [categories, setCategories] = useState<CategoryDetailsDTO[]>([]);
-  const [budgetCategories, setBudgetCategories] = useState<
-    BudgetCategoryDetailsDTO[]
-  >([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingData, setIsLoadingData] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
   // --- Modal State ---
@@ -142,36 +152,12 @@ export default function CategoriesPage() {
     useState<CategoryDetailsDTO | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const teamId = currentTeam?.team.id;
-  const userId = session?.user.id;
-
   // 1. Authentication Check
   useEffect(() => {
     if (authLoading) return;
     if (!session || !userId) router.push("/auth");
     if (!teamId) router.push("/onboarding");
   }, [session, userId, teamId, authLoading, router]);
-
-  // 2. Data Loading
-  useEffect(() => {
-    if (teamId) loadData();
-  }, [teamId]);
-
-  const loadData = async () => {
-    setIsLoadingData(true);
-    try {
-      const [cats, budCats] = await Promise.all([
-        getCategoriesUseCase.execute(teamId!),
-        getBudgetCategoriesUseCase.execute(teamId!),
-      ]);
-      setCategories(cats);
-      setBudgetCategories(budCats);
-    } catch (error: any) {
-      notify.error(error, "carregar dados");
-    } finally {
-      setIsLoadingData(false);
-    }
-  };
 
   // 3. Category Grouping
   const groupedCategories = useMemo(() => {
@@ -203,7 +189,6 @@ export default function CategoriesPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!teamId || !userId) return;
-    setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name") as string;
@@ -211,7 +196,7 @@ export default function CategoriesPage() {
 
     try {
       if (editingCategory) {
-        await updateCategoryUseCase.execute({
+        await updateCategoryMutation.mutateAsync({
           categoryId: editingCategory.id,
           teamId,
           userId,
@@ -220,7 +205,7 @@ export default function CategoriesPage() {
         });
         notify.success("Categoria atualizada!");
       } else {
-        await createCategoryUseCase.execute({
+        await createCategoryMutation.mutateAsync({
           name,
           budgetCategoryId,
           teamId,
@@ -230,25 +215,22 @@ export default function CategoriesPage() {
       }
       setIsDialogOpen(false);
       setEditingCategory(null);
-      await loadData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "salvar categoria");
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!teamId || !userId || !confirm("Excluir esta categoria?")) return;
-    setIsLoading(true);
     try {
-      await deleteCategoryUseCase.execute({ categoryId: id, teamId, userId });
+      await deleteCategoryMutation.mutateAsync({
+        categoryId: id,
+        teamId,
+        userId,
+      });
       notify.success("Categoria excluída.");
-      await loadData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "excluir categoria");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -257,12 +239,8 @@ export default function CategoriesPage() {
     setIsDialogOpen(true);
   };
 
-  if (authLoading || isLoadingData || !session || !teamId) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="animate-spin h-8 w-8 text-primary" />
-      </div>
-    );
+  if (authLoading || isLoading || !session || !teamId) {
+    return <LoadingState message="Carregando categorias..." />;
   }
 
   return (
@@ -416,7 +394,7 @@ export default function CategoriesPage() {
             );
           })}
 
-          {categories.length === 0 && !isLoadingData && (
+          {categories.length === 0 && !isLoading && (
             <div className="text-center py-20">
               <div className="bg-muted w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Sparkles className="w-8 h-8 text-muted-foreground" />
@@ -524,10 +502,10 @@ export default function CategoriesPage() {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isMutating}
                     className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
-                    {isLoading ? (
+                    {isMutating ? (
                       <Loader2 className="animate-spin w-4 h-4" />
                     ) : (
                       "Salvar"

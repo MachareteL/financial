@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { ManageMembersUseCase } from "./manage-members.use-case";
 import { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 import type {
@@ -44,7 +44,7 @@ describe("ManageMembersUseCase", () => {
   });
 
   it("should throw error if invite permission denied", async () => {
-    (teamRepository.verifyPermission as any).mockResolvedValue(false);
+    (teamRepository.verifyPermission as Mock).mockResolvedValue(false);
 
     await expect(useCase.inviteMember(inviteDTO)).rejects.toThrow(
       "Permissão negada."
@@ -74,7 +74,7 @@ describe("ManageMembersUseCase", () => {
     // Mock that the member being removed does NOT have MANAGE_TEAM permission
     // First call is for the user performing the action (has permission)
     // Second call is checking the target member permissions
-    (teamRepository.verifyPermission as any)
+    (teamRepository.verifyPermission as Mock)
       .mockResolvedValueOnce(true)
       .mockResolvedValueOnce(false);
 
@@ -90,12 +90,12 @@ describe("ManageMembersUseCase", () => {
   it("should prevent removing last admin", async () => {
     // User has permission to remove
     // Target member HAS permission MANAGE_TEAM (is admin)
-    (teamRepository.verifyPermission as any)
+    (teamRepository.verifyPermission as Mock)
       .mockResolvedValueOnce(true)
       .mockResolvedValueOnce(true);
 
     // Only 1 admin left
-    (teamRepository.countMembersWithPermission as any).mockResolvedValue(1);
+    (teamRepository.countMembersWithPermission as Mock).mockResolvedValue(1);
 
     await expect(
       useCase.removeMember(

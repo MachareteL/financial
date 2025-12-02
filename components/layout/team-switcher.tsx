@@ -83,7 +83,7 @@ export function TeamSwitcher({ isMobile = false }: TeamSwitcherProps) {
       setShowNewTeamDialog(false);
       setOpen(false);
       setTeamName("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       notify.error(error, "criar a equipe");
     } finally {

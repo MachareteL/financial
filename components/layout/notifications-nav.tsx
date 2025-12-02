@@ -38,11 +38,13 @@ export function NotificationsNav() {
     if (isOpen) {
       fetchInvites();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, session?.user?.email]);
 
   // Initial fetch to show badge count
   useEffect(() => {
     fetchInvites();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.user?.email]);
 
   const handleAccept = async (inviteId: string) => {
@@ -126,12 +128,14 @@ export function NotificationsNav() {
                         <p className="text-sm font-medium">
                           Convite para{" "}
                           <span className="text-primary">
-                            {(invite as any).teamName || "Time"}
+                            {(invite as unknown as { teamName: string })
+                              .teamName || "Time"}
                           </span>
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Convidado por{" "}
-                          {(invite as any).invitedByName || "Alguém"}
+                          {(invite as unknown as { invitedByName: string })
+                            .invitedByName || "Alguém"}
                         </p>
                       </div>
                       <div className="flex gap-2">

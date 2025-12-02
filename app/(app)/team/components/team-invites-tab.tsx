@@ -34,7 +34,7 @@ export function TeamInvitesTab({ invites, onUpdate }: TeamInvitesTabProps) {
       );
       notify.success("Convite cancelado");
       await onUpdate();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "cancelar o convite");
     } finally {
       setLoadingId(null);
@@ -83,7 +83,9 @@ export function TeamInvitesTab({ invites, onUpdate }: TeamInvitesTabProps) {
                         {new Date(invite.createdAt).toLocaleDateString()}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
-                        por {(invite as any).invitedByName || "Alguém"}
+                        por{" "}
+                        {(invite as unknown as { invitedByName: string })
+                          .invitedByName || "Alguém"}
                       </span>
                     </div>
                   </div>

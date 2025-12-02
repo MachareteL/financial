@@ -13,13 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
@@ -28,29 +22,24 @@ import {
   CreditCard,
   AlertTriangle,
   Loader2,
-  Trash2,
   Save,
   Upload,
   X,
 } from "lucide-react";
-import { DeleteExpenseDialog } from "../../components/delete-expense-dialog";
+import { LoadingState } from "@/components/lemon/loading-state";
+import Image from "next/image";
 import { useAuth } from "@/app/auth/auth-provider";
 import { usePermission } from "@/hooks/use-permission";
 
-import {
-  getCategoriesUseCase,
-  getExpenseByIdUseCase,
-  updateExpenseUseCase,
-  deleteExpenseUseCase,
-} from "@/infrastructure/dependency-injection";
-import type { CategoryDetailsDTO } from "@/domain/dto/category.types.d.ts";
-import type {
-  ExpenseDetailsDTO,
-  UpdateExpenseDTO,
-} from "@/domain/dto/expense.types.d.ts";
+import { updateExpenseUseCase } from "@/infrastructure/dependency-injection";
+import type { UpdateExpenseDTO } from "@/domain/dto/expense.types.d.ts";
 import { useTeam } from "@/app/(app)/team/team-provider";
 import { notify } from "@/lib/notify-helper";
 import { compressImage } from "@/lib/compression";
+
+// Hooks
+import { useCategories } from "@/hooks/use-categories";
+import { useExpense } from "@/hooks/use-expenses";
 
 export default function EditExpensePage() {
   const { session, loading: authLoading } = useAuth();
@@ -64,15 +53,15 @@ export default function EditExpensePage() {
   const params = useParams();
   const expenseId = params.id as string;
 
-  // Estados
-  const [categories, setCategories] = useState<CategoryDetailsDTO[]>([]);
-  const [expense, setExpense] = useState<ExpenseDetailsDTO | null>(null);
+  // React Query Hooks
+  const { data: categories = [], isLoading: isLoadingCategories } =
+    useCategories(teamId);
+  const { data: expense, isLoading: isLoadingExpense } = useExpense({
+    expenseId,
+    teamId,
+  });
 
-  const [isLoadingData, setIsLoadingData] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
 
   // Formulário
   const [description, setDescription] = useState("");
@@ -87,6 +76,17 @@ export default function EditExpensePage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
+  // Inicializa o formulário quando os dados da despesa são carregados
+  useEffect(() => {
+    if (expense) {
+      setDescription(expense.description || "");
+      setAmount(expense.amount.toString());
+      setCategoryId(expense.categoryId);
+      setDate(expense.date);
+      setExistingReceiptUrl(expense.receiptUrl || null);
+    }
+  }, [expense]);
+
   useEffect(() => {
     if (authLoading) return;
     if (!session || !userId) {
@@ -97,40 +97,7 @@ export default function EditExpensePage() {
       router.push("/onboarding");
       return;
     }
-
-    const loadData = async () => {
-      setIsLoadingData(true);
-      try {
-        const [categoriesData, expenseData] = await Promise.all([
-          getCategoriesUseCase.execute(teamId),
-          getExpenseByIdUseCase.execute({ expenseId, teamId }),
-        ]);
-
-        setCategories(categoriesData);
-
-        if (expenseData) {
-          setExpense(expenseData);
-          setDescription(expenseData.description || "");
-          setAmount(expenseData.amount.toString());
-          setCategoryId(expenseData.categoryId);
-          setDate(expenseData.date);
-          setExistingReceiptUrl(expenseData.receiptUrl || null); // Salva a URL original
-        } else {
-          notify.error(
-            new Error("Despesa não encontrada"),
-            "carregar os dados da despesa"
-          );
-          router.push("/expenses");
-        }
-      } catch (error: any) {
-        notify.error(error, "carregar os dados da despesa");
-        router.push("/expenses");
-      } finally {
-        setIsLoadingData(false);
-      }
-    };
-    loadData();
-  }, [teamId, expenseId]);
+  }, [teamId, authLoading, session, userId, router]);
 
   // --- Lógica de Upload ---
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -202,46 +169,26 @@ export default function EditExpensePage() {
         description: "As alterações foram salvas com sucesso.",
       });
       router.push("/expenses");
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "salvar a despesa");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDelete = async () => {
-    if (!teamId || !userId || !expense) return;
+  if (authLoading || isLoadingCategories || isLoadingExpense) {
+    return <LoadingState message="Carregando dados da despesa..." />;
+  }
 
-    setIsDeleting(true);
-    try {
-      await deleteExpenseUseCase.execute({
-        expenseId: expense.id,
-        teamId,
-        userId,
-      });
-
-      notify.success("Despesa excluída!", {
-        description: "A despesa foi removida com sucesso.",
-      });
-
-      router.push("/expenses");
-    } catch (error: any) {
-      notify.error(error, "excluir a despesa");
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  if (authLoading || isLoadingData) {
+  if (!expense) {
+    // Se não está carregando e não tem despesa, provavelmente deu erro ou não existe
+    // Opcional: Redirecionar ou mostrar erro
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="animate-spin h-8 w-8 text-gray-900 mx-auto" />
+        <p>Despesa não encontrada.</p>
       </div>
     );
   }
-
-  if (!expense) return null;
-  const isReadOnly = false;
 
   // Determina qual imagem mostrar (Preview do novo upload OU Imagem existente)
   const displayImageUrl = previewUrl || existingReceiptUrl;
@@ -381,11 +328,26 @@ export default function EditExpensePage() {
                   {displayImageUrl ? (
                     <div className="space-y-4">
                       <div className="relative group">
-                        <img
-                          src={displayImageUrl}
-                          alt="Preview"
-                          className="max-w-full h-48 object-contain mx-auto rounded shadow-sm bg-white"
-                        />
+                        {displayImageUrl.startsWith("blob:") ? (
+                          <>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={displayImageUrl}
+                              alt="Preview"
+                              className="max-w-full h-48 object-contain mx-auto rounded shadow-sm bg-white"
+                            />
+                          </>
+                        ) : (
+                          <div className="relative w-full h-48">
+                            <Image
+                              src={displayImageUrl}
+                              alt="Preview"
+                              fill
+                              className="object-contain mx-auto rounded shadow-sm bg-white"
+                              sizes="(max-width: 768px) 100vw, 400px"
+                            />
+                          </div>
+                        )}
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded flex items-start justify-end p-2">
                           <Button
                             type="button"
@@ -439,37 +401,21 @@ export default function EditExpensePage() {
                   variant="outline"
                   onClick={() => router.back()}
                   className="flex-1"
-                  disabled={isLoading || isDeleting}
+                  disabled={isLoading}
                 >
                   Cancelar
                 </Button>
 
                 {can("MANAGE_EXPENSES") && (
-                  <>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      onClick={() => setShowDeleteDialog(true)}
-                      disabled={isLoading}
-                      className="w-full sm:w-auto"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" /> Excluir
-                    </Button>
-
-                    <Button
-                      type="submit"
-                      disabled={isLoading || isDeleting}
-                      className="flex-1"
-                    >
-                      {isLoading ? (
-                        <Loader2 className="animate-spin h-4 w-4" />
-                      ) : (
-                        <>
-                          <Save className="w-4 h-4 mr-2" /> Salvar
-                        </>
-                      )}
-                    </Button>
-                  </>
+                  <Button type="submit" disabled={isLoading} className="flex-1">
+                    {isLoading ? (
+                      <Loader2 className="animate-spin h-4 w-4" />
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" /> Salvar
+                      </>
+                    )}
+                  </Button>
                 )}
               </div>
             </form>

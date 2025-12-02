@@ -1,15 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  getPendingInvitesUseCase,
-  acceptInviteUseCase,
-  declineInviteUseCase,
-} from "@/infrastructure/dependency-injection";
 import { useAuth } from "@/app/auth/auth-provider";
 import { notify } from "@/lib/notify-helper";
-import type { TeamInviteDetailsDTO } from "@/domain/dto/team.types.d.ts";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,70 +11,62 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { UserPlus, Mail } from "lucide-react";
+import { UserPlus, Mail, Loader2 } from "lucide-react";
+import {
+  usePendingInvites,
+  useAcceptInvite,
+  useDeclineInvite,
+} from "@/hooks/use-invites";
+import { LoadingState } from "@/components/lemon/loading-state";
 
 export default function InvitesPage() {
   const { session } = useAuth();
-  const [invites, setInvites] = useState<TeamInviteDetailsDTO[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchInvites = async () => {
-      if (!session?.user?.email) return;
-      try {
-        const data = await getPendingInvitesUseCase.execute(session.user.email);
-        setInvites(data);
-      } catch (error) {
-        console.error("Erro ao buscar convites:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // React Query Hooks
+  const { data: invites = [], isLoading } = usePendingInvites(
+    session?.user?.email
+  );
+  const acceptInviteMutation = useAcceptInvite();
+  const declineInviteMutation = useDeclineInvite();
 
-    fetchInvites();
-  }, [session]);
+  const isActionLoading =
+    acceptInviteMutation.isPending || declineInviteMutation.isPending;
 
   const handleAcceptInvite = async (inviteId: string) => {
     if (!session?.user) return;
-    setActionLoading(true);
     try {
-      await acceptInviteUseCase.execute(inviteId, session.user.id);
+      await acceptInviteMutation.mutateAsync({
+        inviteId,
+        userId: session.user.id,
+      });
       notify.success("Convite aceito!", {
         description: "Você entrou para a equipe.",
       });
-      // Recarrega a página para atualizar a sessão e os times
+      // Recarrega a página para atualizar a sessão e os times completamente
       router.refresh();
-    } catch (error: any) {
+      // Opcional: Forçar reload da janela se o router.refresh não atualizar o contexto de Auth imediatamente
+      // window.location.reload();
+    } catch (error: unknown) {
       notify.error(error, "aceitar convite");
-      setActionLoading(false);
     }
   };
 
   const handleDeclineInvite = async (inviteId: string) => {
-    setActionLoading(true);
     try {
-      await declineInviteUseCase.execute(inviteId);
+      await declineInviteMutation.mutateAsync(inviteId);
       notify.success("Convite recusado.");
-      setInvites((prev) => prev.filter((i) => i.id !== inviteId));
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "recusar convite");
-    } finally {
-      setActionLoading(false);
     }
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <LoadingState message="Buscando convites..." />;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Convites</h1>
         <p className="text-muted-foreground">
@@ -105,7 +90,7 @@ export default function InvitesPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {invites.map((invite) => (
-            <Card key={invite.id}>
+            <Card key={invite.id} className="transition-all hover:shadow-md">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="p-2 bg-emerald-100 dark:bg-emerald-900/20 rounded-full">
@@ -130,17 +115,27 @@ export default function InvitesPage() {
                     <Button
                       className="flex-1"
                       onClick={() => handleAcceptInvite(invite.id)}
-                      disabled={actionLoading}
+                      disabled={isActionLoading}
                     >
-                      Aceitar
+                      {acceptInviteMutation.isPending &&
+                      acceptInviteMutation.variables?.inviteId === invite.id ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        "Aceitar"
+                      )}
                     </Button>
                     <Button
                       variant="outline"
                       className="flex-1"
                       onClick={() => handleDeclineInvite(invite.id)}
-                      disabled={actionLoading}
+                      disabled={isActionLoading}
                     >
-                      Recusar
+                      {declineInviteMutation.isPending &&
+                      declineInviteMutation.variables === invite.id ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        "Recusar"
+                      )}
                     </Button>
                   </div>
                 </div>

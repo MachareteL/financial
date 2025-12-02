@@ -79,7 +79,7 @@ export function TeamMembersTab({
       setInviteRoleId("");
       setIsInviteOpen(false);
       await onUpdate();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "enviar o convite");
     } finally {
       setIsActionLoading(false);
@@ -97,7 +97,7 @@ export function TeamMembersTab({
       });
       notify.success("Cargo atualizado com sucesso!");
       await onUpdate();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "atualizar o cargo");
     }
   };
@@ -118,7 +118,7 @@ export function TeamMembersTab({
         description: "A lista de acesso foi atualizada.",
       });
       await onUpdate();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "remover o membro");
     } finally {
       setIsActionLoading(false);

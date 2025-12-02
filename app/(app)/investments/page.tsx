@@ -1,24 +1,23 @@
 "use client";
 
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/auth/auth-provider";
 import { useTeam } from "@/app/(app)/team/team-provider";
 import { usePermission } from "@/hooks/use-permission";
 import { notify } from "@/lib/notify-helper";
-
-// Use Cases
 import {
-  getInvestmentsUseCase,
-  createInvestmentUseCase,
-  updateInvestmentUseCase,
-  deleteInvestmentUseCase,
-} from "@/infrastructure/dependency-injection";
+  useInvestments,
+  useCreateInvestment,
+  useUpdateInvestment,
+  useDeleteInvestment,
+} from "@/hooks/use-investments";
+import { simulateInvestmentGrowthUseCase } from "@/infrastructure/dependency-injection";
+
 import type {
   InvestmentDetailsDTO,
-  CreateInvestmentDTO,
-  UpdateInvestmentDTO,
+  InvestmentGrowthProjectionDTO,
 } from "@/domain/dto/investment.types.d.ts";
 
 // UI Components
@@ -68,6 +67,7 @@ import {
   ArrowUpRight,
   Sparkles,
 } from "lucide-react";
+import { LoadingState } from "@/components/lemon/loading-state";
 
 // Charts
 import {
@@ -83,7 +83,7 @@ import {
 // --- Configurações Visuais dos Tipos de Investimento ---
 const ASSET_CONFIG: Record<
   string,
-  { label: string; icon: any; color: string; bg: string }
+  { label: string; icon: React.ElementType; color: string; bg: string }
 > = {
   savings: {
     label: "Poupança/CDB",
@@ -127,23 +127,26 @@ const getAssetConfig = (type: string) => {
   return ASSET_CONFIG[type] || ASSET_CONFIG["other"];
 };
 
-// Tipo para o gráfico
-interface ProjectionData {
-  month: string;
-  total: number;
-  invested: number; // Apenas o dinheiro que saiu do bolso
-  yield: number; // O quanto rendeu
-}
-
 export default function InvestmentsPage() {
   const { session, loading: authLoading } = useAuth();
   const { currentTeam } = useTeam();
   const { can } = usePermission();
   const router = useRouter();
 
-  const [investments, setInvestments] = useState<InvestmentDetailsDTO[]>([]);
-  const [isLoading, setIsLoading] = useState(false); // Ações de escrita
-  const [isDataLoading, setIsDataLoading] = useState(true); // Leitura inicial
+  const teamId = currentTeam?.team.id;
+  const userId = session?.user.id;
+
+  // React Query Hooks
+  const { data: investments = [], isLoading: isDataLoading } =
+    useInvestments(teamId);
+  const createInvestmentMutation = useCreateInvestment();
+  const updateInvestmentMutation = useUpdateInvestment();
+  const deleteInvestmentMutation = useDeleteInvestment();
+
+  const isMutating =
+    createInvestmentMutation.isPending ||
+    updateInvestmentMutation.isPending ||
+    deleteInvestmentMutation.isPending;
 
   // Estado do Modal
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -152,10 +155,14 @@ export default function InvestmentsPage() {
 
   // Estado do Gráfico
   const [projectionYears, setProjectionYears] = useState(5);
-  const [projectionData, setProjectionData] = useState<ProjectionData[]>([]);
 
-  const teamId = currentTeam?.team.id;
-  const userId = session?.user.id;
+  const projectionData = useMemo(() => {
+    if (!investments || investments.length === 0) return [];
+    return simulateInvestmentGrowthUseCase.execute({
+      investments,
+      years: projectionYears,
+    });
+  }, [investments, projectionYears]);
 
   // 1. Autenticação
   useEffect(() => {
@@ -170,104 +177,21 @@ export default function InvestmentsPage() {
     }
   }, [session, authLoading, userId, teamId, router]);
 
-  // 2. Carregar Dados
-  useEffect(() => {
-    if (teamId) loadInvestments();
-  }, [teamId]);
-
-  // 3. Recalcular Projeções
-  useEffect(() => {
-    if (investments.length >= 0) {
-      calculateProjections();
-    }
-  }, [investments, projectionYears]);
-
-  const loadInvestments = async () => {
-    if (!teamId) return;
-    setIsDataLoading(true);
-    try {
-      const data = await getInvestmentsUseCase.execute(teamId);
-      setInvestments(data);
-    } catch (error: any) {
-      notify.error(error, "carregar investimentos");
-    } finally {
-      setIsDataLoading(false);
-    }
-  };
-
-  // --- Lógica de Projeção (Juros Compostos) ---
-  const calculateProjections = () => {
-    const totalMonths = projectionYears * 12;
-    const dataPoints: ProjectionData[] = [];
-
-    // Estado inicial (Mês 0)
-    let simulatedTotal = investments.reduce(
-      (acc, inv) => acc + inv.currentAmount,
-      0
-    );
-    let simulatedInvested = investments.reduce(
-      (acc, inv) => acc + inv.currentAmount,
-      0
-    ); // Começa do valor atual como "base"
-
-    for (let m = 0; m <= totalMonths; m++) {
-      // --- Abordagem Iterativa Simplificada ---
-      if (m > 0) {
-        let monthGain = 0;
-        let monthDeposit = 0;
-
-        investments.forEach((inv) => {
-          // Quanto esse ativo específico rende num mês (simplificado sobre o valor atual dele projetado linearmente para performance)
-          // O ideal é ter um objeto de estado para cada ativo, mas para UI rápida:
-          const monthlyRate = inv.annualReturnRate / 100 / 12;
-          // Estimativa do valor do ativo neste passo 'm' (sem considerar juros sobre juros exatos de aportes passados neste loop simples,
-          // mas suficiente para "visão de futuro")
-          const estimatedAssetValue =
-            inv.currentAmount + inv.monthlyContribution * m;
-
-          // Ganho aproximado deste mês
-          monthGain += estimatedAssetValue * monthlyRate;
-          monthDeposit += inv.monthlyContribution;
-        });
-
-        // Juros Compostos Simplificados Globais (para efeito visual de curva exponencial)
-        // Adiciona o rendimento ao total acumulado (juros sobre juros)
-        simulatedTotal += monthGain;
-
-        // Adiciona os novos aportes
-        simulatedTotal += monthDeposit;
-        simulatedInvested += monthDeposit;
-      }
-
-      // Reduz pontos para o gráfico não ficar pesado (1 ponto a cada 3 meses)
-      if (m % 3 === 0 || m === totalMonths) {
-        dataPoints.push({
-          month:
-            m === 0
-              ? "Hoje"
-              : `${Math.floor(m / 12) > 0 ? Math.floor(m / 12) + "a " : ""}${
-                  m % 12
-                }m`,
-          total: simulatedTotal,
-          invested: simulatedInvested,
-          yield: simulatedTotal - simulatedInvested,
-        });
-      }
-    }
-
-    setProjectionData(dataPoints);
-  };
-
   // --- CRUD Handlers ---
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!teamId) return;
-    setIsLoading(true);
+    if (!teamId || !userId) return;
 
     const formData = new FormData(e.currentTarget);
     const rawData = {
       name: formData.get("name") as string,
-      type: formData.get("type") as any,
+      type: formData.get("type") as
+        | "savings"
+        | "stocks"
+        | "bonds"
+        | "real_estate"
+        | "crypto"
+        | "other",
       initialAmount: Number(formData.get("initialAmount")),
       currentAmount: Number(formData.get("currentAmount")),
       monthlyContribution: Number(formData.get("monthlyContribution")),
@@ -277,43 +201,39 @@ export default function InvestmentsPage() {
 
     try {
       if (editingInvestment) {
-        await updateInvestmentUseCase.execute({
+        await updateInvestmentMutation.mutateAsync({
           ...rawData,
           investmentId: editingInvestment.id,
           teamId,
-          userId: userId!,
+          userId,
         });
         notify.success("Investimento atualizado!");
       } else {
-        await createInvestmentUseCase.execute({
+        await createInvestmentMutation.mutateAsync({
           ...rawData,
           teamId,
-          userId: userId!,
+          userId,
         });
         notify.success("Novo ativo adicionado!");
       }
       setIsDialogOpen(false);
       setEditingInvestment(null);
-      loadInvestments();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "salvar investimento");
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!teamId) return;
+    if (!teamId || !userId) return;
     if (!confirm("Remover este investimento da carteira?")) return;
     try {
-      await deleteInvestmentUseCase.execute({
+      await deleteInvestmentMutation.mutateAsync({
         investmentId: id,
         teamId,
-        userId: userId!,
+        userId,
       });
       notify.success("Investimento removido.");
-      loadInvestments();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "remover investimento");
     }
   };
@@ -332,11 +252,7 @@ export default function InvestmentsPage() {
   const estimatedPassiveIncome = totalPatrimony * 0.005;
 
   if (authLoading || isDataLoading || !session || !teamId) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="animate-spin h-10 w-10 text-primary" />
-      </div>
-    );
+    return <LoadingState message="Carregando investimentos..." />;
   }
 
   return (
@@ -465,8 +381,8 @@ export default function InvestmentsPage() {
                   }
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? <Loader2 className="animate-spin" /> : "Salvar"}
+              <Button type="submit" className="w-full" disabled={isMutating}>
+                {isMutating ? <Loader2 className="animate-spin" /> : "Salvar"}
               </Button>
             </form>
           </DialogContent>

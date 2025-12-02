@@ -7,16 +7,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Calendar,
-  CreditCard,
-  FileText,
-  Edit,
-  Loader2,
-  ArrowUpRight,
-} from "lucide-react";
+import { CreditCard, FileText, Edit, Loader2 } from "lucide-react";
 import { usePermission } from "@/hooks/use-permission";
 import { getCategoryStyle } from "../utils";
 import type { ExpenseDetailsDTO } from "@/domain/dto/expense.types.d.ts";

@@ -1,21 +1,6 @@
 import type { Metadata } from "next";
-import {
-  Lock,
-  Eye,
-  Server,
-  ShieldCheck,
-  Cookie,
-  UserCheck,
-  FileJson,
-  Globe,
-} from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Lock, Server, ShieldCheck, UserCheck, FileJson } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,

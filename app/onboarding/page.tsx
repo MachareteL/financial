@@ -16,23 +16,30 @@ import {
 import { Users, UserPlus } from "lucide-react";
 
 import { useAuth } from "@/app/auth/auth-provider";
-import {
-  createTeamUseCase,
-  getPendingInvitesUseCase,
-  acceptInviteUseCase,
-  declineInviteUseCase,
-} from "@/infrastructure/dependency-injection";
+import { createTeamUseCase } from "@/infrastructure/dependency-injection";
 import { notify } from "@/lib/notify-helper";
-import type { TeamInviteDetailsDTO } from "@/domain/dto/team.types";
+import {
+  usePendingInvites,
+  useAcceptInvite,
+  useDeclineInvite,
+} from "@/hooks/use-invites";
 
 export default function OnboardingPage() {
   const { session, loading } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-  const [invites, setInvites] = useState<TeamInviteDetailsDTO[]>([]);
-  const [loadingInvites, setLoadingInvites] = useState(true);
-  const [teamName, setTeamName] = useState("");
-  const [actionLoading] = useState<string | null>(null);
   const router = useRouter();
+
+  // React Query Hooks
+  const { data: invites = [], isLoading: loadingInvites } = usePendingInvites(
+    session?.user?.email
+  );
+  const acceptInviteMutation = useAcceptInvite();
+  const declineInviteMutation = useDeclineInvite();
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [teamName, setTeamName] = useState("");
+
+  const actionLoading =
+    acceptInviteMutation.isPending || declineInviteMutation.isPending;
 
   useEffect(() => {
     // Auth check is handled by middleware
@@ -40,24 +47,6 @@ export default function OnboardingPage() {
       router.push("/dashboard");
     }
   }, [session, loading, router]);
-
-  useEffect(() => {
-    const fetchInvites = async () => {
-      if (!session?.user?.email) return;
-      try {
-        const data = await getPendingInvitesUseCase.execute(session.user.email);
-        setInvites(data);
-      } catch (error) {
-        console.error("Erro ao buscar convites:", error);
-      } finally {
-        setLoadingInvites(false);
-      }
-    };
-
-    if (session?.user?.email) {
-      fetchInvites();
-    }
-  }, [session]);
 
   const handleCreateTeam = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -81,7 +70,7 @@ export default function OnboardingPage() {
 
       // Força recarregamento da sessão para atualizar os times
       window.location.reload();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "criar a equipe");
       setIsLoading(false);
     }
@@ -89,31 +78,27 @@ export default function OnboardingPage() {
 
   const handleAcceptInvite = async (inviteId: string) => {
     if (!session?.user) return;
-    setIsLoading(true);
     try {
-      await acceptInviteUseCase.execute(inviteId, session.user.id);
+      await acceptInviteMutation.mutateAsync({
+        inviteId,
+        userId: session.user.id,
+      });
       notify.success("Convite aceito!", {
         description: "Você entrou para a equipe.",
       });
       // Força recarregamento da sessão
       window.location.reload();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "aceitar convite");
-      setIsLoading(false);
     }
   };
 
   const handleDeclineInvite = async (inviteId: string) => {
-    setIsLoading(true);
     try {
-      await declineInviteUseCase.execute(inviteId);
+      await declineInviteMutation.mutateAsync(inviteId);
       notify.success("Convite recusado.");
-      // Atualiza lista
-      setInvites((prev) => prev.filter((i) => i.id !== inviteId));
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "recusar convite");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -201,13 +186,19 @@ export default function OnboardingPage() {
                     >
                       <div>
                         <p className="font-medium text-foreground">
-                          Time: {(invite as any).teamName}
+                          Time:{" "}
+                          {(invite as unknown as { teamName: string }).teamName}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Convidado por: {(invite as any).invitedByName}
+                          Convidado por:{" "}
+                          {
+                            (invite as unknown as { invitedByName: string })
+                              .invitedByName
+                          }
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Cargo: {(invite as any).roleName}
+                          Cargo:{" "}
+                          {(invite as unknown as { roleName: string }).roleName}
                         </p>
                       </div>
                       <div className="flex gap-2">
@@ -215,7 +206,7 @@ export default function OnboardingPage() {
                           size="sm"
                           className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
                           onClick={() => handleAcceptInvite(invite.id)}
-                          disabled={actionLoading === invite.id}
+                          disabled={actionLoading}
                         >
                           Aceitar
                         </Button>
@@ -224,7 +215,7 @@ export default function OnboardingPage() {
                           variant="outline"
                           className="flex-1 text-destructive hover:text-destructive hover:bg-destructive/10"
                           onClick={() => handleDeclineInvite(invite.id)}
-                          disabled={isLoading}
+                          disabled={actionLoading}
                         >
                           Recusar
                         </Button>

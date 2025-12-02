@@ -116,7 +116,7 @@ export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
       }
       setIsRoleModalOpen(false);
       await onUpdate();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "salvar o cargo");
     } finally {
       setIsActionLoading(false);
@@ -136,7 +136,7 @@ export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
       );
       notify.success("Cargo excluído!");
       await onUpdate();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "excluir o cargo");
     } finally {
       setIsActionLoading(false);

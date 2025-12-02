@@ -57,7 +57,7 @@ export function SubscriptionPromoModal() {
       }
 
       await subscribeTeamAction(currentTeam.team.id, priceId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "iniciar assinatura");
     }
   };
@@ -177,7 +177,7 @@ export function SubscriptionPromoModal() {
   );
 }
 
-function ClockIcon(props: any) {
+function ClockIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}

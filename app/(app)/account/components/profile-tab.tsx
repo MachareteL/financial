@@ -35,7 +35,7 @@ export function ProfileTab() {
       );
       setSession(updatedSession);
       notify.success("Perfil atualizado!");
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "atualizar perfil");
     } finally {
       setIsLoading(false);

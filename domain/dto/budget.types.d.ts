@@ -20,3 +20,16 @@ export type ExpenseSummaryByBudgetCategoryDTO = {
   spent: number; // Gasto total (ex: 1500.00)
   budgeted: number; // Valor planejado (ex: 2500.00)
 };
+
+export type GetBudgetDTO = {
+  teamId: string;
+  month: number;
+  year: number;
+};
+
+export type GetExpenseSummaryDTO = {
+  teamId: string;
+  month: number;
+  year: number;
+  totalIncome: number;
+};

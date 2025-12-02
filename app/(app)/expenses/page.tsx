@@ -7,18 +7,15 @@ import { useTeam } from "@/app/(app)/team/team-provider";
 import { usePermission } from "@/hooks/use-permission";
 import { notify } from "@/lib/notify-helper";
 
-// Use Cases
 import {
-  getExpensesUseCase,
-  getCategoriesUseCase,
-  deleteExpenseUseCase,
-  getBudgetCategoriesUseCase,
-  getExpensesSummaryUseCase,
-} from "@/infrastructure/dependency-injection";
+  useExpenses,
+  useExpensesSummary,
+  useDeleteExpense,
+} from "@/hooks/use-expenses";
+import { useCategories } from "@/hooks/use-categories";
 
 // Types
 import type { ExpenseDetailsDTO } from "@/domain/dto/expense.types.d.ts";
-import type { CategoryDetailsDTO } from "@/domain/dto/category.types.d.ts";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -33,7 +30,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Icons
-import { Plus, Search, Filter, Loader2 } from "lucide-react";
+import { Plus, Search, Filter } from "lucide-react";
 
 // Custom Components
 import { ExpensesList } from "./components/expenses-list";
@@ -41,6 +38,7 @@ import { DeleteExpenseDialog } from "./components/delete-expense-dialog";
 import { ExpensesTable } from "./components/expenses-table";
 import { ExpensesAnalysis } from "./components/expenses-analysis";
 import { ReceiptViewer } from "./components/receipt-viewer";
+import { LoadingState } from "@/components/lemon/loading-state";
 
 const PAGE_SIZE = 20;
 
@@ -50,35 +48,11 @@ export default function ExpensesPage() {
   const { can } = usePermission();
   const router = useRouter();
 
-  // --- Estados de Dados ---
-  const [expenses, setExpenses] = useState<ExpenseDetailsDTO[]>([]);
-  const [categories, setCategories] = useState<CategoryDetailsDTO[]>([]);
-
   // --- Estados de Controle e Paginação ---
-  const [isLoadingInitial, setIsLoadingInitial] = useState(true);
-  const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
-  const [summaryData, setSummaryData] = useState({ total: 0, count: 0 });
 
   // Observer Ref para Scroll Infinito
   const observer = useRef<IntersectionObserver | null>(null);
-
-  const lastExpenseElementRef = useCallback(
-    (node: HTMLElement | null) => {
-      if (isLoadingInitial || isLoadingMore) return;
-      if (observer.current) observer.current.disconnect();
-      observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          setPage((prevPage) => prevPage + 1);
-        }
-      });
-      if (node) observer.current.observe(node);
-    },
-    [isLoadingInitial, isLoadingMore, hasMore]
-  );
 
   // --- Filtros e View ---
   const [viewMode, setViewMode] = useState<"list" | "table" | "analysis">(
@@ -93,6 +67,7 @@ export default function ExpensesPage() {
 
   // --- Modal de Recibo ---
   const [selectedReceipt, setSelectedReceipt] = useState<string | null>(null);
+  const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
 
   const teamId = currentTeam?.team.id;
   const userId = session?.user.id;
@@ -104,115 +79,92 @@ export default function ExpensesPage() {
     if (!teamId) router.push("/onboarding");
   }, [session, userId, teamId, authLoading, router]);
 
-  // 2. Load Aux Data
-  useEffect(() => {
-    if (!teamId) return;
-    const loadAuxData = async () => {
-      try {
-        const [cats] = await Promise.all([
-          getCategoriesUseCase.execute(teamId),
-          getBudgetCategoriesUseCase.execute(teamId),
-        ]);
-        setCategories(cats);
-        // setBudgetCategories(budCats);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    loadAuxData();
-  }, [teamId]);
+  // --- React Query Hooks ---
 
-  // 3. Reset Effect
+  // Calculate dates for filtering
+  const { startDate, endDate } = useMemo(() => {
+    let start: Date | undefined;
+    let end: Date | undefined;
+
+    if (filterMonth !== "all" && filterYear !== "all") {
+      start = new Date(parseInt(filterYear), parseInt(filterMonth) - 1, 1);
+      end = new Date(
+        parseInt(filterYear),
+        parseInt(filterMonth),
+        0,
+        23,
+        59,
+        59
+      );
+    } else if (filterYear !== "all") {
+      start = new Date(parseInt(filterYear), 0, 1);
+      end = new Date(parseInt(filterYear), 11, 31, 23, 59, 59);
+    }
+    return { startDate: start, endDate: end };
+  }, [filterMonth, filterYear]);
+
+  // Fetch Categories
+  const { data: categories = [] } = useCategories(teamId);
+
+  // Fetch Expenses
+  const {
+    data: expenses = [],
+    isLoading: isLoadingExpenses,
+    error: expensesError,
+  } = useExpenses({
+    teamId,
+    startDate,
+    endDate,
+    page,
+    limit: PAGE_SIZE * page, // Fetch up to current page * size to support infinite scroll behavior with RQ
+    categoryId: filterCategory === "all" ? undefined : filterCategory,
+  });
+
+  // Fetch Summary
+  const { data: summaryData = { total: 0, count: 0 } } = useExpensesSummary({
+    teamId,
+    startDate,
+    endDate,
+    categoryId: filterCategory === "all" ? undefined : filterCategory,
+  });
+
+  // Mutations
+  const deleteMutation = useDeleteExpense();
+
+  // Error Handling
   useEffect(() => {
-    if (!teamId) return;
+    if (expensesError) {
+      notify.error(expensesError, "carregar despesas");
+    }
+  }, [expensesError]);
+
+  // Reset page when filters change
+  useEffect(() => {
     setPage(1);
-    setHasMore(true);
-    setExpenses([]);
-    setIsLoadingInitial(true);
-    fetchExpenses(1, true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teamId, filterMonth, filterYear, filterCategory]);
+  }, [filterMonth, filterYear, filterCategory]);
 
-  // 4. Scroll Effect
-  useEffect(() => {
-    if (page > 1) fetchExpenses(page, false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  // Infinite Scroll Logic
+  const hasMore = expenses.length >= page * PAGE_SIZE;
+
+  const lastExpenseElementRef = useCallback(
+    (node: HTMLElement | null) => {
+      if (isLoadingExpenses) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          setPage((prevPage) => prevPage + 1);
+        }
+      });
+      if (node) observer.current.observe(node);
+    },
+    [isLoadingExpenses, hasMore]
+  );
 
   // --- LÓGICA INTELIGENTE DE FILTRO ---
   const handleMonthChange = (val: string) => {
     setFilterMonth(val);
     if (val !== "all" && filterYear === "all") {
       setFilterYear(new Date().getFullYear().toString());
-    }
-  };
-
-  // 5. Fetch Data
-  const fetchExpenses = async (pageToLoad: number, isReset: boolean) => {
-    if (!teamId) return;
-    if (!isReset) setIsLoadingMore(true);
-
-    try {
-      let startDate: Date | undefined;
-      let endDate: Date | undefined;
-
-      if (filterMonth !== "all" && filterYear !== "all") {
-        startDate = new Date(
-          parseInt(filterYear),
-          parseInt(filterMonth) - 1,
-          1
-        );
-        endDate = new Date(
-          parseInt(filterYear),
-          parseInt(filterMonth),
-          0,
-          23,
-          59,
-          59
-        );
-      } else if (filterYear !== "all") {
-        startDate = new Date(parseInt(filterYear), 0, 1);
-        endDate = new Date(parseInt(filterYear), 11, 31, 23, 59, 59);
-      }
-
-      const newExpenses = await getExpensesUseCase.execute({
-        teamId,
-        startDate,
-        endDate,
-        page: pageToLoad,
-        limit: PAGE_SIZE,
-      });
-
-      // Fetch Summary ONLY on reset (filter change)
-      if (isReset) {
-        const summary = await getExpensesSummaryUseCase.execute({
-          teamId,
-          startDate,
-          endDate,
-          categoryId: filterCategory === "all" ? undefined : filterCategory,
-        });
-        setSummaryData(summary);
-      }
-
-      let filteredResult = newExpenses;
-      if (filterCategory !== "all") {
-        filteredResult = filteredResult.filter(
-          (e) => e.categoryId === filterCategory
-        );
-      }
-
-      if (newExpenses.length < PAGE_SIZE) {
-        setHasMore(false);
-      }
-
-      setExpenses((prev) =>
-        isReset ? filteredResult : [...prev, ...filteredResult]
-      );
-    } catch (error: any) {
-      notify.error(error, "carregar despesas");
-    } finally {
-      setIsLoadingInitial(false);
-      setIsLoadingMore(false);
     }
   };
 
@@ -258,31 +210,16 @@ export default function ExpensesPage() {
   const confirmDelete = async () => {
     if (!teamId || !userId || !expenseToDelete) return;
 
-    setIsDeleting(expenseToDelete);
     try {
-      await deleteExpenseUseCase.execute({
+      await deleteMutation.mutateAsync({
         expenseId: expenseToDelete,
         teamId,
         userId,
       });
-
-      // Atualiza lista local
-      const deletedExpense = expenses.find((e) => e.id === expenseToDelete);
-      setExpenses((prev) => prev.filter((e) => e.id !== expenseToDelete));
-
-      // Atualiza sumário local (Total e Contagem)
-      if (deletedExpense) {
-        setSummaryData((prev) => ({
-          total: prev.total - deletedExpense.amount,
-          count: Math.max(0, prev.count - 1),
-        }));
-      }
-
       notify.success("Despesa excluída.");
-    } catch (err: any) {
+    } catch (err: unknown) {
       notify.error(err, "excluir despesa");
     } finally {
-      setIsDeleting(null);
       setExpenseToDelete(null);
     }
   };
@@ -295,11 +232,7 @@ export default function ExpensesPage() {
   };
 
   if (authLoading || !session || !teamId) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="animate-spin h-8 w-8 text-primary" />
-      </div>
-    );
+    return <LoadingState message="Carregando despesas..." />;
   }
 
   return (
@@ -455,16 +388,11 @@ export default function ExpensesPage() {
 
         {/* Content Area */}
         <div className="min-h-[400px]">
-          {isLoadingInitial ? (
-            <div className="flex flex-col items-center justify-center py-32 gap-4 animate-in fade-in duration-700">
-              <Loader2 className="animate-spin text-primary w-8 h-8" />
-              <p className="text-muted-foreground text-sm font-medium">
-                Carregando suas despesas...
-              </p>
-            </div>
+          {isLoadingExpenses ? (
+            <LoadingState message="Carregando suas despesas..." />
           ) : (
             <div className="animate-in slide-in-from-bottom-4 duration-500 fade-in">
-              {expenses.length === 0 && !isLoadingInitial ? (
+              {expenses.length === 0 && !isLoadingExpenses ? (
                 <div className="flex flex-col items-center justify-center py-24 text-center space-y-4 border-2 border-dashed border-muted rounded-2xl bg-muted/5">
                   <div className="bg-muted rounded-full p-4">
                     <Search className="w-8 h-8 text-muted-foreground/50" />
@@ -539,7 +467,7 @@ export default function ExpensesPage() {
         open={!!expenseToDelete}
         onOpenChange={(open) => !open && setExpenseToDelete(null)}
         onConfirm={confirmDelete}
-        isDeleting={!!isDeleting}
+        isDeleting={deleteMutation.isPending}
       />
     </div>
   );

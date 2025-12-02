@@ -41,7 +41,7 @@ export default function UpdatePasswordPage() {
 
       // Redireciona para o dashboard pois o usuário já está logado
       router.push("/dashboard");
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "atualizar senha");
     } finally {
       setIsLoading(false);

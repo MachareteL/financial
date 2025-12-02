@@ -59,6 +59,7 @@ import { GetInvestmentsUseCase } from "@/app/(app)/investments/_use-case/get-inv
 import { CreateInvestmentUseCase } from "@/app/(app)/investments/_use-case/create-investment.use-case";
 import { UpdateInvestmentUseCase } from "@/app/(app)/investments/_use-case/update-investment.use-case";
 import { DeleteInvestmentUseCase } from "@/app/(app)/investments/_use-case/delete-investment.use-case";
+import { SimulateInvestmentGrowthUseCase } from "@/app/(app)/investments/_use-case/simulate-investment-growth.use-case";
 
 // Team Management
 import { GetTeamDataUseCase } from "@/app/(app)/team/_use-case/get-team-data.use-case";
@@ -338,6 +339,10 @@ export const updateInvestmentUseCase = container.get(
 export const deleteInvestmentUseCase = container.get(
   "deleteInvestmentUseCase",
   () => new DeleteInvestmentUseCase(investmentRepository, teamRepository)
+);
+export const simulateInvestmentGrowthUseCase = container.get(
+  "simulateInvestmentGrowthUseCase",
+  () => new SimulateInvestmentGrowthUseCase()
 );
 
 // Team Management

@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ParseReceiptUseCase } from "./parse-receipt.use-case";
 import { IAiService } from "@/domain/interfaces/ai-service.interface";
-import type { ReceiptDataDTO } from "@/domain/dto/ai.types";
+import { AnalyticsService } from "@/domain/interfaces/analytics-service.interface";
 
 describe("ParseReceiptUseCase", () => {
   let useCase: ParseReceiptUseCase;
   let aiService: IAiService;
+  let analyticsService: AnalyticsService;
 
   beforeEach(() => {
     aiService = {
@@ -16,7 +17,11 @@ describe("ParseReceiptUseCase", () => {
       }),
     } as unknown as IAiService;
 
-    useCase = new ParseReceiptUseCase(aiService);
+    analyticsService = {
+      track: vi.fn(),
+    } as unknown as AnalyticsService;
+
+    useCase = new ParseReceiptUseCase(aiService, analyticsService);
   });
 
   it("should parse a valid receipt successfully", async () => {
@@ -27,7 +32,10 @@ describe("ParseReceiptUseCase", () => {
     // Mock arrayBuffer since jsdom File might not implement it fully or we want to control it
     file.arrayBuffer = vi.fn().mockResolvedValue(new ArrayBuffer(10));
 
-    const result = await useCase.execute(file);
+    const result = await useCase.execute(
+      file,
+      "123e4567-e89b-12d3-a456-426614174000"
+    );
 
     expect(result).toEqual({
       amount: 50.0,
@@ -43,9 +51,9 @@ describe("ParseReceiptUseCase", () => {
       type: "image/jpeg",
     } as File;
 
-    await expect(useCase.execute(largeFile)).rejects.toThrow(
-      "Este arquivo excede o limite de 8MB."
-    );
+    await expect(
+      useCase.execute(largeFile, "123e4567-e89b-12d3-a456-426614174000")
+    ).rejects.toThrow("Este arquivo excede o limite de 8MB.");
     expect(aiService.parseReceipt).not.toHaveBeenCalled();
   });
 
@@ -55,9 +63,9 @@ describe("ParseReceiptUseCase", () => {
       type: "text/plain",
     } as File;
 
-    await expect(useCase.execute(invalidFile)).rejects.toThrow(
-      "Formato de arquivo não suportado."
-    );
+    await expect(
+      useCase.execute(invalidFile, "123e4567-e89b-12d3-a456-426614174000")
+    ).rejects.toThrow("Formato de arquivo não suportado.");
     expect(aiService.parseReceipt).not.toHaveBeenCalled();
   });
 });

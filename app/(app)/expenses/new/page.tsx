@@ -1,20 +1,19 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/auth/auth-provider";
 import { notify } from "@/lib/notify-helper";
 import { compressImage } from "@/lib/compression";
 
 // Use Cases e Actions
-import {
-  createExpenseUseCase,
-  getCategoriesUseCase,
-} from "@/infrastructure/dependency-injection";
+import { createExpenseUseCase } from "@/infrastructure/dependency-injection";
 import { parseReceiptAction } from "@/app/(app)/expenses/_actions/parse-receipt";
-import type { CategoryDetailsDTO } from "@/domain/dto/category.types.d.ts";
 import type { CreateExpenseDTO } from "@/domain/dto/expense.types.d.ts";
+
+// Hooks
+import { useCategories } from "@/hooks/use-categories";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -44,6 +43,7 @@ import {
 } from "lucide-react";
 import { UpgradeModal } from "@/app/(app)/components/upgrade-modal";
 import { useFeatureAccess } from "@/hooks/use-feature-access";
+import { LoadingState } from "@/components/lemon/loading-state";
 
 export default function NewExpensePage() {
   const { session, loading: authLoading } = useAuth();
@@ -52,12 +52,15 @@ export default function NewExpensePage() {
   // Referência para o input de arquivo invisível
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Dados
-  const [categories, setCategories] = useState<CategoryDetailsDTO[]>([]);
+  const teamId = session?.teams?.[0]?.team.id;
+  const userId = session?.user?.id;
+
+  // Hooks React Query
+  const { data: categories = [], isLoading: isLoadingCategories } =
+    useCategories(teamId);
 
   // Estados de Loading
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [isParsingReceipt, setIsParsingReceipt] = useState(false);
 
   // Formulário
@@ -80,9 +83,6 @@ export default function NewExpensePage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const teamId = session?.teams?.[0]?.team.id;
-  const userId = session?.user?.id;
-
   // Feature Access
   const { hasAccess: hasAiAccess } = useFeatureAccess("ai_receipt_scanning");
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
@@ -99,24 +99,13 @@ export default function NewExpensePage() {
       return;
     }
 
-    const loadCategories = async () => {
-      setIsLoadingCategories(true);
-      try {
-        const data = await getCategoriesUseCase.execute(teamId);
-        setCategories(data);
-        if (data.length > 0 && !categoryId) {
-          // Tenta achar uma categoria "Outros" ou pega a primeira
-          const defaultCat = data.find((c) => c.name === "Outros") || data[0];
-          setCategoryId(defaultCat.id);
-        }
-      } catch (error: any) {
-        notify.error(error, "carregar categorias");
-      } finally {
-        setIsLoadingCategories(false);
-      }
-    };
-    loadCategories();
-  }, [session, authLoading, userId, teamId, router]);
+    // Set default category if available and not set
+    if (categories.length > 0 && !categoryId) {
+      const defaultCat =
+        categories.find((c) => c.name === "Outros") || categories[0];
+      setCategoryId(defaultCat.id);
+    }
+  }, [session, authLoading, userId, teamId, router, categories, categoryId]);
 
   // --- 2. Upload Inteligente (IA) ---
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -246,7 +235,7 @@ export default function NewExpensePage() {
       });
 
       router.push("/expenses");
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "registrar a despesa");
     } finally {
       setIsLoading(false);
@@ -254,15 +243,11 @@ export default function NewExpensePage() {
   };
 
   if (authLoading || isLoadingCategories || !session) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="animate-spin h-10 w-10 text-blue-600" />
-      </div>
-    );
+    return <LoadingState message="Preparando nova despesa..." />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 animate-in fade-in duration-500">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 pb-20 animate-in fade-in duration-500">
       <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 lg:py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
@@ -270,13 +255,15 @@ export default function NewExpensePage() {
             variant="ghost"
             size="icon"
             onClick={() => router.back()}
-            className="hover:bg-white rounded-full"
+            className="hover:bg-muted/50 rounded-full"
           >
-            <ArrowLeft className="h-5 w-5 text-slate-600" />
+            <ArrowLeft className="h-5 w-5 text-muted-foreground" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Nova Despesa</h1>
-            <p className="text-slate-500 text-sm">
+            <h1 className="text-2xl font-bold text-foreground font-dm-sans">
+              Nova Despesa
+            </h1>
+            <p className="text-muted-foreground text-sm">
               Adicione uma despesa manual ou via comprovante.
             </p>
           </div>
@@ -284,15 +271,13 @@ export default function NewExpensePage() {
 
         <div className="grid gap-6">
           {/* --- MAGIC UPLOAD (IA) --- */}
-          {/* Correção: Quando tem arquivo, removemos o input gigante para não bloquear o botão de remover */}
           <div
             className={`relative overflow-hidden rounded-2xl border-2 border-dashed transition-all duration-300 ${
               previewUrl
-                ? "border-blue-200 bg-blue-50/40"
-                : "border-slate-200 hover:border-blue-400 hover:bg-white bg-white group"
+                ? "border-primary/20 bg-primary/5"
+                : "border-border/50 hover:border-primary/50 hover:bg-card/50 bg-card/30 backdrop-blur-sm group"
             }`}
           >
-            {/* Input cobre tudo APENAS se não tiver preview */}
             {!previewUrl && !isParsingReceipt && (
               <input
                 ref={fileInputRef}
@@ -306,23 +291,24 @@ export default function NewExpensePage() {
             <div className="p-6 flex flex-col items-center justify-center text-center min-h-[140px]">
               {isParsingReceipt ? (
                 <div className="flex flex-col items-center animate-pulse">
-                  <div className="bg-blue-100 p-3 rounded-full mb-3">
-                    <Sparkles className="w-6 h-6 text-blue-600 animate-spin-slow" />
+                  <div className="bg-primary/10 p-3 rounded-full mb-3">
+                    <Sparkles className="w-6 h-6 text-primary animate-spin-slow" />
                   </div>
-                  <h3 className="text-sm font-semibold text-blue-700">
+                  <h3 className="text-sm font-semibold text-primary">
                     Lendo nota fiscal...
                   </h3>
-                  <p className="text-xs text-blue-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Nossa IA está extraindo os dados.
                   </p>
                 </div>
               ) : previewUrl ? (
                 <div className="w-full flex items-center justify-between relative z-10">
                   <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-lg overflow-hidden border border-slate-200 bg-white shadow-sm flex items-center justify-center">
+                    <div className="h-14 w-14 rounded-lg overflow-hidden border border-border/50 bg-background shadow-sm flex items-center justify-center">
                       {selectedFile?.type === "application/pdf" ? (
                         <FileText className="w-8 h-8 text-red-500" />
                       ) : (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={previewUrl}
                           alt="Preview"
@@ -331,11 +317,11 @@ export default function NewExpensePage() {
                       )}
                     </div>
                     <div className="text-left">
-                      <p className="font-medium text-slate-900 flex items-center gap-2 text-sm">
-                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <p className="font-medium text-foreground flex items-center gap-2 text-sm">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                         Anexado
                       </p>
-                      <p className="text-xs text-slate-500 truncate max-w-[180px]">
+                      <p className="text-xs text-muted-foreground truncate max-w-[180px]">
                         {selectedFile?.name}
                       </p>
                     </div>
@@ -344,7 +330,7 @@ export default function NewExpensePage() {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="text-red-500 hover:text-red-600 hover:bg-red-50 relative z-50"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10 relative z-50"
                     onClick={removeFile}
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
@@ -353,13 +339,13 @@ export default function NewExpensePage() {
                 </div>
               ) : (
                 <>
-                  <div className="bg-slate-50 p-3 rounded-full mb-3 group-hover:scale-110 transition-transform group-hover:bg-blue-50">
-                    <UploadCloud className="w-8 h-8 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                  <div className="bg-muted/50 p-3 rounded-full mb-3 group-hover:scale-110 transition-transform group-hover:bg-primary/10">
+                    <UploadCloud className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
                   </div>
-                  <h3 className="text-base font-semibold text-slate-700 group-hover:text-blue-700 transition-colors">
+                  <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors">
                     Toque para ler Nota Fiscal
                   </h3>
-                  <p className="text-xs text-slate-500 mt-1 max-w-xs">
+                  <p className="text-xs text-muted-foreground mt-1 max-w-xs">
                     Use nossa IA para preencher tudo automaticamente. Suporta
                     Imagens e PDF.
                   </p>
@@ -369,22 +355,22 @@ export default function NewExpensePage() {
           </div>
 
           {/* --- FORMULÁRIO --- */}
-          <Card className="border-none shadow-md bg-white rounded-2xl overflow-hidden">
+          <Card className="border border-border/50 shadow-sm bg-card/50 backdrop-blur-xl rounded-2xl overflow-hidden">
             <CardContent className="p-6 space-y-6">
               {/* Valor */}
               <div>
-                <Label className="text-slate-500 text-xs uppercase font-bold tracking-wide mb-2 block">
+                <Label className="text-muted-foreground text-xs uppercase font-bold tracking-wide mb-2 block">
                   Valor Total
                 </Label>
                 <div className="relative">
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-2xl pl-3">
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-2xl pl-3">
                     R$
                   </span>
                   <Input
                     type="number"
                     step="0.01"
                     placeholder="0,00"
-                    className="pl-12 h-14 text-3xl font-bold text-slate-900 placeholder:text-slate-200 border-slate-200 focus-visible:ring-0 focus-visible:border-blue-500 rounded-xl bg-slate-50/50 focus:bg-white transition-colors"
+                    className="pl-12 h-14 text-3xl font-bold text-foreground placeholder:text-muted/50 border-border/50 focus-visible:ring-0 focus-visible:border-primary rounded-xl bg-background/50 focus:bg-background transition-colors font-inter"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     disabled={isParsingReceipt || isLoading}
@@ -395,37 +381,37 @@ export default function NewExpensePage() {
               {/* Descrição e Data */}
               <div className="grid sm:grid-cols-2 gap-5">
                 <div className="space-y-2">
-                  <Label className="text-slate-500 text-xs uppercase font-bold tracking-wide">
+                  <Label className="text-muted-foreground text-xs uppercase font-bold tracking-wide">
                     Descrição
                   </Label>
                   <Input
                     placeholder="Ex: Mercado, Uber..."
-                    className="h-11 border-slate-200 focus-visible:ring-blue-500 bg-slate-50/50 focus:bg-white"
+                    className="h-11 border-border/50 focus-visible:ring-primary bg-background/50 focus:bg-background"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     disabled={isParsingReceipt || isLoading}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-500 text-xs uppercase font-bold tracking-wide">
+                  <Label className="text-muted-foreground text-xs uppercase font-bold tracking-wide">
                     Data
                   </Label>
                   <div className="relative">
                     <Input
                       type="date"
-                      className="h-11 border-slate-200 focus-visible:ring-blue-500 bg-slate-50/50 focus:bg-white"
+                      className="h-11 border-border/50 focus-visible:ring-primary bg-background/50 focus:bg-background"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
                       disabled={isParsingReceipt || isLoading}
                     />
-                    <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                   </div>
                 </div>
               </div>
 
               {/* Categoria */}
               <div className="space-y-2">
-                <Label className="text-slate-500 text-xs uppercase font-bold tracking-wide">
+                <Label className="text-muted-foreground text-xs uppercase font-bold tracking-wide">
                   Categoria
                 </Label>
                 <Select
@@ -433,7 +419,7 @@ export default function NewExpensePage() {
                   onValueChange={setCategoryId}
                   disabled={isParsingReceipt || isLoading}
                 >
-                  <SelectTrigger className="h-11 border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-blue-500">
+                  <SelectTrigger className="h-11 border-border/50 bg-background/50 focus:bg-background focus:ring-primary">
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -444,10 +430,10 @@ export default function NewExpensePage() {
                         className="cursor-pointer"
                       >
                         <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-blue-500" />
+                          <span className="w-2 h-2 rounded-full bg-primary" />
                           {category.name}
                           {category.budgetCategoryName && (
-                            <span className="text-xs text-slate-400 ml-1">
+                            <span className="text-xs text-muted-foreground ml-1">
                               ({category.budgetCategoryName})
                             </span>
                           )}
@@ -460,31 +446,33 @@ export default function NewExpensePage() {
 
               {/* Tipo de Despesa (Abas Modernas) */}
               <div className="pt-2">
-                <Label className="text-slate-500 text-xs uppercase font-bold tracking-wide mb-3 block">
+                <Label className="text-muted-foreground text-xs uppercase font-bold tracking-wide mb-3 block">
                   Detalhes do Lançamento
                 </Label>
                 <Tabs
                   defaultValue="single"
                   value={expenseType}
-                  onValueChange={(v) => setExpenseType(v as any)}
+                  onValueChange={(v) =>
+                    setExpenseType(v as "single" | "recurring" | "installment")
+                  }
                   className="w-full"
                 >
-                  <TabsList className="grid w-full grid-cols-3 h-10 p-1 bg-slate-100 rounded-lg">
+                  <TabsList className="grid w-full grid-cols-3 h-10 p-1 bg-muted/50 rounded-lg">
                     <TabsTrigger
                       value="single"
-                      className="rounded-md text-xs font-medium data-[state=active]:shadow-sm"
+                      className="rounded-md text-xs font-medium data-[state=active]:shadow-sm data-[state=active]:bg-background data-[state=active]:text-foreground"
                     >
                       Único
                     </TabsTrigger>
                     <TabsTrigger
                       value="recurring"
-                      className="rounded-md text-xs font-medium data-[state=active]:shadow-sm"
+                      className="rounded-md text-xs font-medium data-[state=active]:shadow-sm data-[state=active]:bg-background data-[state=active]:text-foreground"
                     >
                       Recorrente
                     </TabsTrigger>
                     <TabsTrigger
                       value="installment"
-                      className="rounded-md text-xs font-medium data-[state=active]:shadow-sm"
+                      className="rounded-md text-xs font-medium data-[state=active]:shadow-sm data-[state=active]:bg-background data-[state=active]:text-foreground"
                     >
                       Parcelado
                     </TabsTrigger>
@@ -492,19 +480,19 @@ export default function NewExpensePage() {
 
                   <div className="mt-4">
                     <TabsContent value="single" className="mt-0">
-                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
-                        <div className="p-2 bg-white rounded-full shadow-sm">
-                          <Receipt className="w-4 h-4 text-slate-400" />
+                      <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border/50">
+                        <div className="p-2 bg-background rounded-full shadow-sm">
+                          <Receipt className="w-4 h-4 text-muted-foreground" />
                         </div>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-muted-foreground">
                           Despesa pontual. Não se repete nos próximos meses.
                         </p>
                       </div>
                     </TabsContent>
 
                     <TabsContent value="recurring" className="mt-0 space-y-4">
-                      <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100 space-y-3">
-                        <div className="flex items-center gap-2 text-blue-700 text-sm font-medium">
+                      <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 space-y-3">
+                        <div className="flex items-center gap-2 text-primary text-sm font-medium">
                           <Repeat className="w-4 h-4" /> Frequência da cobrança
                         </div>
                         <div className="grid grid-cols-3 gap-2">
@@ -516,8 +504,8 @@ export default function NewExpensePage() {
                                 onClick={() => setRecurrenceType(t)}
                                 className={`py-1.5 px-2 rounded-md text-xs font-medium transition-all ${
                                   recurrenceType === t
-                                    ? "bg-blue-600 text-white shadow-md"
-                                    : "bg-white text-slate-600 border border-slate-200 hover:border-blue-300"
+                                    ? "bg-primary text-primary-foreground shadow-md"
+                                    : "bg-background text-muted-foreground border border-border/50 hover:border-primary/30"
                                 }`}
                               >
                                 {t === "weekly"
@@ -533,21 +521,21 @@ export default function NewExpensePage() {
                     </TabsContent>
 
                     <TabsContent value="installment" className="mt-0 space-y-4">
-                      <div className="p-4 bg-purple-50/50 rounded-xl border border-purple-100 space-y-4">
-                        <div className="flex items-center gap-2 text-purple-700 text-sm font-medium">
+                      <div className="p-4 bg-purple-500/5 rounded-xl border border-purple-500/10 space-y-4">
+                        <div className="flex items-center gap-2 text-purple-600 text-sm font-medium">
                           <CreditCard className="w-4 h-4" /> Parcelamento no
                           Cartão
                         </div>
                         <div className="flex gap-4">
                           <div className="flex-1">
-                            <Label className="text-[10px] uppercase text-slate-500 font-bold mb-1.5 block">
+                            <Label className="text-[10px] uppercase text-muted-foreground font-bold mb-1.5 block">
                               Qtd. Parcelas
                             </Label>
                             <Select
                               value={installments}
                               onValueChange={setInstallments}
                             >
-                              <SelectTrigger className="h-9 bg-white border-purple-200 text-sm">
+                              <SelectTrigger className="h-9 bg-background border-purple-200/50 text-sm">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -567,10 +555,10 @@ export default function NewExpensePage() {
                             </Select>
                           </div>
                           <div className="flex-1">
-                            <Label className="text-[10px] uppercase text-slate-500 font-bold mb-1.5 block">
+                            <Label className="text-[10px] uppercase text-muted-foreground font-bold mb-1.5 block">
                               Valor Parcela
                             </Label>
-                            <div className="h-9 px-3 bg-purple-100/50 border border-purple-200 rounded-md flex items-center text-sm font-bold text-purple-900">
+                            <div className="h-9 px-3 bg-purple-500/10 border border-purple-500/20 rounded-md flex items-center text-sm font-bold text-purple-700">
                               R${" "}
                               {calculateInstallmentValue().toLocaleString(
                                 "pt-BR",
@@ -590,13 +578,13 @@ export default function NewExpensePage() {
                 <Button
                   onClick={handleSubmit}
                   disabled={isLoading || isParsingReceipt}
-                  className="w-full h-12 text-base font-semibold shadow-lg shadow-blue-500/20 bg-blue-600 hover:bg-blue-700 transition-all active:scale-[0.98]"
+                  className="w-full h-12 text-base font-bold shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 transition-all active:scale-[0.98] rounded-xl"
                 >
                   {isLoading ? (
                     <Loader2 className="animate-spin mr-2" />
                   ) : (
                     <>
-                      <Sparkles className="w-4 h-4 mr-2 text-blue-200" />
+                      <Sparkles className="w-4 h-4 mr-2 text-primary-foreground/70" />
                       Confirmar Despesa
                     </>
                   )}

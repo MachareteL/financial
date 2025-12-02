@@ -1,13 +1,9 @@
 import type { IExpenseRepository } from "@/domain/interfaces/expense.repository.interface";
 import type { IBudgetCategoryRepository } from "@/domain/interfaces/budget-category.repository.interface";
-import type { ExpenseSummaryByBudgetCategoryDTO } from "@/domain/dto/budget.types.d.ts";
-
-export interface GetExpenseSummaryDTO {
-  teamId: string;
-  month: number;
-  year: number;
-  totalIncome: number;
-}
+import type {
+  ExpenseSummaryByBudgetCategoryDTO,
+  GetExpenseSummaryDTO,
+} from "@/domain/dto/budget.types.d.ts";
 
 export class GetExpenseSummaryByPeriodUseCase {
   constructor(

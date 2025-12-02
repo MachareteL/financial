@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,22 +8,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft,
   Mail,
-  Loader2,
   Users,
   ShieldCheck,
   Settings,
   Sparkles,
 } from "lucide-react";
+import { LoadingState } from "@/components/lemon/loading-state";
 import { useTeam } from "@/app/(app)/team/team-provider";
-import { notify } from "@/lib/notify-helper";
-
-// DTOs e Entidades
-import type { TeamMemberProfileDTO } from "@/domain/dto/team.types.d.ts";
-import type { TeamRole } from "@/domain/entities/team-role";
-import type { TeamInvite } from "@/domain/entities/team-invite";
-
-// Casos de Uso
-import { getTeamDataUseCase } from "@/infrastructure/dependency-injection";
+import { useTeamData } from "@/hooks/use-team-data";
 
 // Componentes
 import { TeamMembersTab } from "./components/team-members-tab";
@@ -32,51 +24,29 @@ import { TeamSettingsTab } from "./components/team-settings-tab";
 import { TeamInvitesTab } from "./components/team-invites-tab";
 import { TeamSubscriptionTab } from "./components/team-subscription-tab";
 
-import type { Subscription } from "@/domain/entities/subscription";
-import type { Team } from "@/domain/entities/team";
-
 export default function TeamPage() {
   const { currentTeam } = useTeam();
   const router = useRouter();
 
-  // Dados
-  const [members, setMembers] = useState<TeamMemberProfileDTO[]>([]);
-  const [roles, setRoles] = useState<TeamRole[]>([]);
-  const [invites, setInvites] = useState<TeamInvite[]>([]);
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [teamDetails, setTeamDetails] = useState<Team | null>(null);
+  // React Query Hook
+  const {
+    data: teamData,
+    isLoading,
+    refetch,
+  } = useTeamData(currentTeam?.team.id);
 
-  // Estados de UI
-  const [isLoading, setIsLoading] = useState(true);
+  const members = teamData?.members || [];
+  const roles = teamData?.roles || [];
+  const invites = teamData?.invites || [];
+  const subscription = teamData?.subscription || null;
+  const teamDetails = teamData?.team || null;
 
-  // Carregar dados ao entrar ou trocar de time
-  useEffect(() => {
-    if (currentTeam) loadTeamData();
-  }, [currentTeam]);
-
-  const loadTeamData = async () => {
-    if (!currentTeam) return;
-    setIsLoading(true);
-    try {
-      const data = await getTeamDataUseCase.execute(currentTeam.team.id);
-      setMembers(data.members);
-      setRoles(data.roles);
-      setInvites(data.invites);
-      setSubscription(data.subscription);
-      setTeamDetails(data.team);
-    } catch (error: any) {
-      notify.error(error, "carregar os dados da equipe");
-    } finally {
-      setIsLoading(false);
-    }
+  const handleUpdate = async () => {
+    await refetch();
   };
 
   if (!currentTeam || isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="animate-spin h-8 w-8 text-primary mx-auto" />
-      </div>
-    );
+    return <LoadingState message="Carregando equipe..." />;
   }
 
   const isPro = teamDetails?.isPro(!!subscription && subscription.isActive());
@@ -158,14 +128,14 @@ export default function TeamPage() {
             <TeamMembersTab
               members={members}
               roles={roles}
-              onUpdate={loadTeamData}
+              onUpdate={handleUpdate}
             />
           </TabsContent>
           <TabsContent value="roles" className="outline-none mt-0">
-            <TeamRolesTab roles={roles} onUpdate={loadTeamData} />
+            <TeamRolesTab roles={roles} onUpdate={handleUpdate} />
           </TabsContent>
           <TabsContent value="invites" className="outline-none mt-0">
-            <TeamInvitesTab invites={invites} onUpdate={loadTeamData} />
+            <TeamInvitesTab invites={invites} onUpdate={handleUpdate} />
           </TabsContent>
           <TabsContent value="subscription" className="outline-none mt-0">
             {teamDetails && (

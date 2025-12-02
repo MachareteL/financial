@@ -1,7 +1,7 @@
 import { Home, ShoppingBag, PiggyBank, Wallet } from "lucide-react";
 
 // --- CONFIGURAÇÃO DE CORES E ÍCONES ---
-export const FOLDER_ICONS: Record<string, any> = {
+export const FOLDER_ICONS: Record<string, React.ElementType> = {
   Necessidades: Home,
   Desejos: ShoppingBag,
   Poupança: PiggyBank,

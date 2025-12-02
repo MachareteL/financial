@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { DeleteExpenseUseCase } from "./delete-expense.use-case";
 import { IExpenseRepository } from "@/domain/interfaces/expense.repository.interface";
 import { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
@@ -42,7 +42,7 @@ describe("DeleteExpenseUseCase", () => {
   });
 
   it("should throw error if permission denied", async () => {
-    (teamRepository.verifyPermission as any).mockResolvedValue(false);
+    (teamRepository.verifyPermission as Mock).mockResolvedValue(false);
 
     await expect(useCase.execute(validDTO)).rejects.toThrow(
       "Permissão negada: Você não pode excluir despesas."

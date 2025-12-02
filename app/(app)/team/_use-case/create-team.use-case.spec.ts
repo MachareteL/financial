@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { CreateTeamUseCase } from "./create-team.use-case";
 import { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 import { ICategoryRepository } from "@/domain/interfaces/category.repository.interface";
@@ -83,8 +83,8 @@ describe("CreateTeamUseCase", () => {
       createdAt: new Date(),
     });
 
-    (teamRepository.getTeamsByOwner as any).mockResolvedValue([freeTeam]);
-    (subscriptionRepository.findByTeamId as any).mockResolvedValue(null); // No sub = FREE
+    (teamRepository.getTeamsByOwner as Mock).mockResolvedValue([freeTeam]);
+    (subscriptionRepository.findByTeamId as Mock).mockResolvedValue(null); // No sub = FREE
 
     await expect(useCase.execute(validDTO)).rejects.toThrow(
       "Você já possui um time gratuito. Para criar mais times, faça upgrade dos existentes para o plano PRO."
@@ -113,8 +113,8 @@ describe("CreateTeamUseCase", () => {
       updatedAt: new Date(),
     });
 
-    (teamRepository.getTeamsByOwner as any).mockResolvedValue([proTeam]);
-    (subscriptionRepository.findByTeamId as any).mockResolvedValue(
+    (teamRepository.getTeamsByOwner as Mock).mockResolvedValue([proTeam]);
+    (subscriptionRepository.findByTeamId as Mock).mockResolvedValue(
       activeSubscription
     );
 

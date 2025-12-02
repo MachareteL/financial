@@ -1,14 +1,16 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { CheckFeatureAccessUseCase } from "./check-feature-access.use-case";
 import { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 import { ISubscriptionRepository } from "@/domain/interfaces/subscription.repository.interface";
 import { Team } from "@/domain/entities/team";
 import { Subscription } from "@/domain/entities/subscription";
+import { AnalyticsService } from "@/domain/interfaces/analytics-service.interface";
 
 describe("CheckFeatureAccessUseCase", () => {
   let useCase: CheckFeatureAccessUseCase;
   let teamRepository: ITeamRepository;
   let subscriptionRepository: ISubscriptionRepository;
+  let analyticsService: AnalyticsService;
 
   beforeEach(() => {
     teamRepository = {
@@ -19,9 +21,14 @@ describe("CheckFeatureAccessUseCase", () => {
       findByTeamId: vi.fn(),
     } as unknown as ISubscriptionRepository;
 
+    analyticsService = {
+      track: vi.fn(),
+    } as unknown as AnalyticsService;
+
     useCase = new CheckFeatureAccessUseCase(
       teamRepository,
-      subscriptionRepository
+      subscriptionRepository,
+      analyticsService
     );
   });
 
@@ -49,8 +56,8 @@ describe("CheckFeatureAccessUseCase", () => {
       updatedAt: new Date(),
     });
 
-    (teamRepository.getTeamById as any).mockResolvedValue(proTeam);
-    (subscriptionRepository.findByTeamId as any).mockResolvedValue(
+    (teamRepository.getTeamById as Mock).mockResolvedValue(proTeam);
+    (subscriptionRepository.findByTeamId as Mock).mockResolvedValue(
       activeSubscription
     );
 
@@ -69,8 +76,8 @@ describe("CheckFeatureAccessUseCase", () => {
       createdAt: new Date(),
     });
 
-    (teamRepository.getTeamById as any).mockResolvedValue(freeTeam);
-    (subscriptionRepository.findByTeamId as any).mockResolvedValue(null); // No sub
+    (teamRepository.getTeamById as Mock).mockResolvedValue(freeTeam);
+    (subscriptionRepository.findByTeamId as Mock).mockResolvedValue(null); // No sub
 
     const result = await useCase.execute(
       "123e4567-e89b-12d3-a456-426614174003",
@@ -87,8 +94,8 @@ describe("CheckFeatureAccessUseCase", () => {
       createdAt: new Date(),
     });
 
-    (teamRepository.getTeamById as any).mockResolvedValue(freeTeam);
-    (subscriptionRepository.findByTeamId as any).mockResolvedValue(null);
+    (teamRepository.getTeamById as Mock).mockResolvedValue(freeTeam);
+    (subscriptionRepository.findByTeamId as Mock).mockResolvedValue(null);
 
     const result = await useCase.execute(
       "123e4567-e89b-12d3-a456-426614174003",
@@ -98,7 +105,7 @@ describe("CheckFeatureAccessUseCase", () => {
   });
 
   it("should throw error if team not found", async () => {
-    (teamRepository.getTeamById as any).mockResolvedValue(null);
+    (teamRepository.getTeamById as Mock).mockResolvedValue(null);
 
     await expect(
       useCase.execute("123e4567-e89b-12d3-a456-426614174000", "any")

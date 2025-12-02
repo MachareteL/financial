@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { SaveBudgetUseCase } from "./save-budget.use-case";
 import { IBudgetRepository } from "@/domain/interfaces/budget.repository.interface";
 import { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
@@ -59,20 +59,20 @@ describe("SaveBudgetUseCase", () => {
       createdAt: new Date(),
     });
 
-    (budgetRepository.findByTeamAndPeriod as any).mockResolvedValue(
+    (budgetRepository.findByTeamAndPeriod as Mock).mockResolvedValue(
       existingBudget
     );
 
     await useCase.execute(validDTO);
 
     expect(budgetRepository.update).toHaveBeenCalled();
-    const updatedBudget = (budgetRepository.update as any).mock.calls[0][0];
+    const updatedBudget = (budgetRepository.update as Mock).mock.calls[0][0];
     expect(updatedBudget.totalIncome).toBe(5000);
     expect(budgetRepository.create).not.toHaveBeenCalled();
   });
 
   it("should throw error if permission denied", async () => {
-    (teamRepository.verifyPermission as any).mockResolvedValue(false);
+    (teamRepository.verifyPermission as Mock).mockResolvedValue(false);
 
     await expect(useCase.execute(validDTO)).rejects.toThrow(
       "Permissão negada: Você não pode editar o orçamento."

@@ -1,15 +1,17 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { CreateExpenseUseCase } from "./create-expense.use-case";
 import { IExpenseRepository } from "@/domain/interfaces/expense.repository.interface";
 import { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 import { IStorageRepository } from "@/domain/interfaces/storage.repository.interface";
 import type { CreateExpenseDTO } from "@/domain/dto/expense.types.d.ts";
+import { AnalyticsService } from "@/domain/interfaces/analytics-service.interface";
 
 describe("CreateExpenseUseCase", () => {
   let useCase: CreateExpenseUseCase;
   let expenseRepository: IExpenseRepository;
   let teamRepository: ITeamRepository;
   let storageRepository: IStorageRepository;
+  let analyticsService: AnalyticsService;
 
   beforeEach(() => {
     expenseRepository = {
@@ -24,10 +26,15 @@ describe("CreateExpenseUseCase", () => {
       upload: vi.fn().mockResolvedValue("https://storage.com/receipt.png"),
     } as unknown as IStorageRepository;
 
+    analyticsService = {
+      track: vi.fn(),
+    } as unknown as AnalyticsService;
+
     useCase = new CreateExpenseUseCase(
       expenseRepository,
       storageRepository,
-      teamRepository
+      teamRepository,
+      analyticsService
     );
   });
 
@@ -51,7 +58,7 @@ describe("CreateExpenseUseCase", () => {
       "MANAGE_EXPENSES"
     );
     expect(expenseRepository.createMany).toHaveBeenCalledTimes(1);
-    const createdExpenses = (expenseRepository.createMany as any).mock
+    const createdExpenses = (expenseRepository.createMany as Mock).mock
       .calls[0][0];
     expect(createdExpenses).toHaveLength(1);
     expect(createdExpenses[0].amount).toBe(100);
@@ -59,7 +66,7 @@ describe("CreateExpenseUseCase", () => {
   });
 
   it("should throw error if permission denied", async () => {
-    (teamRepository.verifyPermission as any).mockResolvedValue(false);
+    (teamRepository.verifyPermission as Mock).mockResolvedValue(false);
 
     await expect(useCase.execute(validDTO)).rejects.toThrow(
       "Permissão negada: Você não pode criar despesas."
@@ -78,7 +85,7 @@ describe("CreateExpenseUseCase", () => {
     await useCase.execute(installmentDTO);
 
     expect(expenseRepository.createMany).toHaveBeenCalledTimes(1);
-    const createdExpenses = (expenseRepository.createMany as any).mock
+    const createdExpenses = (expenseRepository.createMany as Mock).mock
       .calls[0][0];
     expect(createdExpenses).toHaveLength(3);
 
@@ -103,7 +110,7 @@ describe("CreateExpenseUseCase", () => {
     await useCase.execute(dtoWithReceipt);
 
     expect(storageRepository.upload).toHaveBeenCalled();
-    const createdExpenses = (expenseRepository.createMany as any).mock
+    const createdExpenses = (expenseRepository.createMany as Mock).mock
       .calls[0][0];
     expect(createdExpenses[0].receiptUrl).toBe(
       "https://storage.com/receipt.png"
@@ -111,7 +118,7 @@ describe("CreateExpenseUseCase", () => {
   });
 
   it("should continue without receipt if upload fails", async () => {
-    (storageRepository.upload as any).mockRejectedValue(
+    (storageRepository.upload as Mock).mockRejectedValue(
       new Error("Upload failed")
     );
     const file = new File(["content"], "receipt.png", { type: "image/png" });
@@ -120,7 +127,7 @@ describe("CreateExpenseUseCase", () => {
     await useCase.execute(dtoWithReceipt);
 
     expect(storageRepository.upload).toHaveBeenCalled();
-    const createdExpenses = (expenseRepository.createMany as any).mock
+    const createdExpenses = (expenseRepository.createMany as Mock).mock
       .calls[0][0];
     expect(createdExpenses[0].receiptUrl).toBeNull();
   });

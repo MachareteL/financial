@@ -7,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-  CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -70,7 +69,7 @@ export function TeamBillingSection({
         throw new Error("Price ID not configured");
       }
       await subscribeTeamAction(team.id, priceId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "iniciar assinatura");
       setIsLoading(false);
     }
@@ -80,7 +79,7 @@ export function TeamBillingSection({
     setIsLoading(true);
     try {
       await manageSubscriptionAction(team.id);
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "gerenciar assinatura");
       setIsLoading(false);
     }

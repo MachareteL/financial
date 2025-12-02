@@ -6,7 +6,7 @@ import { SupabaseSubscriptionRepository } from "@/infrastructure/repositories/su
 import { Subscription } from "@/domain/entities/subscription";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-11-17.clover" as any,
+  apiVersion: "2025-11-17.clover" as unknown as Stripe.LatestApiVersion,
 });
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -34,9 +34,10 @@ export async function POST(req: Request) {
 
   try {
     event = stripe.webhooks.constructEvent(body, sig, endpointSecret);
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
-      { error: `Webhook Error: ${err.message}` },
+      { error: `Webhook Error: ${errorMessage}` },
       { status: 400 }
     );
   }
@@ -97,7 +98,7 @@ export async function POST(req: Request) {
         console.log(`Unhandled event type ${event.type}`);
         break;
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error processing webhook:", error);
     return NextResponse.json(
       { error: "Error processing webhook" },

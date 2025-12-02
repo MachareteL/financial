@@ -1,13 +1,9 @@
-import type { IExpenseRepository } from '@/domain/interfaces/expense.repository.interface'
-import type { IBudgetCategoryRepository } from '@/domain/interfaces/budget-category.repository.interface'
-import type { ExpenseSummaryByBudgetCategoryDTO } from '@/domain/dto/budget.types.d.ts'
-
-export interface GetExpenseSummaryDTO {
-  teamId: string
-  month: number
-  year: number
-  totalIncome: number
-}
+import type { IExpenseRepository } from "@/domain/interfaces/expense.repository.interface";
+import type { IBudgetCategoryRepository } from "@/domain/interfaces/budget-category.repository.interface";
+import type {
+  ExpenseSummaryByBudgetCategoryDTO,
+  GetExpenseSummaryDTO,
+} from "@/domain/dto/budget.types.d.ts";
 
 export class GetExpenseSummaryByPeriodUseCase {
   constructor(
@@ -15,36 +11,49 @@ export class GetExpenseSummaryByPeriodUseCase {
     private budgetCategoryRepository: IBudgetCategoryRepository
   ) {}
 
-  async execute(dto: GetExpenseSummaryDTO): Promise<ExpenseSummaryByBudgetCategoryDTO[]> {
-    const startDate = new Date(dto.year, dto.month - 1, 1)
-    const endDate = new Date(dto.year, dto.month, 0, 23, 59, 59, 999)
+  async execute(
+    dto: GetExpenseSummaryDTO
+  ): Promise<ExpenseSummaryByBudgetCategoryDTO[]> {
+    const startDate = new Date(dto.year, dto.month - 1, 1);
+    const endDate = new Date(dto.year, dto.month, 0, 23, 59, 59, 999);
 
-    const budgetCategories = await this.budgetCategoryRepository.findByTeamId(dto.teamId)
-    
-    const expenses = await this.expenseRepository.findByDateRange(dto.teamId, startDate, endDate)
+    const budgetCategories = await this.budgetCategoryRepository.findByTeamId(
+      dto.teamId
+    );
 
-    const expensesByBudgetCategory = new Map<string, number>()
+    const expenses = await this.expenseRepository.findByDateRange(
+      dto.teamId,
+      startDate,
+      endDate
+    );
+
+    const expensesByBudgetCategory = new Map<string, number>();
     for (const expense of expenses) {
-      const budgetCatId = expense.category?.budgetCategoryId
+      const budgetCatId = expense.category?.budgetCategoryId;
       if (budgetCatId) {
-        const currentSpent = expensesByBudgetCategory.get(budgetCatId) || 0
-        expensesByBudgetCategory.set(budgetCatId, currentSpent + expense.amount)
+        const currentSpent = expensesByBudgetCategory.get(budgetCatId) || 0;
+        expensesByBudgetCategory.set(
+          budgetCatId,
+          currentSpent + expense.amount
+        );
       }
     }
 
-    const summary: ExpenseSummaryByBudgetCategoryDTO[] = budgetCategories.map(bc => {
-      const spent = expensesByBudgetCategory.get(bc.id) || 0
-      const budgeted = dto.totalIncome * bc.percentage
-      
-      return {
-        id: bc.id,
-        name: bc.name,
-        percentage: bc.percentage,
-        spent: spent,
-        budgeted: budgeted,
-      }
-    })
+    const summary: ExpenseSummaryByBudgetCategoryDTO[] = budgetCategories.map(
+      (bc) => {
+        const spent = expensesByBudgetCategory.get(bc.id) || 0;
+        const budgeted = dto.totalIncome * bc.percentage;
 
-    return summary
+        return {
+          id: bc.id,
+          name: bc.name,
+          percentage: bc.percentage,
+          spent: spent,
+          budgeted: budgeted,
+        };
+      }
+    );
+
+    return summary;
   }
 }

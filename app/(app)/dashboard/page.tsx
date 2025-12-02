@@ -4,12 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/auth/auth-provider";
 import { useTeam } from "@/app/(app)/team/team-provider";
-import {
-  getDashboardDataUseCase,
-  signOutUseCase,
-} from "@/infrastructure/dependency-injection";
-import type { DashboardDataDTO } from "@/domain/dto/dashboard.types.d.ts";
+import { signOutUseCase } from "@/infrastructure/dependency-injection";
 import { notify } from "@/lib/notify-helper";
+import { useDashboardData } from "@/hooks/use-dashboard";
 
 // Layout Components
 import { PageContainer, Section } from "@/components/layout";
@@ -32,34 +29,19 @@ export default function DashboardPage() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-  // Data State
-  const [data, setData] = useState<DashboardDataDTO | null>(null);
-  const [isLoadingData, setIsLoadingData] = useState(true);
+  // Data State (React Query)
+  const {
+    data,
+    isLoading: isLoadingData,
+    error,
+  } = useDashboardData(currentTeam?.team.id, selectedMonth, selectedYear);
 
-  // Fetch Data
   useEffect(() => {
-    if (authLoading) return;
-    if (!session || !currentTeam) return;
-
-    const loadData = async () => {
-      setIsLoadingData(true);
-      try {
-        const result = await getDashboardDataUseCase.execute(
-          currentTeam.team.id,
-          selectedMonth,
-          selectedYear
-        );
-        setData(result);
-      } catch (error: any) {
-        console.error("Dashboard error:", error);
-        notify.error(error, "carregar os dados do painel");
-      } finally {
-        setIsLoadingData(false);
-      }
-    };
-
-    loadData();
-  }, [currentTeam, selectedMonth, selectedYear, session, authLoading]);
+    if (error) {
+      console.error("Dashboard error:", error);
+      notify.error(error, "carregar os dados do painel");
+    }
+  }, [error]);
 
   const handleLogout = async () => {
     await signOutUseCase.execute();
@@ -90,7 +72,7 @@ export default function DashboardPage() {
         {isLoadingData ? (
           <LoadingState message="Carregando resumo..." />
         ) : (
-          <SummaryCards data={data} isLoading={false} />
+          <SummaryCards data={data || null} isLoading={false} />
         )}
       </Section>
 

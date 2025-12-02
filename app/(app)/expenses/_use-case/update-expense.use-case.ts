@@ -1,6 +1,7 @@
 import type { IExpenseRepository } from "@/domain/interfaces/expense.repository.interface";
 import type { IStorageRepository } from "@/domain/interfaces/storage.repository.interface"; // <-- Importar
 import type { UpdateExpenseDTO } from "@/domain/dto/expense.types.d.ts";
+import type { UpdateExpenseProps } from "@/domain/entities/expense";
 
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 
@@ -50,7 +51,7 @@ export class UpdateExpenseUseCase {
       }
     }
 
-    const updateProps: any = {
+    const updateProps: UpdateExpenseProps = {
       description: dto.description,
       amount: dto.amount,
       categoryId: dto.categoryId,
@@ -64,7 +65,9 @@ export class UpdateExpenseUseCase {
 
     // Remove undefined keys so they don't overwrite existing values
     Object.keys(updateProps).forEach(
-      (key) => updateProps[key] === undefined && delete updateProps[key]
+      (key) =>
+        updateProps[key as keyof UpdateExpenseProps] === undefined &&
+        delete updateProps[key as keyof UpdateExpenseProps]
     );
 
     const updatedExpense = existingExpense.update(updateProps);

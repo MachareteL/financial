@@ -12,7 +12,6 @@ import {
   TrendingDown,
   Info,
   ArrowUpRight,
-  ArrowDownRight,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { DashboardDataDTO } from "@/domain/dto/dashboard.types.d.ts";

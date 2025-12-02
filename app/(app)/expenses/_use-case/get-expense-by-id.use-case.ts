@@ -1,11 +1,9 @@
 import type { IExpenseRepository } from "@/domain/interfaces/expense.repository.interface";
-import type { ExpenseDetailsDTO } from "@/domain/dto/expense.types.d.ts";
+import type {
+  ExpenseDetailsDTO,
+  GetExpenseByIdDTO,
+} from "@/domain/dto/expense.types.d.ts";
 import type { Expense } from "@/domain/entities/expense";
-
-export interface GetExpenseByIdDTO {
-  expenseId: string;
-  teamId: string;
-}
 
 export class GetExpenseByIdUseCase {
   constructor(private expenseRepository: IExpenseRepository) {}

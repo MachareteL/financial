@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/app/auth/auth-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AnalyticsProvider } from "@/components/providers/analytics-provider";
+import QueryProvider from "@/components/providers/query-provider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -62,7 +63,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AnalyticsProvider>
-            <AuthProvider>{children}</AuthProvider>
+            <QueryProvider>
+              <AuthProvider>{children}</AuthProvider>
+            </QueryProvider>
           </AnalyticsProvider>
           <Toaster />
         </ThemeProvider>

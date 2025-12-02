@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { UpdateExpenseUseCase } from "./update-expense.use-case";
 import { IExpenseRepository } from "@/domain/interfaces/expense.repository.interface";
 import { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
@@ -55,7 +55,7 @@ describe("UpdateExpenseUseCase", () => {
   });
 
   it("should update expense details successfully", async () => {
-    (expenseRepository.findById as any).mockResolvedValue(existingExpense);
+    (expenseRepository.findById as Mock).mockResolvedValue(existingExpense);
 
     await useCase.execute(validDTO);
 
@@ -65,27 +65,27 @@ describe("UpdateExpenseUseCase", () => {
       "MANAGE_EXPENSES"
     );
     expect(expenseRepository.update).toHaveBeenCalled();
-    const updatedExpense = (expenseRepository.update as any).mock.calls[0][0];
+    const updatedExpense = (expenseRepository.update as Mock).mock.calls[0][0];
     expect(updatedExpense.amount).toBe(200);
     expect(updatedExpense.description).toBe("Updated Lunch");
   });
 
   it("should update receipt if file provided", async () => {
-    (expenseRepository.findById as any).mockResolvedValue(existingExpense);
+    (expenseRepository.findById as Mock).mockResolvedValue(existingExpense);
     const file = new File(["content"], "new.png", { type: "image/png" });
     const dtoWithFile = { ...validDTO, receiptFile: file };
 
     await useCase.execute(dtoWithFile);
 
     expect(storageRepository.upload).toHaveBeenCalled();
-    const updatedExpense = (expenseRepository.update as any).mock.calls[0][0];
+    const updatedExpense = (expenseRepository.update as Mock).mock.calls[0][0];
     expect(updatedExpense.receiptUrl).toBe(
       "https://storage.com/new-receipt.png"
     );
   });
 
   it("should throw error if permission denied", async () => {
-    (teamRepository.verifyPermission as any).mockResolvedValue(false);
+    (teamRepository.verifyPermission as Mock).mockResolvedValue(false);
 
     await expect(useCase.execute(validDTO)).rejects.toThrow(
       "Permissão negada: Você não pode editar despesas."
@@ -94,7 +94,7 @@ describe("UpdateExpenseUseCase", () => {
   });
 
   it("should throw error if expense not found", async () => {
-    (expenseRepository.findById as any).mockResolvedValue(null);
+    (expenseRepository.findById as Mock).mockResolvedValue(null);
 
     await expect(useCase.execute(validDTO)).rejects.toThrow(
       "Gasto não encontrado ou você não tem permissão"

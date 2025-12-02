@@ -1,6 +1,7 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X, ArrowDown } from "lucide-react";
+import Image from "next/image";
 
 interface ReceiptViewerProps {
   selectedReceipt: string | null;
@@ -35,12 +36,25 @@ export function ReceiptViewer({
                   src={selectedReceipt}
                   className="w-[800px] h-[600px] rounded-lg shadow-inner bg-white"
                 />
+              ) : selectedReceipt.startsWith("blob:") ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={selectedReceipt}
+                    alt="Comprovante"
+                    className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-sm"
+                  />
+                </>
               ) : (
-                <img
-                  src={selectedReceipt}
-                  alt="Comprovante"
-                  className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-sm"
-                />
+                <div className="relative w-full h-full min-h-[50vh]">
+                  <Image
+                    src={selectedReceipt}
+                    alt="Comprovante"
+                    fill
+                    className="object-contain rounded-lg shadow-sm"
+                    sizes="(max-width: 768px) 100vw, 800px"
+                  />
+                </div>
               ))}
           </div>
           <div className="bg-white p-3 border-t border-slate-100 flex justify-between items-center">

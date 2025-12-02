@@ -3,7 +3,6 @@
 import type React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useAuth } from "./auth-provider";
 import { notify } from "@/lib/notify-helper";
 
@@ -58,7 +57,7 @@ export default function AuthPage() {
         description: "Login realizado com sucesso.",
       });
       router.push("/dashboard");
-    } catch (err: any) {
+    } catch (err: unknown) {
       notify.error(err, "fazer login");
     } finally {
       setIsLoading(false);
@@ -83,7 +82,7 @@ export default function AuthPage() {
       // Opcional: Auto-login após cadastro se a API permitir, ou pedir para logar
       // Por padrão do fluxo anterior, o usuário não é logado automaticamente se tiver verify email
       // Mas se o RLS permitir, ele pode logar. Vamos manter o usuário na tela para ele fazer login ou ver o aviso.
-    } catch (err: any) {
+    } catch (err: unknown) {
       notify.error(err, "criar conta");
     } finally {
       setIsLoading(false);
@@ -103,7 +102,7 @@ export default function AuthPage() {
       setIsResetOpen(false);
       router.push(`/auth/verify-code?email=${encodeURIComponent(resetEmail)}`);
       setResetEmail("");
-    } catch (err: any) {
+    } catch (err: unknown) {
       notify.error(err, "enviar email de recuperação");
     } finally {
       setIsLoading(false);

@@ -6,18 +6,18 @@ import { useAuth } from "@/app/auth/auth-provider";
 import { useTeam } from "@/app/(app)/team/team-provider";
 import { usePermission } from "@/hooks/use-permission";
 import {
-  getIncomesUseCase,
-  createIncomeUseCase,
-  updateIncomeUseCase,
-  deleteIncomeUseCase,
-  getBudgetUseCase,
-  saveBudgetUseCase,
-  getBudgetCategoriesUseCase,
-  createBudgetCategoryUseCase,
-  updateBudgetCategoryUseCase,
-  deleteBudgetCategoryUseCase,
-  getCategoriesUseCase,
-} from "@/infrastructure/dependency-injection";
+  useBudget,
+  useBudgetCategories,
+  useSaveBudget,
+  useUpdateBudgetCategory,
+} from "@/hooks/use-budget";
+import {
+  useIncomes,
+  useCreateIncome,
+  useUpdateIncome,
+  useDeleteIncome,
+} from "@/hooks/use-incomes";
+import { useCategories } from "@/hooks/use-categories";
 import { notify } from "@/lib/notify-helper";
 import {
   PieChart as RechartsPieChart,
@@ -28,24 +28,16 @@ import {
 } from "recharts";
 
 // UI Components
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -68,9 +60,7 @@ import {
   Target,
   Edit2,
   Trash2,
-  RefreshCw,
   DollarSign,
-  ArrowRight,
   AlertCircle,
   Sparkles,
   CheckCircle2,
@@ -86,15 +76,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { LoadingState } from "@/components/lemon/loading-state";
 
 // Types
-import type {
-  IncomeDetailsDTO,
-  CreateIncomeDTO,
-  UpdateIncomeDTO,
-} from "@/domain/dto/income.types.d.ts";
-import type { BudgetCategoryDetailsDTO } from "@/domain/dto/budget-category.types.d.ts";
-import type { CategoryDetailsDTO } from "@/domain/dto/category.types.d.ts";
+import type { IncomeDetailsDTO } from "@/domain/dto/income.types.d.ts";
 
 // Configuração Visual das Pastas
 const FOLDER_CONFIG: Record<
@@ -145,15 +130,6 @@ export default function BudgetPage() {
   // --- Estado Global ---
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-
-  // --- Dados ---
-  const [incomes, setIncomes] = useState<IncomeDetailsDTO[]>([]);
-  const [budgetCategories, setBudgetCategories] = useState<
-    BudgetCategoryDetailsDTO[]
-  >([]);
-  const [categories, setCategories] = useState<CategoryDetailsDTO[]>([]);
 
   // --- Estado de Edição ---
   const [plannedIncome, setPlannedIncome] = useState<string>("");
@@ -184,46 +160,47 @@ export default function BudgetPage() {
     }
   }, [session, authLoading, userId, teamId, router]);
 
-  // 2. Carregar Dados
-  // 2. Carregar Dados
+  // --- React Query Hooks ---
+
+  // Fetch Data
+  const { data: incomes = [] } = useIncomes(teamId);
+
+  const { data: budgetData } = useBudget(teamId, selectedMonth, selectedYear);
+
+  const { data: budgetCategories = [] } = useBudgetCategories(teamId);
+
+  const { data: categories = [] } = useCategories(teamId);
+
+  // Mutations
+  const saveBudgetMutation = useSaveBudget();
+  const updateBudgetCategoryMutation = useUpdateBudgetCategory();
+  const createIncomeMutation = useCreateIncome();
+  const updateIncomeMutation = useUpdateIncome();
+  const deleteIncomeMutation = useDeleteIncome();
+
+  const isSaving =
+    saveBudgetMutation.isPending ||
+    updateBudgetCategoryMutation.isPending ||
+    createIncomeMutation.isPending ||
+    updateIncomeMutation.isPending ||
+    deleteIncomeMutation.isPending;
+
+  // Initialize edit states when data loads
   useEffect(() => {
-    if (teamId) loadData();
-  }, [teamId, selectedMonth, selectedYear]);
+    if (budgetData) {
+      setPlannedIncome(budgetData.totalIncome.toString());
+    }
+  }, [budgetData]);
 
-  const loadData = async () => {
-    if (!teamId) return;
-    setIsLoading(true);
-    try {
-      const [incomesData, budgetData, budgetCatsData, catsData] =
-        await Promise.all([
-          getIncomesUseCase.execute(teamId),
-          getBudgetUseCase.execute({
-            teamId,
-            month: selectedMonth,
-            year: selectedYear,
-          }),
-          getBudgetCategoriesUseCase.execute(teamId),
-          getCategoriesUseCase.execute(teamId),
-        ]);
-
-      setIncomes(incomesData);
-      setBudgetCategories(budgetCatsData);
-      setCategories(catsData);
-
-      // Inicializa valores de edição
-      setPlannedIncome(budgetData?.totalIncome.toString() || "0");
-
+  useEffect(() => {
+    if (budgetCategories.length > 0) {
       const initialPercentages: Record<string, string> = {};
-      budgetCatsData.forEach((bc) => {
+      budgetCategories.forEach((bc) => {
         initialPercentages[bc.id] = (bc.percentage * 100).toString();
       });
       setEditedPercentages(initialPercentages);
-    } catch (error: any) {
-      notify.error(error, "carregar dados");
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [budgetCategories]);
 
   // --- Cálculos Auxiliares ---
 
@@ -295,9 +272,8 @@ export default function BudgetPage() {
       return;
     }
 
-    setIsSaving(true);
     try {
-      await saveBudgetUseCase.execute({
+      await saveBudgetMutation.mutateAsync({
         teamId,
         userId: userId!,
         month: selectedMonth,
@@ -309,7 +285,7 @@ export default function BudgetPage() {
         budgetCategories.map((bc) => {
           const newPerc = parseFloat(editedPercentages[bc.id]);
           if (!isNaN(newPerc) && newPerc !== bc.percentage * 100) {
-            return updateBudgetCategoryUseCase.execute({
+            return updateBudgetCategoryMutation.mutateAsync({
               teamId,
               userId: userId!,
               budgetCategoryId: bc.id,
@@ -322,11 +298,8 @@ export default function BudgetPage() {
       );
 
       notify.success("Planejamento salvo!");
-      await loadData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "salvar planejamento");
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -342,7 +315,6 @@ export default function BudgetPage() {
     e.preventDefault();
     if (!teamId || !userId) return;
 
-    setIsSaving(true);
     const formData = new FormData(e.currentTarget);
     const data = {
       amount: Number(formData.get("amount")),
@@ -354,7 +326,7 @@ export default function BudgetPage() {
 
     try {
       if (editingIncome) {
-        await updateIncomeUseCase.execute({
+        await updateIncomeMutation.mutateAsync({
           ...data,
           incomeId: editingIncome.id,
           teamId,
@@ -362,16 +334,13 @@ export default function BudgetPage() {
         });
         notify.success("Receita atualizada!");
       } else {
-        await createIncomeUseCase.execute({ ...data, teamId, userId });
+        await createIncomeMutation.mutateAsync({ ...data, teamId, userId });
         notify.success("Receita criada!");
       }
       setIsIncomeDialogOpen(false);
       setEditingIncome(null);
-      loadData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "salvar receita");
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -382,14 +351,13 @@ export default function BudgetPage() {
   const confirmDeleteIncome = async () => {
     if (!teamId || !userId || !incomeToDelete) return;
     try {
-      await deleteIncomeUseCase.execute({
+      await deleteIncomeMutation.mutateAsync({
         incomeId: incomeToDelete,
         teamId,
         userId,
       });
       notify.success("Receita excluída.");
-      loadData();
-    } catch (e: any) {
+    } catch (e: unknown) {
       notify.error(e, "excluir receita");
     } finally {
       setIncomeToDelete(null);
@@ -397,11 +365,7 @@ export default function BudgetPage() {
   };
 
   if (authLoading || !session || !teamId) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="animate-spin h-10 w-10 text-primary" />
-      </div>
-    );
+    return <LoadingState message="Carregando orçamento..." />;
   }
 
   return (

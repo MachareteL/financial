@@ -60,7 +60,7 @@ export function TeamSettingsTab({ team, subscription }: TeamSettingsTabProps) {
       notify.success("Configurações atualizadas com sucesso!");
       // Atualiza o contexto global do time
       window.location.reload();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "atualizar a equipe");
     } finally {
       setIsLoading(false);

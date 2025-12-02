@@ -43,7 +43,7 @@ export function UpgradeModal({
       }
 
       await subscribeTeamAction(currentTeam.team.id, priceId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "iniciar assinatura");
       setLoadingInterval(null);
     }

@@ -47,6 +47,7 @@
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "latest",
     "@tailwindcss/typography": "^0.5.19",
+    "@tanstack/react-query": "^5.90.11",
     "@vercel/speed-insights": "^1.2.0",
     "autoprefixer": "^10.4.20",
     "browser-image-compression": "^2.0.2",

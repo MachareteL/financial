@@ -33,7 +33,7 @@ export function SecurityTab() {
       notify.success("Senha alterada com sucesso!");
       setPassword("");
       setConfirmPassword("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "alterar senha");
     } finally {
       setIsLoading(false);

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { CreateBudgetCategoryUseCase } from "./create-budget-category.use-case";
 import { IBudgetCategoryRepository } from "@/domain/interfaces/budget-category.repository.interface";
 import { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
@@ -40,14 +40,14 @@ describe("CreateBudgetCategoryUseCase", () => {
       "MANAGE_BUDGET"
     );
     expect(budgetCategoryRepository.create).toHaveBeenCalled();
-    const createdCategory = (budgetCategoryRepository.create as any).mock
+    const createdCategory = (budgetCategoryRepository.create as Mock).mock
       .calls[0][0];
     expect(createdCategory.name).toBe("New Category");
     expect(createdCategory.percentage).toBe(0.2);
   });
 
   it("should throw error if permission denied", async () => {
-    (teamRepository.verifyPermission as any).mockResolvedValue(false);
+    (teamRepository.verifyPermission as Mock).mockResolvedValue(false);
 
     await expect(useCase.execute(validDTO)).rejects.toThrow(
       "Permissão negada: Você não pode criar categorias de orçamento."
