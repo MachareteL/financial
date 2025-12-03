@@ -1,7 +1,7 @@
 "use client";
 
 import type { TeamMembership } from "@/domain/dto/user.types.d.ts";
-import { useAuth } from "@/app/auth/auth-provider";
+import { useAuth } from "@/components/providers/auth-provider";
 import { useRouter } from "next/navigation";
 import React, {
   createContext,

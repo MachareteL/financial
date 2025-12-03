@@ -3,7 +3,7 @@
 import type React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "./auth-provider";
+import { useAuth } from "@/components/providers/auth-provider";
 import { notify } from "@/lib/notify-helper";
 
 // Use Cases

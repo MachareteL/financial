@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { LoadingState } from "@/components/lemon/loading-state";
 import Image from "next/image";
-import { useAuth } from "@/app/auth/auth-provider";
+import { useAuth } from "@/components/providers/auth-provider";
 import { usePermission } from "@/hooks/use-permission";
 
 import { updateExpenseUseCase } from "@/infrastructure/dependency-injection";

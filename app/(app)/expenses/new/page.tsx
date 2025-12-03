@@ -3,7 +3,7 @@
 import type React from "react";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/auth/auth-provider";
+import { useAuth } from "@/components/providers/auth-provider";
 import { notify } from "@/lib/notify-helper";
 import { compressImage } from "@/lib/compression";
 
@@ -41,7 +41,7 @@ import {
   UploadCloud,
   FileText,
 } from "lucide-react";
-import { UpgradeModal } from "@/app/(app)/components/upgrade-modal";
+import { UpgradeModal } from "@/components/subscription/upgrade-modal";
 import { useFeatureAccess } from "@/hooks/use-feature-access";
 import { LoadingState } from "@/components/lemon/loading-state";
 

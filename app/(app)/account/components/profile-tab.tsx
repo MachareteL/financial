@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/app/auth/auth-provider";
+import { useAuth } from "@/components/providers/auth-provider";
 import { updateProfileUseCase } from "@/infrastructure/dependency-injection";
 import { notify } from "@/lib/notify-helper";
 import { Button } from "@/components/ui/button";

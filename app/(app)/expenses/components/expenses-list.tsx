@@ -1,8 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { CalendarDays, CreditCard, Edit, Trash2, Loader2 } from "lucide-react";
+import {
+  CalendarDays,
+  CreditCard,
+  Edit,
+  Trash2,
+  Loader2,
+  Sparkles,
+} from "lucide-react";
 import { usePermission } from "@/hooks/use-permission";
 import { getCategoryStyle } from "../utils";
-import { EmptyState } from "./empty-state";
+import { EmptyState } from "@/components/lemon/empty-state";
 import { notify } from "@/lib/notify-helper";
 import type { ExpenseDetailsDTO } from "@/domain/dto/expense.types.d.ts";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
@@ -29,7 +36,28 @@ export function ExpensesList({
   const { can } = usePermission();
 
   if (Object.entries(groupedExpenses).length === 0) {
-    return <EmptyState onClearFilters={onClearFilters} />;
+    return (
+      <EmptyState
+        title="Tudo limpo por aqui!"
+        message="Nenhuma despesa encontrada com os filtros atuais."
+        illustration={
+          <div className="w-24 h-24 bg-gradient-to-br from-blue-50 to-purple-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm ring-1 ring-slate-100">
+            <Sparkles className="w-10 h-10 text-blue-400" />
+          </div>
+        }
+        action={
+          onClearFilters && (
+            <Button
+              variant="outline"
+              className="rounded-full border-slate-200"
+              onClick={onClearFilters}
+            >
+              Limpar Filtros
+            </Button>
+          )
+        }
+      />
+    );
   }
 
   return (

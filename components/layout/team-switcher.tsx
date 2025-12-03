@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTeam } from "@/app/(app)/team/team-provider";
-import { useAuth } from "@/app/auth/auth-provider";
+import { useAuth } from "@/components/providers/auth-provider";
 
 // UI Components
 import { Button } from "@/components/ui/button";

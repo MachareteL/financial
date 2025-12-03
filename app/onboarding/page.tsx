@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Users, UserPlus } from "lucide-react";
 
-import { useAuth } from "@/app/auth/auth-provider";
+import { useAuth } from "@/components/providers/auth-provider";
 import { createTeamUseCase } from "@/infrastructure/dependency-injection";
 import { notify } from "@/lib/notify-helper";
 import {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useAuth } from "@/app/auth/auth-provider";
+import { useAuth } from "@/components/providers/auth-provider";
 import { getPendingInvitesUseCase } from "@/infrastructure/dependency-injection";
 import { notify } from "@/lib/notify-helper";
 import { useRouter, usePathname } from "next/navigation";

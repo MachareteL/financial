@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-import { UpgradeModal } from "@/app/(app)/components/upgrade-modal";
+import { UpgradeModal } from "@/components/subscription/upgrade-modal";
 
 export function SubscriptionBadge() {
   const { currentTeam } = useTeam();

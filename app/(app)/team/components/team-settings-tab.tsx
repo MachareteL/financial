@@ -25,7 +25,7 @@ import {
 import { useTeam } from "@/app/(app)/team/team-provider";
 import { notify } from "@/lib/notify-helper";
 import { updateTeamUseCase } from "@/infrastructure/dependency-injection";
-import { useAuth } from "@/app/auth/auth-provider";
+import { useAuth } from "@/components/providers/auth-provider";
 import { usePermission } from "@/hooks/use-permission";
 import type { Subscription } from "@/domain/entities/subscription";
 import type { Team } from "@/domain/entities/team";
