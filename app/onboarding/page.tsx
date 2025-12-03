@@ -57,12 +57,12 @@ export default function OnboardingPage() {
   const actionLoading =
     acceptInviteMutation.isPending || declineInviteMutation.isPending;
 
-  // useEffect(() => {
-  //   // Auth check is handled by middleware
-  //   if (session?.teams && session.teams.length > 0) {
-  //     router.push("/dashboard");
-  //   }
-  // }, [session, loading, router]);
+  useEffect(() => {
+    // Auth check is handled by middleware
+    if (session?.teams && session.teams.length > 0) {
+      router.push("/dashboard");
+    }
+  }, [session, loading, router]);
 
   const handleCreateTeam = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

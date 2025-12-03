@@ -17,12 +17,16 @@ interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
   featureName?: string;
+  title?: string;
+  description?: string;
 }
 
 export function UpgradeModal({
   isOpen,
   onClose,
   featureName,
+  title,
+  description,
 }: UpgradeModalProps) {
   const { currentTeam } = useTeam();
   const [loadingInterval, setLoadingInterval] = useState<
@@ -57,15 +61,18 @@ export function UpgradeModal({
             <Sparkles className="w-6 h-6 text-primary" />
           </div>
           <DialogTitle className="text-center text-xl">
-            {featureName
-              ? `Desbloqueie ${featureName}`
-              : "Faça o Upgrade para PRO"}
+            {title
+              ? title
+              : featureName
+                ? `Desbloqueie ${featureName}`
+                : "Faça o Upgrade para PRO"}
           </DialogTitle>
           <DialogDescription className="text-center pt-2">
-            {featureName
-              ? "Esta funcionalidade é exclusiva do plano PRO."
-              : "Tenha acesso ilimitado a todas as funcionalidades."}{" "}
-            Escolha o plano ideal para sua equipe.
+            {description
+              ? description
+              : featureName
+                ? "Esta funcionalidade é exclusiva do plano PRO."
+                : "Tenha acesso ilimitado a todas as funcionalidades. Escolha o plano ideal para sua equipe."}
           </DialogDescription>
         </DialogHeader>
 
