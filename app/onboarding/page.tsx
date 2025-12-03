@@ -3,6 +3,8 @@
 import type React from "react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +15,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Users, UserPlus } from "lucide-react";
+import {
+  Users,
+  UserPlus,
+  Moon,
+  Sun,
+  RefreshCw,
+  CheckCircle2,
+  Sparkles,
+} from "lucide-react";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { createTeamUseCase } from "@/infrastructure/dependency-injection";
@@ -23,15 +33,21 @@ import {
   useAcceptInvite,
   useDeclineInvite,
 } from "@/hooks/use-invites";
+import { LoadingState } from "@/components/lemon/loading-state";
 
 export default function OnboardingPage() {
   const { session, loading } = useAuth();
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
 
   // React Query Hooks
-  const { data: invites = [], isLoading: loadingInvites } = usePendingInvites(
-    session?.user?.email
-  );
+  const {
+    data: invites = [],
+    isLoading: loadingInvites,
+    refetch: refetchInvites,
+    isRefetching: isRefetchingInvites,
+  } = usePendingInvites(session?.user?.email);
+
   const acceptInviteMutation = useAcceptInvite();
   const declineInviteMutation = useDeclineInvite();
 
@@ -102,170 +118,269 @@ export default function OnboardingPage() {
     }
   };
 
-  if (loading || !session || (session.teams && session.teams.length > 0)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4 text-foreground">
-            Carregando...
-          </h1>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-        </div>
-      </div>
-    );
+  const handleRefreshInvites = async () => {
+    await refetchInvites();
+    notify.success("Lista de convites atualizada.");
+  };
+
+  if (loading || !session) {
+    return <LoadingState message="Carregando suas informações..." />;
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="max-w-4xl w-full space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            Bem-vindo, {session.user.name}!
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 transition-colors duration-300">
+      <div className="max-w-5xl w-full space-y-8">
+        {/* Header Section */}
+        <div className="text-center space-y-4">
+          <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-2 relative">
+            <Sparkles className="w-8 h-8 text-primary" />
+            <Badge
+              variant="secondary"
+              className="absolute -top-2 -right-12 text-[10px] px-1.5 py-0.5 h-5 gap-1 border-primary/20 bg-background/80 backdrop-blur-sm shadow-sm"
+            >
+              <Sparkles className="w-2.5 h-2.5 text-primary" />
+              AI Empowered
+            </Badge>
+          </div>
+          <h1 className="text-4xl font-bold text-foreground tracking-tight">
+            Bem-vindo ao Lemon, {session.user.name?.split(" ")[0]}!
           </h1>
-          <p className="text-muted-foreground">
-            Para começar, você precisa criar um time/equipe ou ser convidado
-            para um(a).
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Estamos felizes em ter você aqui. Para começar a organizar suas
+            finanças, precisamos configurar seu espaço de trabalho.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Criar Time */}
-          <Card className="h-full">
-            <CardHeader className="text-center">
-              <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <UserPlus className="w-6 h-6 text-primary" />
-              </div>
-              <CardTitle>Criar Nova equipe</CardTitle>
-              <CardDescription>
-                Comece um novo time financeiro e convide outros membros depois
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleCreateTeam} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="teamName">Nome do Time</Label>
-                  <Input
-                    id="teamName"
-                    name="teamName"
-                    placeholder="Ex: Família Silva"
-                    required
-                    disabled={isLoading}
-                    value={teamName}
-                    onChange={(e) => setTeamName(e.target.value)}
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Criando..." : "Criar Equipe"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Convites */}
-          <Card className="h-full flex flex-col">
-            <CardHeader className="text-center">
-              <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <UserPlus className="w-6 h-6 text-primary" />
-              </div>
-              <CardTitle>Convites Pendentes</CardTitle>
-              <CardDescription>
-                Veja se alguém te convidou para um time
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1">
-              {loadingInvites ? (
-                <div className="text-center py-4 text-muted-foreground">
-                  Carregando convites...
-                </div>
-              ) : invites.length > 0 ? (
-                <div className="space-y-4">
-                  {invites.map((invite) => (
-                    <div
-                      key={invite.id}
-                      className="bg-card border rounded-lg p-4 shadow-sm flex flex-col gap-3"
-                    >
-                      <div>
-                        <p className="font-medium text-foreground">
-                          Time:{" "}
-                          {(invite as unknown as { teamName: string }).teamName}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Convidado por:{" "}
-                          {
-                            (invite as unknown as { invitedByName: string })
-                              .invitedByName
-                          }
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Cargo:{" "}
-                          {(invite as unknown as { roleName: string }).roleName}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-                          onClick={() => handleAcceptInvite(invite.id)}
-                          disabled={actionLoading}
-                        >
-                          Aceitar
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => handleDeclineInvite(invite.id)}
-                          disabled={actionLoading}
-                        >
-                          Recusar
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center space-y-4">
-                  <div className="bg-muted/50 p-4 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Seu email para convite:
-                    </p>
-                    <p className="font-medium text-foreground">
-                      {session.user.email}
-                    </p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Nenhum convite pendente no momento.
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        {/* Theme Selection - Subtle but accessible */}
+        <div className="flex justify-center gap-2">
+          <Button
+            variant={theme === "light" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setTheme("light")}
+            className="rounded-full px-4"
+          >
+            <Sun className="w-4 h-4 mr-2" />
+            Claro
+          </Button>
+          <Button
+            variant={theme === "dark" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setTheme("dark")}
+            className="rounded-full px-4"
+          >
+            <Moon className="w-4 h-4 mr-2" />
+            Escuro
+          </Button>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              Como funciona
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-xs font-bold text-primary">1</span>
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          {/* Left Column: Actions */}
+          <div className="space-y-6">
+            {/* Create Team */}
+            <Card className="border-primary/20 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserPlus className="w-5 h-5 text-primary" />
+                  Criar Nova Equipe
+                </CardTitle>
+                <CardDescription>
+                  Crie um espaço para você ou sua família.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleCreateTeam} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="teamName">Nome da Equipe</Label>
+                    <Input
+                      id="teamName"
+                      name="teamName"
+                      placeholder="Ex: Minha Casa, Família Silva..."
+                      required
+                      disabled={isLoading}
+                      value={teamName}
+                      onChange={(e) => setTeamName(e.target.value)}
+                      className="bg-background"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full font-medium"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Criando..." : "Começar Agora"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Invites */}
+            <Card className="border-border shadow-md">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="space-y-1">
+                  <CardTitle className="text-base font-medium">
+                    Convites Pendentes
+                  </CardTitle>
+                  <CardDescription>
+                    Verifique se você foi convidado.
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRefreshInvites}
+                  disabled={loadingInvites || isRefetchingInvites}
+                  className="gap-2 text-muted-foreground hover:text-primary border border-dashed border-primary/30 hover:border-primary/60 hover:bg-primary/5"
+                >
+                  <RefreshCw
+                    className={`w-4 h-4 ${
+                      loadingInvites || isRefetchingInvites
+                        ? "animate-spin"
+                        : ""
+                    }`}
+                  />
+                  Atualizar convites
+                </Button>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {loadingInvites && !isRefetchingInvites ? (
+                  <div className="text-center py-4 text-muted-foreground text-sm">
+                    Buscando convites...
+                  </div>
+                ) : invites.length > 0 ? (
+                  <div className="space-y-3">
+                    {invites.map((invite) => (
+                      <div
+                        key={invite.id}
+                        className="bg-muted/30 border rounded-lg p-3 flex flex-col gap-3 transition-colors hover:bg-muted/50"
+                      >
+                        <div>
+                          <p className="font-medium text-sm text-foreground">
+                            {
+                              (invite as unknown as { teamName: string })
+                                .teamName
+                            }
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            De:{" "}
+                            {
+                              (invite as unknown as { invitedByName: string })
+                                .invitedByName
+                            }
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="flex-1 h-8 text-xs"
+                            onClick={() => handleAcceptInvite(invite.id)}
+                            disabled={actionLoading}
+                          >
+                            Aceitar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 h-8 text-xs text-destructive hover:text-destructive"
+                            onClick={() => handleDeclineInvite(invite.id)}
+                            disabled={actionLoading}
+                          >
+                            Recusar
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 bg-muted/20 rounded-lg border border-dashed">
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Nenhum convite encontrado.
+                    </p>
+                    <p className="text-xs text-muted-foreground/70">
+                      Seu email é:{" "}
+                      <span className="font-medium text-foreground">
+                        {session.user.email}
+                      </span>
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column: Explanations */}
+          <div className="space-y-6 lg:pt-0">
+            <Card className="bg-primary/5 border-primary/10 shadow-none">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-primary">
+                  <Users className="w-5 h-5" />
+                  Como o Lemon funciona?
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-background border border-primary/20 flex items-center justify-center flex-shrink-0 text-primary font-bold shadow-sm">
+                    1
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-foreground mb-1">
+                      Crie sua Equipe
+                    </h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Comece criando um espaço para suas finanças. Pode ser
+                      pessoal, para o casal ou para toda a família. Você define
+                      quem participa.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-background border border-primary/20 flex items-center justify-center flex-shrink-0 text-primary font-bold shadow-sm">
+                    2
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-foreground mb-1">
+                      Organize Gastos e Metas
+                    </h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Registre despesas, categorize gastos e defina metas de
+                      economia. Tudo fica sincronizado para todos os membros da
+                      equipe.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-background border border-primary/20 flex items-center justify-center flex-shrink-0 text-primary font-bold shadow-sm">
+                    3
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-foreground mb-1">
+                      Acompanhe a Evolução
+                    </h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Visualize para onde seu dinheiro está indo com relatórios
+                      simples e tome decisões melhores para o seu futuro
+                      financeiro.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="bg-muted/30 rounded-lg p-4 border flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
               <div>
-                <h4 className="font-medium">
-                  Cada pessoa tem um Time ou uma Equipe
+                <h4 className="text-sm font-medium text-foreground">
+                  Dica Rápida
                 </h4>
-                <p className="text-sm text-muted-foreground">
-                  Um "time" é o espaço compartilhado onde vocês organizam a vida
-                  financeira em conjunto.
+                <p className="text-xs text-muted-foreground mt-1">
+                  Você pode criar múltiplas equipes depois (ex: uma para "Casa"
+                  e outra para "Pessoal") no menu de configurações.
                 </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
