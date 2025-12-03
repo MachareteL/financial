@@ -1,13 +1,10 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { IAiService } from "@/domain/interfaces/ai-service.interface";
-import { ReceiptSchema, type ReceiptDataDTO } from "@/domain/entities/receipt";
+import { ReceiptSchema, type ReceiptDataDTO } from "@/domain/dto/receipt.dto";
 
 export class GeminiAiService implements IAiService {
   private model;
-  constructor(
-    apiKey: string,
-    modelName: string = "gemini-2.5-flash"
-  ) {
+  constructor(apiKey: string, modelName: string = "gemini-2.5-flash") {
     const genAI = new GoogleGenerativeAI(apiKey);
     this.model = genAI.getGenerativeModel({
       model: modelName,

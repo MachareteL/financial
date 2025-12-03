@@ -7,19 +7,33 @@ import {
   getRateLimitService,
 } from "@/infrastructure/dependency-injection/server-container";
 import { getSupabaseClient } from "@/infrastructure/database/supabase.server";
-import type { ReceiptDataDTO } from "@/domain/entities/receipt";
+import type { ReceiptDataDTO } from "@/domain/dto/receipt.dto";
+
+export type ParseReceiptResult =
+  | { success: true; data: ReceiptDataDTO }
+  | { success: false; error: string; code: string };
 
 export async function parseReceiptAction(
   formData: FormData
-): Promise<ReceiptDataDTO | null> {
+): Promise<ParseReceiptResult> {
   const file = formData.get("file") as File;
   const teamId = formData.get("teamId") as string;
 
-  if (!file || file.size === 0) return null;
+  if (!file || file.size === 0) {
+    return {
+      success: false,
+      error: "Arquivo inválido ou vazio.",
+      code: "INVALID_FILE",
+    };
+  }
 
   // --- GATEKEEPER VALIDATION ---
   if (!teamId) {
-    throw new Error("Team ID is required for validation.");
+    return {
+      success: false,
+      error: "Team ID is required.",
+      code: "MISSING_TEAM_ID",
+    };
   }
 
   const supabase = await getSupabaseClient();
@@ -28,16 +42,18 @@ export async function parseReceiptAction(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error("Unauthorized");
+    return { success: false, error: "Unauthorized", code: "UNAUTHORIZED" };
   }
 
   // --- RATE LIMITING ---
   const rateLimitService = getRateLimitService();
   const isAllowed = await rateLimitService.checkLimit(teamId);
   if (!isAllowed) {
-    throw new Error(
-      "Limite de requisições excedido. Tente novamente em 1 minuto."
-    );
+    return {
+      success: false,
+      error: "Limite de requisições excedido. Tente novamente em 1 minuto.",
+      code: "RATE_LIMIT_EXCEEDED",
+    };
   }
 
   // Verify if user belongs to the team (Security Check)
@@ -49,9 +65,11 @@ export async function parseReceiptAction(
   );
 
   if (!hasPermission) {
-    throw new Error(
-      "Unauthorized: You do not have permission to manage expenses for this team."
-    );
+    return {
+      success: false,
+      error: "Você não tem permissão para gerenciar despesas nesta equipe.",
+      code: "PERMISSION_DENIED",
+    };
   }
 
   // Let's check feature access first.
@@ -63,14 +81,32 @@ export async function parseReceiptAction(
   );
 
   if (!hasAccess) {
-    throw new Error("Funcionalidade disponivel apenas para equipe PRO.");
+    return {
+      success: false,
+      error: "Funcionalidade disponível apenas para equipe PRO.",
+      code: "FEATURE_LOCKED",
+    };
   }
 
   try {
     const parseReceiptUseCase = getParseReceiptUseCase();
-    return await parseReceiptUseCase.execute(file, user.id);
+    const result = await parseReceiptUseCase.execute(file, user.id);
+
+    if (!result) {
+      return {
+        success: false,
+        error: "Não foi possível ler os dados do recibo.",
+        code: "PARSE_FAILED",
+      };
+    }
+
+    return { success: true, data: result };
   } catch (error) {
     console.error("Erro ao processar recibo:", error);
-    return null;
+    return {
+      success: false,
+      error: "Erro interno ao processar recibo.",
+      code: "INTERNAL_ERROR",
+    };
   }
 }

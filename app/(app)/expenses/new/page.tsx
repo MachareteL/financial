@@ -140,9 +140,10 @@ export default function NewExpensePage() {
         formData.append("teamId", teamId);
       }
 
-      const data = await parseReceiptAction(formData);
+      const result = await parseReceiptAction(formData);
 
-      if (data) {
+      if (result.success) {
+        const data = result.data;
         if (data.amount) setAmount(data.amount.toString());
         if (data.description) setDescription(data.description);
         if (data.date) setDate(data.date);
@@ -161,6 +162,8 @@ export default function NewExpensePage() {
         notify.success("Nota fiscal lida!", {
           description: "Os dados foram preenchidos automaticamente.",
         });
+      } else {
+        notify.error(result.error, "ler nota fiscal");
       }
     } catch (error) {
       console.error("Erro na leitura:", error);
