@@ -20,6 +20,7 @@ export default function PublicLayout({
   ];
 
   const isBlog = pathname?.startsWith("/blog");
+  const isQuiz = pathname?.startsWith("/quiz");
 
   return (
     <div className="min-h-screen bg-background font-sans selection:bg-primary/30">
@@ -62,7 +63,7 @@ export default function PublicLayout({
 
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
           {/* Navigation Tabs */}
-          {!isBlog && (
+          {!isBlog && !isQuiz && (
             <div className="flex flex-wrap gap-2 mb-12 border-b border-border/50 pb-1">
               {tabs.map((tab) => (
                 <Link

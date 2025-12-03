@@ -325,6 +325,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      quiz_sessions: {
+        Row: {
+          answers_p1: Json | null;
+          answers_p2: Json | null;
+          created_at: string;
+          current_question_index: number | null;
+          id: string;
+          player_1_id: string | null;
+          player_2_id: string | null;
+          result_p1: string | null;
+          result_p2: string | null;
+          status: string | null;
+        };
+        Insert: {
+          answers_p1?: Json | null;
+          answers_p2?: Json | null;
+          created_at?: string;
+          current_question_index?: number | null;
+          id?: string;
+          player_1_id?: string | null;
+          player_2_id?: string | null;
+          result_p1?: string | null;
+          result_p2?: string | null;
+          status?: string | null;
+        };
+        Update: {
+          answers_p1?: Json | null;
+          answers_p2?: Json | null;
+          created_at?: string;
+          current_question_index?: number | null;
+          id?: string;
+          player_1_id?: string | null;
+          player_2_id?: string | null;
+          result_p1?: string | null;
+          result_p2?: string | null;
+          status?: string | null;
+        };
+        Relationships: [];
+      };
       rate_limits: {
         Row: {
           count: number;

@@ -9,16 +9,20 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'yzbiamscspdkodfkmvth.supabase.co',
+        protocol: "https",
+        hostname: "yzbiamscspdkodfkmvth.supabase.co",
+      },
+      {
+        protocol: "https",
+        hostname: "api.dicebear.com",
       },
     ],
   },
   experimental: {
     serverActions: {
-      bodySizeLimit: '8mb',
+      bodySizeLimit: "8mb",
     },
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;

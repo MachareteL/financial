@@ -41,25 +41,32 @@ export class TeamRepository implements ITeamRepository {
       "MANAGE_TEAM",
     ];
 
-    const basicPermissions = ["MANAGE_EXPENSES"];
-
-    // Criar Cargo "Proprietário" (Owner)
     const ownerRoleData: Database["public"]["Tables"]["team_roles"]["Insert"] =
       {
         team_id: teamData.id,
         name: "Proprietário",
-        color: "#eab308", // Dourado
+        color: "#eab308",
         permissions: allPermissions,
         description: "Dono do time. Acesso total e irrestrito.",
       };
 
-    const { error: ownerError } = await this.supabase
+    const { data: ownerRole, error: ownerError } = await this.supabase
       .from("team_roles")
       .insert(ownerRoleData)
       .select("id")
       .single();
 
     if (ownerError) throw new Error(ownerError.message);
+
+    const { error: memberError } = await this.supabase
+      .from("team_members")
+      .insert({
+        team_id: teamData.id,
+        profile_id: createdBy,
+        role_id: ownerRole.id,
+      });
+
+    if (memberError) throw new Error(memberError.message);
 
     return new Team({
       id: teamData.id,
