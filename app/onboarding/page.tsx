@@ -57,12 +57,12 @@ export default function OnboardingPage() {
   const actionLoading =
     acceptInviteMutation.isPending || declineInviteMutation.isPending;
 
-  useEffect(() => {
-    // Auth check is handled by middleware
-    if (session?.teams && session.teams.length > 0) {
-      router.push("/dashboard");
-    }
-  }, [session, loading, router]);
+  // useEffect(() => {
+  //   // Auth check is handled by middleware
+  //   if (session?.teams && session.teams.length > 0) {
+  //     router.push("/dashboard");
+  //   }
+  // }, [session, loading, router]);
 
   const handleCreateTeam = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -132,15 +132,8 @@ export default function OnboardingPage() {
       <div className="max-w-5xl w-full space-y-8">
         {/* Header Section */}
         <div className="text-center space-y-4">
-          <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-2 relative">
+          <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-2">
             <Sparkles className="w-8 h-8 text-primary" />
-            <Badge
-              variant="secondary"
-              className="absolute -top-2 -right-12 text-[10px] px-1.5 py-0.5 h-5 gap-1 border-primary/20 bg-background/80 backdrop-blur-sm shadow-sm"
-            >
-              <Sparkles className="w-2.5 h-2.5 text-primary" />
-              AI Empowered
-            </Badge>
           </div>
           <h1 className="text-4xl font-bold text-foreground tracking-tight">
             Bem-vindo ao Lemon, {session.user.name?.split(" ")[0]}!
@@ -172,6 +165,29 @@ export default function OnboardingPage() {
             Escuro
           </Button>
         </div>
+
+        {/* AI Value Proposition Section */}
+        <Card className="bg-gradient-to-r from-primary/10 via-background to-background border-primary/20">
+          <CardContent className="flex items-center gap-6 p-6">
+            <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-6 h-6 text-primary" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-semibold text-lg text-foreground flex items-center gap-2">
+                Potencialize suas finanças
+                <Badge variant="secondary" className="text-xs font-normal">
+                  Beta
+                </Badge>
+              </h3>
+              <p className="text-muted-foreground">
+                Com o Lemon AI, você pode gerar{" "}
+                <strong>insights inteligentes</strong>. Descubra padrões,
+                oportunidades de economia e tenha uma visão clara do seu
+                dinheiro, tudo no seu tempo e sob seu controle.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           {/* Left Column: Actions */}
