@@ -2,6 +2,7 @@ import { Archetype, QuizOption } from "@/domain/entities/quiz/real-questions";
 
 export interface QuizResult {
   archetype: Archetype;
+  scores: Record<Archetype, number>;
   axes: {
     discipline: number;
     security: number;
@@ -35,6 +36,7 @@ export class CalculateLifestyleUseCase {
 
     return {
       archetype: dominantArchetype,
+      scores: scores,
       axes: {
         discipline: this.calculateAxis(scores.Experiencer, scores.Strategist), // Vivência vs Controle
         security: this.calculateAxis(scores.Minimalist, scores.Builder), // Conservador vs Arrojado

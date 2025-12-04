@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import html2canvas from "html2canvas";
 import {
   Share2,
   CheckCircle2,
@@ -18,12 +19,16 @@ import {
   Zap,
   Shield,
   Target,
+  Download,
+  Loader2,
+  PieChart,
 } from "lucide-react";
 import confetti from "canvas-confetti";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { QuizResult } from "../_use-case/calculate-lifestyle.use-case";
 import { cn } from "@/lib/utils";
 import { generateWhatsAppLink } from "../utils/share-utils";
+import { ShareableResultCard } from "./shareable-result-card";
 
 interface ResultSectionProps {
   result: QuizResult;
@@ -88,6 +93,16 @@ export function ResultSection({
   const archetypeData = ARCHETYPES[selectedArchetype];
   const themeColors = ARCHETYPE_THEME_COLORS[selectedArchetype];
   const [activeTab, setActiveTab] = useState<string>("profile");
+  const shareCardRef = useRef<HTMLDivElement>(null);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+
+  // Calculate total score for percentages
+  const totalScore = Object.values(quizResult.scores).reduce(
+    (a, b) => a + b,
+    0
+  );
+  const getPercentage = (score: number) =>
+    Math.round((score / totalScore) * 100);
 
   // Reset selected archetype when result changes
   useEffect(() => {
@@ -150,21 +165,56 @@ export function ResultSection({
     }
   };
 
+  const handleDownloadImage = async () => {
+    if (!shareCardRef.current) return;
+    setIsGeneratingImage(true);
+
+    try {
+      const canvas = await html2canvas(shareCardRef.current, {
+        scale: 2,
+        backgroundColor: null, // Transparent to let the component's background show
+        useCORS: true,
+        logging: false,
+      });
+
+      const image = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.href = image;
+      link.download = `lemon-archetype-${quizResult.archetype}.png`;
+      link.click();
+    } catch (error) {
+      console.error("Error generating image:", error);
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
   const getLemonBenefit = (type: Archetype) => {
     switch (type) {
       case "Strategist":
-        return "O Lemon automatiza a coleta de dados para que você foque na análise, não na digitação. Seus relatórios, prontos em segundos.";
+        return "O Lemon é o seu cockpit financeiro. Automatizamos a coleta de dados para que você foque na estratégia, não na digitação.";
       case "Experiencer":
         return "O Lemon organiza tudo automaticamente. Você vive o momento, nós cuidamos do registro. Sem culpa, com controle.";
       case "Builder":
-        return "Monitore seu patrimônio em tempo real. Gráficos de evolução, alocação de ativos e metas de crescimento em um só lugar.";
+        return "Monitore seu império em tempo real. Gráficos de evolução, alocação de ativos e metas de crescimento em um só lugar.";
       case "Minimalist":
-        return "Segurança e simplicidade. Veja todas as suas contas em uma tela só e garanta que sua reserva está protegida e rendendo.";
+        return "Paz de espírito em uma tela. Veja todas as suas contas juntas e garanta que sua reserva está protegida e rendendo.";
     }
   };
 
   return (
     <div className="w-full max-w-6xl mx-auto pb-20 px-4 md:px-6">
+      {/* Hidden Shareable Card for Image Generation */}
+      <div className="fixed left-[-9999px] top-0">
+        <div ref={shareCardRef}>
+          <ShareableResultCard
+            result={quizResult}
+            archetypeData={ARCHETYPES[quizResult.archetype]}
+            themeColors={ARCHETYPE_THEME_COLORS[quizResult.archetype]}
+          />
+        </div>
+      </div>
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {coupleResult && (
           <div className="flex justify-center mb-8">
@@ -196,46 +246,62 @@ export function ResultSection({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
             <div className="lg:col-span-5 order-2 lg:order-1">
               <Card className="h-full border-none shadow-elevated overflow-hidden bg-card relative flex flex-col">
-                <div
-                  className={`h-4 w-full ${themeColors.bg.replace("/10", "")}`}
-                />
-                <CardHeader className="text-center pb-2 pt-8 md:pt-10 relative z-10 flex-1 px-6">
+                <div className="bg-card relative flex-1 flex flex-col">
                   <div
-                    className={cn(
-                      "mx-auto mb-6 w-24 h-24 md:w-32 md:h-32 rounded-full flex items-center justify-center text-5xl md:text-6xl shadow-inner bg-muted/30",
-                      themeColors.bg
-                    )}
-                  >
-                    🍋
-                  </div>
-                  <CardTitle className="text-3xl md:text-4xl lg:text-5xl font-black text-foreground tracking-tight">
-                    {archetypeData.title}
-                  </CardTitle>
-                  <p className="text-base md:text-lg text-muted-foreground font-medium mt-4 italic">
-                    {archetypeData.motto}
-                  </p>
-                </CardHeader>
-                <CardContent className="text-center pb-6 md:pb-8 px-6">
-                  <div
-                    className={cn(
-                      "p-5 md:p-6 rounded-xl border mt-4 md:mt-6",
-                      themeColors.bg,
-                      themeColors.border
-                    )}
-                  >
-                    <p className="text-sm md:text-base font-semibold text-foreground">
-                      {archetypeData.pitch}
+                    className={`h-4 w-full ${themeColors.bg.replace("/10", "")}`}
+                  />
+                  <CardHeader className="text-center pb-2 pt-8 md:pt-10 relative z-10 flex-1 px-6">
+                    <div
+                      className={cn(
+                        "mx-auto mb-6 w-24 h-24 md:w-32 md:h-32 rounded-full flex items-center justify-center text-5xl md:text-6xl shadow-inner bg-muted/30",
+                        themeColors.bg
+                      )}
+                    >
+                      🍋
+                    </div>
+                    <CardTitle className="text-3xl md:text-4xl lg:text-5xl font-black text-foreground tracking-tight">
+                      {archetypeData.title}
+                    </CardTitle>
+                    <p className="text-base md:text-lg text-muted-foreground font-medium mt-4 italic">
+                      {archetypeData.motto}
                     </p>
-                  </div>
-                </CardContent>
-                <CardFooter className="p-6 md:p-8 pt-0 mt-auto">
+                  </CardHeader>
+                  <CardContent className="text-center pb-6 md:pb-8 px-6">
+                    <div
+                      className={cn(
+                        "p-5 md:p-6 rounded-xl border mt-4 md:mt-6",
+                        themeColors.bg,
+                        themeColors.border
+                      )}
+                    >
+                      <p className="text-sm md:text-base font-semibold text-foreground">
+                        {archetypeData.pitch}
+                      </p>
+                    </div>
+                  </CardContent>
+                </div>
+                <CardFooter className="p-6 md:p-8 pt-0 mt-auto flex flex-col gap-3">
                   <Button
                     size="lg"
                     className="w-full font-bold h-12 shadow-button text-base md:text-lg"
                     onClick={handleShare}
                   >
                     <Share2 className="mr-2 h-5 w-5" />
-                    Compartilhar Resultado
+                    Compartilhar Link
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full font-bold h-12 text-base md:text-lg"
+                    onClick={handleDownloadImage}
+                    disabled={isGeneratingImage}
+                  >
+                    {isGeneratingImage ? (
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    ) : (
+                      <Download className="mr-2 h-5 w-5" />
+                    )}
+                    Salvar Resultado
                   </Button>
                 </CardFooter>
               </Card>
@@ -251,7 +317,54 @@ export function ResultSection({
                   {archetypeData.fullDescription}
                 </p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                {/* Composition Chart (On Screen) */}
+                <div className="mt-8 mb-8 p-6 bg-muted/30 rounded-2xl border border-border/50">
+                  <h3 className="font-semibold flex items-center gap-2 mb-4">
+                    <PieChart className="w-5 h-5 text-primary" />
+                    Sua Composição
+                  </h3>
+                  <div className="space-y-4">
+                    {(
+                      Object.entries(quizResult.scores) as [Archetype, number][]
+                    )
+                      .sort(([, a], [, b]) => b - a)
+                      .map(([type, score]) => {
+                        const percentage = getPercentage(score);
+                        if (percentage === 0) return null;
+                        const typeColors = ARCHETYPE_THEME_COLORS[type];
+
+                        return (
+                          <div key={type} className="space-y-1">
+                            <div className="flex justify-between text-sm font-medium">
+                              <span
+                                className={
+                                  type === quizResult.archetype
+                                    ? "text-foreground font-bold"
+                                    : "text-muted-foreground"
+                                }
+                              >
+                                {type}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {percentage}%
+                              </span>
+                            </div>
+                            <div className="h-2.5 w-full bg-muted rounded-full overflow-hidden">
+                              <div
+                                className={cn(
+                                  "h-full rounded-full transition-all duration-1000",
+                                  typeColors.bg.replace("/10", "")
+                                )}
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <h3 className="font-semibold flex items-center gap-2 text-success">
                       <Zap className="w-5 h-5" /> Seus Superpoderes
@@ -294,7 +407,7 @@ export function ResultSection({
                 </div>
                 <div className="relative z-10">
                   <h3 className="text-xl md:text-2xl font-bold mb-2">
-                    O Lemon é o aliado perfeito para {archetypeData.title}
+                    O Lemon é o parceiro ideal para {archetypeData.title}
                   </h3>
                   <p className="text-primary-foreground/90 text-base md:text-lg mb-6 leading-relaxed max-w-xl">
                     {getLemonBenefit(selectedArchetype)}
@@ -304,7 +417,7 @@ export function ResultSection({
                     variant="secondary"
                     className="w-full sm:w-auto font-bold shadow-lg hover:shadow-xl transition-all text-primary"
                   >
-                    Criar minha conta grátis
+                    Começar minha jornada grátis
                   </Button>
                 </div>
               </div>

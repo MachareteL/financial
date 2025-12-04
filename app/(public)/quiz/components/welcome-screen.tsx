@@ -66,7 +66,7 @@ export function WelcomeScreen({
             className="px-4 py-1.5 text-sm font-medium bg-primary/10 text-primary border-primary/20 backdrop-blur-sm"
           >
             <Sparkles className="w-3.5 h-3.5 mr-2 inline-block" />
-            Mais de 10.000 pessoas já descobriram
+            Tendência entre casais modernos
           </Badge>
         </motion.div>
 
@@ -76,7 +76,7 @@ export function WelcomeScreen({
         >
           Qual é a sua <br className="hidden md:block" />
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/80 to-secondary animate-gradient">
-            vibe com o dinheiro?
+            sintonia financeira?
           </span>
         </motion.h1>
 
@@ -84,9 +84,9 @@ export function WelcomeScreen({
           variants={item}
           className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-10"
         >
-          Não é só sobre números. É sobre comportamento. Descubra seu{" "}
-          <strong>DNA Financeiro</strong> e entenda a química entre você e seu
-          parceiro(a).
+          Dinheiro não é só matemática, é comportamento. Descubra seu{" "}
+          <strong>DNA Financeiro</strong> e entenda a química real entre você e
+          seu amor.
         </motion.p>
 
         <motion.div
@@ -103,9 +103,11 @@ export function WelcomeScreen({
               <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-inner mx-auto">
                 <User className="w-7 h-7 text-primary" />
               </div>
-              <CardTitle className="text-2xl font-bold">Jogar Solo</CardTitle>
+              <CardTitle className="text-2xl font-bold">
+                Descobrir meu perfil
+              </CardTitle>
               <CardDescription className="text-base">
-                Autoconhecimento financeiro em 2 minutos.
+                Autoconhecimento em 2 minutos.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -133,15 +135,16 @@ export function WelcomeScreen({
               <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-inner mx-auto">
                 <Users className="w-7 h-7 text-primary" />
               </div>
-              <CardTitle className="text-2xl font-bold">Modo Casal</CardTitle>
+              <CardTitle className="text-2xl font-bold">
+                Responder em dupla
+              </CardTitle>
               <CardDescription className="text-base">
-                Descubra a compatibilidade e evite brigas.
+                Descubra como vocês lidam com dinheiro.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button className="w-full shadow-button group-hover:shadow-button-hover transition-all font-bold h-12 text-lg">
-                Convidar Parceiro(a){" "}
-                <Heart className="ml-2 w-4 h-4 fill-current" />
+                Convidar Parceiro(a)
               </Button>
             </CardContent>
           </Card>
@@ -162,6 +165,7 @@ export function WelcomeScreen({
                   alt="User"
                   fill
                   className="object-cover"
+                  unoptimized
                 />
               </div>
             ))}
@@ -228,18 +232,17 @@ export function WelcomeScreen({
           </div>
           <h3 className="text-xl font-bold mb-3">Autoconhecimento</h3>
           <p className="text-muted-foreground">
-            Entenda por que você gasta (ou economiza) do jeito que faz. Saia do
-            piloto automático.
+            Entenda seus gatilhos de gastos e saia do piloto automático.
           </p>
         </div>
         <div className="bg-card p-8 rounded-3xl border border-border/50 shadow-sm text-center">
           <div className="w-12 h-12 bg-pink-100 text-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <Heart className="w-6 h-6" />
           </div>
-          <h3 className="text-xl font-bold mb-3">Harmonia no Amor</h3>
+          <h3 className="text-xl font-bold mb-3">Sintonia no Amor</h3>
           <p className="text-muted-foreground">
-            O dinheiro é a causa #1 de divórcios. Descubra como alinhar seus
-            objetivos sem brigas.
+            Dinheiro é a causa #1 de tretas. Alinhe os ponteiros sem perder o
+            romance.
           </p>
         </div>
         <div className="bg-card p-8 rounded-3xl border border-border/50 shadow-sm text-center">
@@ -248,8 +251,7 @@ export function WelcomeScreen({
           </div>
           <h3 className="text-xl font-bold mb-3">Crescimento Real</h3>
           <p className="text-muted-foreground">
-            Use seus pontos fortes para construir patrimônio de forma
-            sustentável e inteligente.
+            Use seus pontos fortes para construir a vida que vocês merecem.
           </p>
         </div>
       </div>

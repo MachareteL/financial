@@ -10,7 +10,9 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Loader2, Copy, CheckCircle2 } from "lucide-react";
+import { Loader2, Copy, CheckCircle2, MessageCircle } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
+import { generateWhatsAppLink } from "../utils/share-utils";
 
 interface MultiplayerManagerProps {
   onOpponentUpdate: (answers: QuizOption[]) => void;
@@ -221,10 +223,39 @@ export function MultiplayerManager({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          <div className="flex flex-col items-center justify-center">
+            <div className="p-4 bg-white rounded-xl border shadow-sm mb-4">
+              <QRCodeSVG
+                value={`${window.location.origin}/quiz?session=${sessionId}`}
+                size={180}
+                level="H"
+                includeMargin
+              />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Escaneie para entrar na sessão
+            </p>
+          </div>
+
           <div className="p-6 bg-primary/5 rounded-xl border border-primary/10">
             <Button
               size="lg"
-              className="w-full font-bold shadow-button mb-2"
+              className="w-full font-bold shadow-button mb-3 bg-[#25D366] hover:bg-[#128C7E] text-white border-none"
+              onClick={() => {
+                const url = `${window.location.origin}/quiz?session=${sessionId}`;
+                const text =
+                  "Vamos descobrir nosso perfil financeiro juntos no Lemon! 🍋";
+                window.open(generateWhatsAppLink(text, url), "_blank");
+              }}
+            >
+              <MessageCircle className="mr-2 h-5 w-5" />
+              Convidar por WhatsApp
+            </Button>
+
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full font-bold mb-2"
               onClick={handleCopyLink}
             >
               <Copy className="mr-2 h-5 w-5" />

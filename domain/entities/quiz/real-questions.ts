@@ -26,80 +26,83 @@ export const ARCHETYPES: Record<
   }
 > = {
   Strategist: {
-    title: "O Estrategista",
-    subtitle: "Seu superpoder é a previsibilidade. Seu ponto cego é a rigidez.",
-    pitch: "Te damos o controle absoluto sem você precisar abrir o Excel.",
+    title: "O Arquiteto",
+    subtitle:
+      "Planejamento é sua linguagem de amor. O futuro é construído hoje.",
+    pitch:
+      "Você não gasta, você aloca recursos. O caos financeiro não tem vez com você.",
     color: "bg-blue-500",
-    motto: '"Se não pode ser medido, não pode ser gerenciado."',
+    motto: '"Sorte é o encontro da preparação com a oportunidade."',
     fullDescription:
-      "Você é a âncora financeira. Enquanto o mundo gira no caos, sua planilha permanece imaculada. Para você, dinheiro não é sobre emoção, é sobre lógica, dados e otimização. Você encontra paz na previsibilidade e sente um prazer quase físico ao ver as contas batendo centavo por centavo.",
+      "Você é o mestre da estrutura. Enquanto a maioria reage aos boletos, você já previu, categorizou e pagou com desconto. Para você, dinheiro é uma ferramenta de construção de vida, não apenas papel. Você dorme tranquilo não porque tem muito, mas porque tem controle.",
     strengths: [
-      "Visão de longo prazo impecável",
-      "Disciplina inabalável",
-      "Habilidade natural para encontrar ineficiências",
+      "Visão de longo prazo cristalina",
+      "Habilidade de transformar metas em planos acionáveis",
+      "Imunidade a compras por impulso",
     ],
     blindSpots: [
-      'Dificuldade em gastar com prazeres "irracionais"',
-      "Pode paralisar por excesso de análise",
-      "Tende a julgar quem é menos organizado",
+      "Pode esquecer de curtir o presente por focar demais no futuro",
+      "Tende a ser rígido com mudanças de planos",
+      "Risco de ver o dinheiro como fim, não meio",
     ],
   },
   Experiencer: {
-    title: "O Bon Vivant",
-    subtitle: "Você prioriza o hoje. Cuidado para não esquecer do amanhã.",
-    pitch: "Viva bem, mas saiba o limite. Te avisamos quando parar.",
+    title: "O Espírito Livre",
+    subtitle: "Colecionador de momentos, não de coisas. A vida acontece agora.",
+    pitch: "O dinheiro serve para criar memórias. O resto é detalhe.",
     color: "bg-yellow-500",
-    motto: '"A vida é agora. O dinheiro é apenas o meio."',
+    motto:
+      '"A única coisa que a gente leva da vida é a vida que a gente leva."',
     fullDescription:
-      "Você entende que o caixão não tem gaveta. Sua relação com o dinheiro é fluida e generosa. Você investe em memórias, sensações e conexões. Para você, um saldo bancário alto sem histórias para contar é apenas um número triste em um servidor.",
+      "Você entende que o valor das coisas está na experiência que elas proporcionam. Seja um jantar incrível ou uma viagem de última hora, você não tem medo de usar o dinheiro para viver bem. Seu desafio é garantir que o 'eu do futuro' também possa curtir tanto quanto o 'eu de hoje'.",
     strengths: [
-      "Sabe aproveitar o melhor da vida",
-      "Generosidade natural",
-      "Não se torna escravo do dinheiro",
+      "Sabe priorizar o que realmente traz felicidade",
+      "Generosidade e facilidade em compartilhar",
+      "Não sofre por acumulação desnecessária",
     ],
     blindSpots: [
-      "Tendência a ignorar o futuro distante",
-      "Gastos impulsivos baseados em emoção",
-      "Dificuldade em construir reservas de emergência",
+      "O 'eu do futuro' muitas vezes fica esquecido",
+      "Dificuldade com rotinas financeiras chatas",
+      "Risco de confundir desejo com necessidade",
     ],
   },
   Builder: {
-    title: "O Visionário",
-    subtitle: "Focado em multiplicar. Aceita risco para mudar de patamar.",
-    pitch: "Monitore a evolução do seu patrimônio em tempo real.",
+    title: "O Impulsionador",
+    subtitle:
+      "Inquieto por natureza. Onde os outros veem risco, você vê chance.",
+    pitch: "Crescer é a única opção. Estagnação é seu maior pesadelo.",
     color: "bg-purple-500",
-    motto: '"Risco é o preço da oportunidade."',
+    motto: '"Quem não arrisca, não petisca (e não enriquece)."',
     fullDescription:
-      "Você não quer apenas preservar, você quer multiplicar. O status quo te incomoda. Você vê o dinheiro como uma ferramenta de alavancagem para construir impérios, sejam eles grandes ou pequenos. A segurança do CDB te dá sono; a volatilidade da oportunidade te dá energia.",
+      "Você tem um motor interno ligado no 220v. Dinheiro parado te incomoda fisicamente. Você está sempre buscando a próxima alavanca, o próximo projeto, a próxima forma de multiplicar. Sua ambição é sua maior aliada, mas cuidado para não tropeçar na própria velocidade.",
     strengths: [
+      "Faro apurado para oportunidades",
       "Coragem para tomar decisões difíceis",
-      "Foco em crescimento exponencial",
-      "Resiliência a perdas de curto prazo",
+      "Foco em multiplicação e escala",
     ],
     blindSpots: [
       "Pode negligenciar a segurança básica",
-      "Ansiedade por resultados rápidos",
-      'Risco de "dar um passo maior que a perna"',
+      "Ansiedade quando os resultados demoram",
+      "Tendência a dar passos maiores que a perna",
     ],
   },
   Minimalist: {
-    title: "O Zen",
-    subtitle: "Paz de espírito acima de tudo. Simplicidade é o seu lema.",
-    pitch:
-      "Segurança automatizada. Durma tranquilo sabendo que está tudo azul.",
+    title: "O Essencialista",
+    subtitle: "Menos barulho, mais paz. A sofisticação está na simplicidade.",
+    pitch: "Sua riqueza é medida pela sua tranquilidade, não pelos seus bens.",
     color: "bg-green-500",
-    motto: '"Menos é mais. Paz é lucro."',
+    motto: '"Não é sobre ter pouco, é sobre ter o suficiente."',
     fullDescription:
-      "Você busca a liberdade através da simplicidade. Não é sobre escassez, é sobre suficiência. Você dorme tranquilo porque sabe que não precisa de muito para ser feliz. Dívidas são seus piores pesadelos e sua reserva de emergência é seu templo sagrado.",
+      "Você descobriu o segredo que a maioria ignora: a liberdade custa menos do que parece. Você valoriza a paz de espírito acima de qualquer status. Sua vida financeira é leve, descomplicada e incrivelmente resiliente. Enquanto o mundo corre atrás de 'mais', você está feliz com o 'melhor'.",
     strengths: [
-      "Imunidade ao consumismo desenfreado",
-      "Estabilidade emocional financeira",
-      "Capacidade de viver bem com pouco",
+      "Imunidade quase total ao consumismo",
+      "Alta capacidade de poupança e resiliência",
+      "Clareza sobre o que é realmente importante",
     ],
     blindSpots: [
       "Pode perder oportunidades por excesso de cautela",
-      "Medo irracional de escassez",
-      "Dificuldade em investir em si mesmo",
+      "Risco de viver com menos do que poderia/merece",
+      "Dificuldade em investir em confortos que facilitam a vida",
     ],
   },
 };
@@ -107,153 +110,209 @@ export const ARCHETYPES: Record<
 export const REAL_QUESTIONS: QuizQuestion[] = [
   {
     id: "q1",
-    text: "Sobrou R$ 2.000,00 no fim do mês. O que você faz?",
+    text: "Sua banda favorita anunciou um show surpresa na sua cidade, mas o ingresso é salgado. Você:",
     options: [
       {
         id: "a",
-        text: "Jogo tudo no investimento que rende mais.",
-        archetype: "Builder",
-      },
-      {
-        id: "b",
-        text: "Deixo na conta, vai que o carro quebra.",
-        archetype: "Minimalist",
-      },
-      {
-        id: "c",
-        text: "Compro aquela passagem em promoção.",
+        text: "Compro na hora! Parcelo em 12x, mas não perco essa memória.",
         archetype: "Experiencer",
       },
       {
-        id: "d",
-        text: "Abato uma parcela futura do financiamento.",
+        id: "b",
+        text: "Analiso meu fluxo de caixa do mês. Se couber sem comprometer as metas, eu vou.",
         archetype: "Strategist",
+      },
+      {
+        id: "c",
+        text: "Penso: 'Com esse valor eu poderia investir em algo que me dê retorno real'.",
+        archetype: "Builder",
+      },
+      {
+        id: "d",
+        text: "Provavelmente não vou. Prefiro ouvir no Spotify e economizar essa grana.",
+        archetype: "Minimalist",
       },
     ],
   },
   {
     id: "q2",
-    text: "Você recebeu um bônus inesperado da empresa. Qual o primeiro pensamento?",
+    text: "Caiu um bônus inesperado na conta da empresa (milagre!). O primeiro pensamento é:",
     options: [
       {
         id: "a",
-        text: "Já sei exatamente onde investir para render mais.",
+        text: "Já sei exatamente onde alocar para acelerar minha independência financeira.",
         archetype: "Builder",
       },
       {
         id: "b",
-        text: "Vou guardar, nunca se sabe o dia de amanhã.",
+        text: "Vou guardar na reserva. Segurança em primeiro lugar, sempre.",
         archetype: "Minimalist",
       },
       {
         id: "c",
-        text: "Hora de trocar de celular ou fazer aquela viagem!",
+        text: "Hora de trocar de celular ou fazer aquela viagem que estava namorando!",
         archetype: "Experiencer",
       },
       {
         id: "d",
-        text: "Atualizo minha planilha e defino o destino de cada centavo.",
+        text: "Atualizo minha planilha e defino o destino de cada centavo estrategicamente.",
         archetype: "Strategist",
       },
     ],
   },
   {
     id: "q3",
-    text: "Como você lida com a fatura do cartão de crédito?",
+    text: "Um parente próximo pede R$ 500 emprestado com aquela história triste. Sua reação:",
     options: [
       {
         id: "a",
-        text: "Uso para acumular milhas e benefícios, pago sempre em dia.",
-        archetype: "Builder",
+        text: "Empresto (ou dou) se tiver. Família é para essas coisas.",
+        archetype: "Experiencer",
       },
       {
         id: "b",
-        text: "Evito usar. Prefiro débito ou Pix para não ter surpresa.",
+        text: "Empresto, mas já mentalizo que esse dinheiro provavelmente não volta.",
         archetype: "Minimalist",
       },
       {
         id: "c",
-        text: "Às vezes me assusto, mas a vida é uma só.",
-        archetype: "Experiencer",
+        text: "Avalio se é uma emergência real. Se for desorganização, prefiro ajudar a organizar as contas.",
+        archetype: "Strategist",
       },
       {
         id: "d",
-        text: "Sei exatamente quanto virá, acompanho gasto por gasto.",
-        archetype: "Strategist",
+        text: "Proponho uma forma dele fazer esse dinheiro extra trabalhando ou vendendo algo.",
+        archetype: "Builder",
       },
     ],
   },
   {
     id: "q4",
-    text: "Seu parceiro(a) sugere um jantar caro em uma terça-feira. Você:",
+    text: "Dia de pagar a fatura do cartão de crédito. Qual é a sensação?",
     options: [
       {
         id: "a",
-        text: 'Analiso se cabe no orçamento de "lazer" do mês.',
+        text: "Satisfação. Tudo sob controle, pontos acumulados e pago em dia.",
         archetype: "Strategist",
       },
       {
         id: "b",
-        text: "Topo! Vamos aproveitar o momento.",
-        archetype: "Experiencer",
-      },
-      {
-        id: "c",
-        text: "Sugiro algo mais em conta ou cozinhar em casa.",
+        text: "Alívio por não ter gastado quase nada. Odeio depender de crédito.",
         archetype: "Minimalist",
       },
       {
+        id: "c",
+        text: "Um leve mini-infarto, mas valeu a pena cada jantar e comprinha.",
+        archetype: "Experiencer",
+      },
+      {
         id: "d",
-        text: 'Penso: "Esse dinheiro poderia estar rendendo..."',
+        text: "Indiferença. É só uma ferramenta de fluxo de caixa para meus planos maiores.",
         archetype: "Builder",
       },
     ],
   },
   {
     id: "q5",
-    text: "Qual é o seu maior medo financeiro?",
+    text: "O crush sugere um restaurante Michelin numa terça-feira comum. Você:",
     options: [
       {
         id: "a",
-        text: "Perder o controle das minhas finanças.",
-        archetype: "Strategist",
-      },
-      {
-        id: "b",
-        text: "Não aproveitar a vida enquanto tenho saúde.",
+        text: "Topo! Experiências gastronômicas são prioridade pra mim.",
         archetype: "Experiencer",
       },
       {
-        id: "c",
-        text: "Ficar sem dinheiro em uma emergência.",
+        id: "b",
+        text: "Sugiro algo mais em conta ou cozinhar um jantar especial em casa.",
         archetype: "Minimalist",
       },
       {
+        id: "c",
+        text: "Vejo se tenho 'budget de lazer' disponível. Se tiver, vamos.",
+        archetype: "Strategist",
+      },
+      {
         id: "d",
-        text: "Perder oportunidades de multiplicar meu patrimônio.",
+        text: "Penso: 'Esse jantar custa 5 ações daquela empresa que eu quero comprar...'",
         archetype: "Builder",
       },
     ],
   },
   {
     id: "q6",
-    text: 'Para você, o que significa "sucesso financeiro"?',
+    text: "Black Friday chegou. Você recebe 50 e-mails de promoção. Você:",
     options: [
       {
         id: "a",
-        text: "Ter tudo organizado e previsível.",
+        text: "Já tenho minha lista de desejos pronta e monitorada há meses. Só compro o planejado.",
         archetype: "Strategist",
       },
       {
         id: "b",
-        text: "Poder viver experiências incríveis sem culpa.",
-        archetype: "Experiencer",
+        text: "Ignoro tudo. Se eu precisasse, já teria comprado. Não caio em hype.",
+        archetype: "Minimalist",
       },
-      { id: "c", text: "Ter paz e zero dívidas.", archetype: "Minimalist" },
+      {
+        id: "c",
+        text: "Aproveito para comprar coisas que vão me ajudar a ganhar mais dinheiro ou produtividade.",
+        archetype: "Builder",
+      },
       {
         id: "d",
-        text: "Liberdade para fazer o que quiser, quando quiser.",
+        text: "Dou uma olhada... vai que tem aquela passagem ou aquele tênis num preço imperdível?",
+        archetype: "Experiencer",
+      },
+    ],
+  },
+  {
+    id: "q7",
+    text: "Como você planeja suas férias?",
+    options: [
+      {
+        id: "a",
+        text: "Planilha detalhada: roteiro, custos diários, reservas com antecedência máxima.",
+        archetype: "Strategist",
+      },
+      {
+        id: "b",
+        text: "Defino o destino e vou. Gosto de deixar a vida me levar e decidir lá.",
+        archetype: "Experiencer",
+      },
+      {
+        id: "c",
+        text: "Busco destinos baratos ou fico em casa relaxando. Férias é para descansar, não gastar.",
+        archetype: "Minimalist",
+      },
+      {
+        id: "d",
+        text: "Busco um lugar que me inspire ou onde eu possa fazer networking/aprender algo novo.",
         archetype: "Builder",
+      },
+    ],
+  },
+  {
+    id: "q8",
+    text: "Para você, o que significa 'sucesso financeiro'?",
+    options: [
+      {
+        id: "a",
+        text: "Liberdade total de agenda. Fazer o que quiser, quando quiser.",
+        archetype: "Builder",
+      },
+      {
+        id: "b",
+        text: "Poder viver experiências incríveis sem culpa e sem contar moedas.",
+        archetype: "Experiencer",
+      },
+      {
+        id: "c",
+        text: "Dormir com a cabeça tranquila, zero dívidas e dinheiro na conta.",
+        archetype: "Minimalist",
+      },
+      {
+        id: "d",
+        text: "Ter a vida organizada, previsível e segura para minha família.",
+        archetype: "Strategist",
       },
     ],
   },
