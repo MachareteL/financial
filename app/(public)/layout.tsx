@@ -61,7 +61,7 @@ export default function PublicLayout({
           <div className="absolute top-20 left-1/4 w-[400px] h-[400px] bg-purple-500/5 rounded-full blur-[100px]" />
         </div>
 
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {/* Navigation Tabs */}
           {!isBlog && !isQuiz && (
             <div className="flex flex-wrap gap-2 mb-12 border-b border-border/50 pb-1">

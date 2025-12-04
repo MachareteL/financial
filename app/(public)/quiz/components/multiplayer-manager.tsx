@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { usePostHog } from "posthog-js/react";
 import { getSupabaseClient } from "@/infrastructure/database/supabase.client";
 import { QuizOption } from "@/domain/entities/quiz/real-questions";
@@ -43,21 +43,67 @@ export function MultiplayerManager({
     statusRef.current = status;
   }, [status]);
 
-  // Auto-init logic
-  useEffect(() => {
-    if (initialized.current) return;
+  // Subscribe to Realtime
+  const subscribeToSession = useCallback(
+    (id: string, isHostParam: boolean) => {
+      if (!supabase) return;
 
-    if (joinSessionId) {
-      initialized.current = true;
-      joinSession(joinSessionId);
-    } else if (autoCreate) {
-      initialized.current = true;
-      createSession();
-    }
-  }, [autoCreate, joinSessionId]);
+      const channel = supabase
+        .channel(`quiz_session:${id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "quiz_sessions",
+            filter: `id=eq.${id}`,
+          },
+          (payload) => {
+            const newData = payload.new;
+
+            // Use ref to check current status to avoid stale closure
+            if (
+              newData.status === "playing" &&
+              statusRef.current !== "playing"
+            ) {
+              setStatus("playing");
+              onGameStart();
+            }
+
+            // Sync answers
+            console.log("Realtime Update:", { isHostParam, newData });
+            if (isHostParam) {
+              if (newData.answers_p2) {
+                console.log(
+                  "Host updating opponent answers:",
+                  newData.answers_p2
+                );
+                onOpponentUpdate(newData.answers_p2 as QuizOption[]);
+              }
+            } else {
+              if (newData.answers_p1) {
+                console.log(
+                  "Guest updating opponent answers:",
+                  newData.answers_p1
+                );
+                onOpponentUpdate(newData.answers_p1 as QuizOption[]);
+              }
+            }
+          }
+        )
+        .subscribe((status) => {
+          console.log("Subscription status:", status);
+        });
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    },
+    [supabase, onGameStart, onOpponentUpdate]
+  );
 
   // Create Session
-  const createSession = async () => {
+  const createSession = useCallback(async () => {
     if (!supabase) return;
     setStatus("creating");
 
@@ -74,97 +120,60 @@ export function MultiplayerManager({
       subscribeToSession(data.id, true);
       posthog?.capture("multiplayer_session_created", { session_id: data.id });
     }
-  };
+  }, [supabase, subscribeToSession, posthog]);
 
   // Join Session
-  const joinSession = async (id: string) => {
-    if (!supabase) return;
-    setStatus("joining");
+  const joinSession = useCallback(
+    async (id: string) => {
+      if (!supabase) return;
+      setStatus("joining");
 
-    const { data, error } = await supabase
-      .from("quiz_sessions")
-      .select()
-      .eq("id", id)
-      .single();
-
-    if (data && !error) {
-      setSessionId(data.id);
-      setIsHost(false);
-      setStatus("ready"); // Guest is ready immediately upon joining
-
-      // Subscribe FIRST to ensure we don't miss events
-      subscribeToSession(data.id, false);
-
-      // Update status to playing
-      const { error: updateError } = await supabase
+      const { data, error } = await supabase
         .from("quiz_sessions")
-        .update({ status: "playing" })
-        .eq("id", id);
+        .select()
+        .eq("id", id)
+        .single();
 
-      if (!updateError) {
-        // Manually trigger start for Guest to avoid race condition with Realtime
-        setStatus("playing");
-        onGameStart();
-      }
-    } else {
-      alert("Sessão não encontrada!");
-      setStatus("idle");
-      initialized.current = false; // Allow retry
-    }
-  };
+      if (data && !error) {
+        setSessionId(data.id);
+        setIsHost(false);
+        setStatus("ready"); // Guest is ready immediately upon joining
 
-  // Subscribe to Realtime
-  const subscribeToSession = (id: string, isHostParam: boolean) => {
-    if (!supabase) return;
+        // Subscribe FIRST to ensure we don't miss events
+        subscribeToSession(data.id, false);
 
-    const channel = supabase
-      .channel(`quiz_session:${id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "quiz_sessions",
-          filter: `id=eq.${id}`,
-        },
-        (payload) => {
-          const newData = payload.new;
+        // Update status to playing
+        const { error: updateError } = await supabase
+          .from("quiz_sessions")
+          .update({ status: "playing" })
+          .eq("id", id);
 
-          // Use ref to check current status to avoid stale closure
-          if (newData.status === "playing" && statusRef.current !== "playing") {
-            setStatus("playing");
-            onGameStart();
-          }
-
-          // Sync answers
-          console.log("Realtime Update:", { isHostParam, newData });
-          if (isHostParam) {
-            if (newData.answers_p2) {
-              console.log(
-                "Host updating opponent answers:",
-                newData.answers_p2
-              );
-              onOpponentUpdate(newData.answers_p2 as QuizOption[]);
-            }
-          } else {
-            if (newData.answers_p1) {
-              console.log(
-                "Guest updating opponent answers:",
-                newData.answers_p1
-              );
-              onOpponentUpdate(newData.answers_p1 as QuizOption[]);
-            }
-          }
+        if (!updateError) {
+          // Manually trigger start for Guest to avoid race condition with Realtime
+          setStatus("playing");
+          onGameStart();
         }
-      )
-      .subscribe((status) => {
-        console.log("Subscription status:", status);
-      });
+      } else {
+        alert("Sessão não encontrada!");
+        setStatus("idle");
+        initialized.current = false; // Allow retry
+      }
+    },
+    [supabase, subscribeToSession, onGameStart]
+  );
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
+  // Auto-init logic
+  useEffect(() => {
+    if (initialized.current) return;
+
+    if (joinSessionId) {
+      initialized.current = true;
+      joinSession(joinSessionId);
+    } else if (autoCreate) {
+      initialized.current = true;
+      createSession();
+    }
+  }, [autoCreate, joinSessionId, createSession, joinSession]);
 
   // Sync my answers
   useEffect(() => {

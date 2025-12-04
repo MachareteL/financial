@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { useTeam } from "@/app/(app)/team/team-provider";
 import Link from "next/link";
-import { Sparkles, Clock, Zap, Crown } from "lucide-react";
+import { Clock, Zap, Crown } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,

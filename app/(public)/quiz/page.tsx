@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense, useCallback } from "react";
 import { LoadingState } from "@/components/lemon/loading-state";
 import { useSearchParams } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
@@ -72,31 +72,31 @@ function QuizContent() {
     isAdvancing.current = false;
   }, [currentQuestionIndex]);
 
-  const finishQuiz = (
-    myFinalAnswers: QuizOption[],
-    opponentFinalAnswers?: QuizOption[]
-  ) => {
-    const useCase = new CalculateLifestyleUseCase();
-    const myResult = useCase.execute(myFinalAnswers);
-    setResult(myResult);
+  const finishQuiz = useCallback(
+    (myFinalAnswers: QuizOption[], opponentFinalAnswers?: QuizOption[]) => {
+      const useCase = new CalculateLifestyleUseCase();
+      const myResult = useCase.execute(myFinalAnswers);
+      setResult(myResult);
 
-    posthog?.capture("quiz_completed", {
-      result: myResult.archetype,
-      mode: mode,
-    });
+      posthog?.capture("quiz_completed", {
+        result: myResult.archetype,
+        mode: mode,
+      });
 
-    if (opponentFinalAnswers) {
-      const opponentResult = useCase.execute(opponentFinalAnswers);
-      const coupleUseCase = new GetCoupleInsightUseCase();
-      const coupleInsight = coupleUseCase.execute(
-        myResult.archetype,
-        opponentResult.archetype
-      );
-      setCoupleResult(coupleInsight);
-    }
+      if (opponentFinalAnswers) {
+        const opponentResult = useCase.execute(opponentFinalAnswers);
+        const coupleUseCase = new GetCoupleInsightUseCase();
+        const coupleInsight = coupleUseCase.execute(
+          myResult.archetype,
+          opponentResult.archetype
+        );
+        setCoupleResult(coupleInsight);
+      }
 
-    setView("result");
-  };
+      setView("result");
+    },
+    [mode, posthog]
+  );
 
   const handleStartSolo = () => {
     posthog?.capture("quiz_started", { mode: "solo" });
@@ -152,7 +152,14 @@ function QuizContent() {
         }, 500);
       }
     }
-  }, [answers, opponentAnswers, currentQuestionIndex, mode, isLastQuestion]);
+  }, [
+    answers,
+    opponentAnswers,
+    currentQuestionIndex,
+    mode,
+    isLastQuestion,
+    finishQuiz,
+  ]);
 
   const handleRetake = () => {
     setAnswers([]);
@@ -166,7 +173,7 @@ function QuizContent() {
   };
 
   return (
-    <div className="min-h-[80vh] flex flex-col items-center justify-center w-full max-w-5xl mx-auto">
+    <div className="min-h-[80vh] flex flex-col items-center justify-center w-full mx-auto">
       {/* Persistent Multiplayer Manager */}
       {mode === "multiplayer" && (
         <div className={view === "welcome" ? "w-full max-w-md" : "hidden"}>
@@ -218,7 +225,7 @@ function QuizContent() {
       )}
 
       {view === "result" && result && (
-        <div className="w-full max-w-4xl">
+        <div className="w-full">
           <ResultSection
             result={result}
             coupleResult={coupleResult}

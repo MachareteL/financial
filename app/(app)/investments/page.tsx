@@ -15,10 +15,7 @@ import {
 } from "@/hooks/use-investments";
 import { simulateInvestmentGrowthUseCase } from "@/infrastructure/dependency-injection";
 
-import type {
-  InvestmentDetailsDTO,
-  InvestmentGrowthProjectionDTO,
-} from "@/domain/dto/investment.types.d.ts";
+import type { InvestmentDetailsDTO } from "@/domain/dto/investment.types.d.ts";
 
 // UI Components
 import { Button } from "@/components/ui/button";
