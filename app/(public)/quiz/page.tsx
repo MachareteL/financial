@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
+import { LoadingState } from "@/components/lemon/loading-state";
 import { useSearchParams } from "next/navigation";
 import {
   REAL_QUESTIONS,
@@ -18,7 +19,7 @@ import { MultiplayerManager } from "./components/multiplayer-manager";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
-export default function QuizPage() {
+function QuizContent() {
   const searchParams = useSearchParams();
   const sessionParam = searchParams.get("session");
 
@@ -205,5 +206,13 @@ export default function QuizPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function QuizPage() {
+  return (
+    <Suspense fallback={<LoadingState message="Carregando quiz..." />}>
+      <QuizContent />
+    </Suspense>
   );
 }
