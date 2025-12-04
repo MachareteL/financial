@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { TrendingUp, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { JsonLd } from "@/components/seo/json-ld";
 
 export default function PublicLayout({
   children,
@@ -22,8 +23,22 @@ export default function PublicLayout({
   const isBlog = pathname?.startsWith("/blog");
   const isQuiz = pathname?.startsWith("/quiz");
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Lemon Financial",
+    applicationCategory: "FinanceApplication",
+    operatingSystem: "Web",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "BRL",
+    },
+  };
+
   return (
     <div className="min-h-screen bg-background font-sans selection:bg-primary/30">
+      <JsonLd schema={jsonLd} />
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6 lg:px-8">

@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
+import { JsonLd } from "@/components/seo/json-ld";
 
 export default function LandingPage() {
   const { session, loading } = useAuth();
@@ -51,8 +52,39 @@ export default function LandingPage() {
     );
   }
 
+  const softwareSchema = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Lemon Financial",
+    applicationCategory: "FinanceApplication",
+    operatingSystem: "Web",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "BRL",
+    },
+  };
+
+  const financialProductSchema = {
+    "@context": "https://schema.org",
+    "@type": "FinancialProduct",
+    name: "Lemon Financial Pro",
+    description: "Organização financeira para casais com IA.",
+    brand: {
+      "@type": "Brand",
+      name: "Lemon",
+    },
+    offers: {
+      "@type": "Offer",
+      price: "19.90",
+      priceCurrency: "BRL",
+    },
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
+      <JsonLd schema={softwareSchema} />
+      <JsonLd schema={financialProductSchema} />
       {/* --- HEADER --- */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md transition-all">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
