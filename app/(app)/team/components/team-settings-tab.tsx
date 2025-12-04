@@ -127,10 +127,10 @@ export function TeamSettingsTab({ team, subscription }: TeamSettingsTabProps) {
           </Card>
 
           <Card
-            className={`relative overflow-hidden border-amber-500/20 transition-all duration-300 hover:shadow-lg ${
+            className={`relative overflow-hidden border-warning/20 transition-all duration-300 hover:shadow-lg ${
               !isPro
                 ? "bg-muted/30"
-                : "bg-gradient-to-br from-amber-500/5 to-transparent"
+                : "bg-gradient-to-br from-warning/5 to-transparent"
             }`}
           >
             <div className="absolute top-0 right-0 p-3 opacity-10">
@@ -138,13 +138,13 @@ export function TeamSettingsTab({ team, subscription }: TeamSettingsTabProps) {
             </div>
             <CardHeader>
               <div className="flex justify-between items-start mb-2">
-                <div className="p-2 bg-amber-500/10 rounded-lg w-fit">
-                  <LineChart className="w-6 h-6 text-amber-600" />
+                <div className="p-2 bg-warning/10 rounded-lg w-fit">
+                  <LineChart className="w-6 h-6 text-warning" />
                 </div>
                 {!isPro && (
                   <Badge
                     variant="outline"
-                    className="border-amber-500/50 text-amber-600"
+                    className="border-warning/50 text-warning"
                   >
                     PRO
                   </Badge>

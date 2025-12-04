@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import { LoadingState } from "@/components/lemon/loading-state";
 import { useSearchParams } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
 import {
   REAL_QUESTIONS,
   QuizOption,
@@ -20,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
 function QuizContent() {
+  const posthog = usePostHog();
   const searchParams = useSearchParams();
   const sessionParam = searchParams.get("session");
 
@@ -47,12 +49,20 @@ function QuizContent() {
   useEffect(() => {
     if (sessionParam) {
       setMode("multiplayer");
+      posthog?.capture("multiplayer_session_joined", {
+        session_id: sessionParam,
+      });
       // We stay in 'welcome' view but show the MultiplayerManager overlay
       // Actually, if we are joining, we might want to show the lobby immediately
       // But the current logic hides MultiplayerManager if view !== 'welcome' (except for background logic)
       // Let's keep view as 'welcome' so the manager is visible
     }
-  }, [sessionParam]);
+  }, [sessionParam, posthog]);
+
+  // Track quiz view
+  useEffect(() => {
+    posthog?.capture("quiz_viewed");
+  }, [posthog]);
 
   const currentQuestion = REAL_QUESTIONS[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === REAL_QUESTIONS.length - 1;
@@ -70,6 +80,11 @@ function QuizContent() {
     const myResult = useCase.execute(myFinalAnswers);
     setResult(myResult);
 
+    posthog?.capture("quiz_completed", {
+      result: myResult.archetype,
+      mode: mode,
+    });
+
     if (opponentFinalAnswers) {
       const opponentResult = useCase.execute(opponentFinalAnswers);
       const coupleUseCase = new GetCoupleInsightUseCase();
@@ -84,11 +99,13 @@ function QuizContent() {
   };
 
   const handleStartSolo = () => {
+    posthog?.capture("quiz_started", { mode: "solo" });
     setMode("solo");
     setView("quiz");
   };
 
   const handleStartMultiplayer = () => {
+    posthog?.capture("quiz_started", { mode: "multiplayer" });
     setMode("multiplayer");
     setIsCreatingSession(true);
   };
@@ -98,6 +115,10 @@ function QuizContent() {
   };
 
   const handleSelectOption = (option: QuizOption) => {
+    posthog?.capture("quiz_question_answered", {
+      question_index: currentQuestionIndex,
+      answer: option.text,
+    });
     const newAnswers = [...answers, option];
     setAnswers(newAnswers);
 

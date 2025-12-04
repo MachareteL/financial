@@ -89,15 +89,15 @@ export function TeamBillingSection({
     <div className="space-y-8">
       {/* Status Banner */}
       {isTrialActive && !subscription && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-6 flex flex-col sm:flex-row items-start gap-4 shadow-sm">
-          <div className="bg-blue-100 p-2 rounded-full">
-            <Sparkles className="w-6 h-6 text-blue-600" />
+        <div className="bg-gradient-to-r from-info/10 to-info/5 border border-info/20 rounded-xl p-6 flex flex-col sm:flex-row items-start gap-4 shadow-sm">
+          <div className="bg-info/20 p-2 rounded-full">
+            <Sparkles className="w-6 h-6 text-info" />
           </div>
           <div>
-            <h4 className="font-semibold text-blue-900 text-lg">
+            <h4 className="font-semibold text-foreground text-lg">
               Período de Testes Premium Ativo
             </h4>
-            <p className="text-blue-700 mt-1 max-w-xl">
+            <p className="text-muted-foreground mt-1 max-w-xl">
               Aproveite acesso total a todas as funcionalidades PRO por mais{" "}
               <strong>{daysRemaining} dias</strong>.
             </p>
@@ -106,15 +106,15 @@ export function TeamBillingSection({
       )}
 
       {subscription?.cancelAtPeriodEnd && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex flex-col sm:flex-row items-start gap-4">
-          <div className="bg-amber-100 p-2 rounded-full">
-            <AlertTriangle className="w-6 h-6 text-amber-600" />
+        <div className="bg-warning/5 border border-warning/20 rounded-xl p-6 flex flex-col sm:flex-row items-start gap-4">
+          <div className="bg-warning/10 p-2 rounded-full">
+            <AlertTriangle className="w-6 h-6 text-warning" />
           </div>
           <div>
-            <h4 className="font-semibold text-amber-900 text-lg">
+            <h4 className="font-semibold text-foreground text-lg">
               Assinatura Cancelada
             </h4>
-            <p className="text-amber-700 mt-1 max-w-xl">
+            <p className="text-muted-foreground mt-1 max-w-xl">
               Sua assinatura foi cancelada e expirará em{" "}
               <strong>
                 {subscription.currentPeriodEnd?.toLocaleDateString()}
@@ -126,15 +126,15 @@ export function TeamBillingSection({
       )}
 
       {!isPro && !isTrialActive && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex flex-col sm:flex-row items-start gap-4">
-          <div className="bg-amber-100 p-2 rounded-full">
-            <AlertTriangle className="w-6 h-6 text-amber-600" />
+        <div className="bg-warning/5 border border-warning/20 rounded-xl p-6 flex flex-col sm:flex-row items-start gap-4">
+          <div className="bg-warning/10 p-2 rounded-full">
+            <AlertTriangle className="w-6 h-6 text-warning" />
           </div>
           <div>
-            <h4 className="font-semibold text-amber-900 text-lg">
+            <h4 className="font-semibold text-foreground text-lg">
               Seu período de testes acabou
             </h4>
-            <p className="text-amber-700 mt-1 max-w-xl">
+            <p className="text-muted-foreground mt-1 max-w-xl">
               Assine o plano PRO para desbloquear novamente as funcionalidades
               avançadas.
             </p>
@@ -169,7 +169,7 @@ export function TeamBillingSection({
               Anual
               <Badge
                 variant="secondary"
-                className="bg-green-100 text-green-700 hover:bg-green-100 border-0 text-[10px] px-1.5 h-5"
+                className="bg-success/10 text-success hover:bg-success/20 border-0 text-[10px] px-1.5 h-5"
               >
                 -50%
               </Badge>
@@ -193,11 +193,11 @@ export function TeamBillingSection({
             <CardContent>
               <ul className="space-y-4 text-sm text-muted-foreground">
                 <li className="flex items-center gap-3">
-                  <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
                   Até 3 membros
                 </li>
                 <li className="flex items-center gap-3">
-                  <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
                   Gestão de despesas básica
                 </li>
                 <li className="flex items-center gap-3 text-muted-foreground/50">
@@ -218,7 +218,7 @@ export function TeamBillingSection({
           className={cn(
             "border-2 relative overflow-hidden transition-all duration-300",
             isPro
-              ? "border-green-500 shadow-md md:col-span-2 lg:col-span-3"
+              ? "border-success shadow-md md:col-span-2 lg:col-span-3"
               : "border-primary shadow-xl scale-105 md:scale-110 z-10 lg:col-span-2"
           )}
         >
@@ -241,7 +241,7 @@ export function TeamBillingSection({
                     <CardTitle className="text-2xl flex items-center gap-2">
                       PRO
                       {isPro && (
-                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">
+                        <Badge className="bg-success/10 text-success hover:bg-success/20 border-success/20">
                           ATIVO
                         </Badge>
                       )}
@@ -266,7 +266,7 @@ export function TeamBillingSection({
                         <p className="text-sm text-muted-foreground">
                           Cobrado anualmente (R$ 238,80)
                         </p>
-                        <p className="text-sm text-green-600 font-medium flex items-center gap-1">
+                        <p className="text-sm text-success font-medium flex items-center gap-1">
                           <Check className="w-3 h-3" />
                           Economia de R$ 240,00 por ano
                         </p>
@@ -327,7 +327,7 @@ export function TeamBillingSection({
                     <p className="text-sm font-medium text-muted-foreground mb-1">
                       Status da Assinatura
                     </p>
-                    <p className="text-lg font-semibold text-green-600 flex items-center justify-center gap-2">
+                    <p className="text-lg font-semibold text-success flex items-center justify-center gap-2">
                       <CheckCircle2 className="w-5 h-5" /> Ativa
                     </p>
                   </div>
@@ -356,7 +356,7 @@ export function TeamBillingSection({
                   <Button
                     onClick={handleSubscribe}
                     disabled={isLoading}
-                    className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white shadow-lg transition-all hover:shadow-xl hover:scale-[1.02]"
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg transition-all hover:shadow-xl hover:scale-[1.02]"
                     size="lg"
                   >
                     {isLoading ? (

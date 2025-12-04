@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { usePostHog } from "posthog-js/react";
 import { getSupabaseClient } from "@/infrastructure/database/supabase.client";
 import { QuizOption } from "@/domain/entities/quiz/real-questions";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ export function MultiplayerManager({
   >("idle");
   const statusRef = useRef(status);
   const initialized = useRef(false);
+  const posthog = usePostHog();
 
   const supabase = getSupabaseClient();
 
@@ -70,6 +72,7 @@ export function MultiplayerManager({
       setIsHost(true);
       setStatus("waiting");
       subscribeToSession(data.id, true);
+      posthog?.capture("multiplayer_session_created", { session_id: data.id });
     }
   };
 

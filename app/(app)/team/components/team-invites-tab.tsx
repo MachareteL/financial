@@ -44,7 +44,7 @@ export function TeamInvitesTab({ invites, onUpdate }: TeamInvitesTabProps) {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-foreground">
           Convites Pendentes
         </h3>
         <p className="text-sm text-muted-foreground">
@@ -93,7 +93,7 @@ export function TeamInvitesTab({ invites, onUpdate }: TeamInvitesTabProps) {
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                   <Badge
                     variant="secondary"
-                    className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200"
+                    className="bg-warning/10 text-warning hover:bg-warning/20 border-warning/20"
                   >
                     Aguardando
                   </Badge>

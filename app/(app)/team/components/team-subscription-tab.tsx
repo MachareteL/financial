@@ -18,8 +18,8 @@ export function TeamSubscriptionTab({
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center gap-3 border-b pb-4">
-        <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
-          <Sparkles className="w-5 h-5 text-green-600 dark:text-green-400" />
+        <div className="p-2 bg-success/10 rounded-lg">
+          <Sparkles className="w-5 h-5 text-success" />
         </div>
         <div>
           <h3 className="text-lg font-semibold text-foreground">

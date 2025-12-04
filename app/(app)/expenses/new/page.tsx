@@ -8,12 +8,12 @@ import { notify } from "@/lib/notify-helper";
 import { compressImage } from "@/lib/compression";
 
 // Use Cases e Actions
-import { createExpenseUseCase } from "@/infrastructure/dependency-injection";
 import { parseReceiptAction } from "@/app/(app)/expenses/_actions/parse-receipt";
 import type { CreateExpenseDTO } from "@/domain/dto/expense.types.d.ts";
 
 // Hooks
 import { useCategories } from "@/hooks/use-categories";
+import { useCreateExpense } from "@/hooks/use-expenses";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,8 @@ export default function NewExpensePage() {
   // Hooks React Query
   const { data: categories = [], isLoading: isLoadingCategories } =
     useCategories(teamId);
+
+  const createExpenseMutation = useCreateExpense();
 
   // Estados de Loading
   const [isLoading, setIsLoading] = useState(false);
@@ -228,7 +230,7 @@ export default function NewExpensePage() {
             : undefined,
       };
 
-      await createExpenseUseCase.execute(dto);
+      await createExpenseMutation.mutateAsync(dto);
 
       notify.success("Despesa registrada!", {
         description:

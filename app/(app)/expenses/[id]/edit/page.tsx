@@ -81,7 +81,8 @@ export default function EditExpensePage() {
     if (expense) {
       setDescription(expense.description || "");
       setAmount(expense.amount.toString());
-      setCategoryId(expense.categoryId);
+      // Tenta pegar o ID direto ou do objeto aninhado
+      setCategoryId(expense.categoryId || expense.category?.id || "");
       setDate(expense.date);
       setExistingReceiptUrl(expense.receiptUrl || null);
     }
@@ -144,6 +145,14 @@ export default function EditExpensePage() {
     e.preventDefault();
     if (!teamId || !expense) return;
 
+    if (!categoryId) {
+      notify.error(
+        "Categoria obrigatória",
+        "Por favor, selecione uma categoria para a despesa."
+      );
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -194,7 +203,7 @@ export default function EditExpensePage() {
   const displayImageUrl = previewUrl || existingReceiptUrl;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-background p-4">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
@@ -202,8 +211,12 @@ export default function EditExpensePage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Editar Despesa</h1>
-            <p className="text-gray-600">Alterar detalhes do lançamento</p>
+            <h1 className="text-2xl font-bold text-foreground">
+              Editar Despesa
+            </h1>
+            <p className="text-muted-foreground">
+              Alterar detalhes do lançamento
+            </p>
           </div>
         </div>
 
@@ -212,7 +225,7 @@ export default function EditExpensePage() {
           {expense.isRecurring && (
             <Badge
               variant="secondary"
-              className="flex items-center gap-1 bg-blue-100 text-blue-800"
+              className="flex items-center gap-1 bg-secondary text-secondary-foreground"
             >
               <Repeat className="h-3 w-3" />
               Recorrente ({expense.recurrenceType})
@@ -221,7 +234,7 @@ export default function EditExpensePage() {
           {expense.isInstallment && (
             <Badge
               variant="secondary"
-              className="flex items-center gap-1 bg-purple-100 text-purple-800"
+              className="flex items-center gap-1 bg-warning/10 text-warning"
             >
               <CreditCard className="h-3 w-3" />
               Parcela {expense.installmentNumber}/{expense.totalInstallments}
@@ -231,15 +244,15 @@ export default function EditExpensePage() {
 
         {/* Aviso para Parcelas */}
         {expense.isInstallment && (
-          <Card className="border-orange-200 bg-orange-50">
+          <Card className="border-warning/20 bg-warning/5">
             <CardContent className="pt-4 pb-4">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5" />
+                <AlertTriangle className="h-5 w-5 text-warning mt-0.5" />
                 <div>
-                  <p className="font-medium text-orange-800">
+                  <p className="font-medium text-warning">
                     Atenção: Despesa Parcelada
                   </p>
-                  <p className="text-sm text-orange-700">
+                  <p className="text-sm text-warning/90">
                     As alterações feitas aqui afetarão{" "}
                     <strong>apenas esta parcela</strong>.
                   </p>
@@ -324,7 +337,7 @@ export default function EditExpensePage() {
               {/* Seção de Recibo (Upload/Visualização) */}
               <div className="space-y-2 border-t pt-6">
                 <Label>Nota Fiscal / Recibo</Label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50">
+                <div className="border-2 border-dashed border-input rounded-lg p-6 bg-muted/10">
                   {displayImageUrl ? (
                     <div className="space-y-4">
                       <div className="relative group">
@@ -361,7 +374,7 @@ export default function EditExpensePage() {
                           </Button>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-600 text-center truncate">
+                      <p className="text-sm text-muted-foreground text-center truncate">
                         {selectedFile
                           ? `Novo arquivo: ${selectedFile.name}`
                           : "Recibo atual"}
@@ -369,11 +382,11 @@ export default function EditExpensePage() {
                     </div>
                   ) : (
                     <div className="text-center">
-                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                      <Upload className="mx-auto h-12 w-12 text-muted-foreground/50" />
                       <div className="mt-4">
                         <label
                           htmlFor="receipt"
-                          className="cursor-pointer font-medium text-blue-600 hover:text-blue-500"
+                          className="cursor-pointer font-medium text-primary hover:text-primary/80"
                         >
                           Clique para fazer upload (ou substituir)
                           <input
@@ -385,7 +398,7 @@ export default function EditExpensePage() {
                             onChange={handleFileSelect}
                           />
                         </label>
-                        <p className="mt-1 block text-sm text-gray-500">
+                        <p className="mt-1 block text-sm text-muted-foreground">
                           PNG, JPG, PDF (Max 10MB)
                         </p>
                       </div>
