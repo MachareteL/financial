@@ -38,6 +38,10 @@ export const metadata: Metadata = {
     "app casal",
     "planilha de gastos",
     "excel financeiro",
+    "planilha de gastos casal",
+    "excel financeiro",
+    "app controle financeiro compartilhado",
+    "planilha com IA",
     "b3",
     "imposto de renda",
   ],
@@ -45,6 +49,12 @@ export const metadata: Metadata = {
     type: "website",
     locale: "pt_BR",
     siteName: "Lemon",
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@lemonfinancas",
+    creator: "@lemonfinancas",
+    images: ["/og-image.png"], // Assuming a default OG image exists or will be handled by opengraph-image.tsx
   },
 };
 

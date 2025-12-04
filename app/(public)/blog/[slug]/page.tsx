@@ -93,6 +93,26 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       <div className="mt-16 border-t pt-8">
         <NewsletterCTA />
       </div>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BlogPosting",
+            headline: post.title,
+            description: post.description,
+            image: post.coverImage
+              ? [`https://lemonfinancas.com.br${post.coverImage}`]
+              : [],
+            datePublished: post.date,
+            author: {
+              "@type": "Person",
+              name: post.author,
+            },
+          }),
+        }}
+      />
     </article>
   );
 }

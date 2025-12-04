@@ -18,6 +18,9 @@ export const metadata: Metadata = {
       "Descubra seu arquétipo financeiro e a química do seu relacionamento.",
     type: "website",
   },
+  alternates: {
+    canonical: "https://lemonfinancas.com.br/quiz",
+  },
 };
 
 export default function QuizLayout({
