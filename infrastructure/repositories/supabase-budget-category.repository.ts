@@ -6,7 +6,10 @@ import type { Database } from "@/domain/dto/database.types.d.ts";
 type BudgetCategoryRow =
   Database["public"]["Tables"]["budget_categories"]["Row"];
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 export class BudgetCategoryRepository implements IBudgetCategoryRepository {
+  constructor(private readonly supabase: SupabaseClient) {}
   private mapRowToEntity(row: BudgetCategoryRow): BudgetCategory {
     return new BudgetCategory({
       id: row.id,
@@ -28,9 +31,7 @@ export class BudgetCategoryRepository implements IBudgetCategoryRepository {
   }
 
   async findByTeamId(teamId: string): Promise<BudgetCategory[]> {
-    const supabase = getSupabaseClient();
-
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from("budget_categories")
       .select("*")
       .eq("team_id", teamId)
@@ -41,9 +42,7 @@ export class BudgetCategoryRepository implements IBudgetCategoryRepository {
   }
 
   async findById(id: string, teamId: string): Promise<BudgetCategory | null> {
-    const supabase = getSupabaseClient();
-
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from("budget_categories")
       .select("*")
       .eq("id", id)
@@ -57,10 +56,9 @@ export class BudgetCategoryRepository implements IBudgetCategoryRepository {
   }
 
   async create(category: BudgetCategory): Promise<BudgetCategory> {
-    const supabase = getSupabaseClient();
     const row = this.mapEntityToRow(category);
 
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from("budget_categories")
       .insert({
         ...row,
@@ -76,8 +74,7 @@ export class BudgetCategoryRepository implements IBudgetCategoryRepository {
 
   async update(category: BudgetCategory): Promise<BudgetCategory> {
     const row = this.mapEntityToRow(category);
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from("budget_categories")
       .update(row)
       .eq("id", category.id)
@@ -90,8 +87,7 @@ export class BudgetCategoryRepository implements IBudgetCategoryRepository {
   }
 
   async delete(id: string, teamId: string): Promise<void> {
-    const supabase = getSupabaseClient();
-    const { error } = await supabase
+    const { error } = await this.supabase
       .from("budget_categories")
       .delete()
       .eq("id", id)

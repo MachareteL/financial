@@ -8,32 +8,29 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useAuth } from "@/app/auth/auth-provider";
+import { useAuth } from "@/components/providers/auth-provider";
 import {
   getPendingInvitesUseCase,
   acceptInviteUseCase,
   declineInviteUseCase,
 } from "@/infrastructure/dependency-injection";
-import { TeamInvite } from "@/domain/entities/team-invite";
+import type { TeamInviteDetailsDTO } from "@/domain/dto/team.types";
 import { notify } from "@/lib/notify-helper";
 import { Badge } from "@/components/ui/badge";
 
 export function NotificationsNav() {
   const { session } = useAuth();
-  const [invites, setInvites] = useState<TeamInvite[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [invites, setInvites] = useState<TeamInviteDetailsDTO[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
   const fetchInvites = async () => {
     if (!session?.user?.email) return;
-    setIsLoading(true);
     try {
       const data = await getPendingInvitesUseCase.execute(session.user.email);
       setInvites(data);
     } catch (error) {
+      notify.error(error, "carregar convites");
       console.error("Failed to fetch invites", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -41,11 +38,13 @@ export function NotificationsNav() {
     if (isOpen) {
       fetchInvites();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, session?.user?.email]);
 
   // Initial fetch to show badge count
   useEffect(() => {
     fetchInvites();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.user?.email]);
 
   const handleAccept = async (inviteId: string) => {
@@ -129,12 +128,14 @@ export function NotificationsNav() {
                         <p className="text-sm font-medium">
                           Convite para{" "}
                           <span className="text-primary">
-                            {(invite as any).teamName || "Time"}
+                            {(invite as unknown as { teamName: string })
+                              .teamName || "Time"}
                           </span>
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Convidado por{" "}
-                          {(invite as any).invitedByName || "Alguém"}
+                          {(invite as unknown as { invitedByName: string })
+                            .invitedByName || "Alguém"}
                         </p>
                       </div>
                       <div className="flex gap-2">

@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Edit, Trash2, Plus, Loader2, Shield, Crown } from "lucide-react";
-import { useAuth } from "@/app/auth/auth-provider";
+import { useAuth } from "@/components/providers/auth-provider";
 import { useTeam } from "@/app/(app)/team/team-provider";
 import { usePermission } from "@/hooks/use-permission";
 import { notify } from "@/lib/notify-helper";
@@ -116,7 +116,7 @@ export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
       }
       setIsRoleModalOpen(false);
       await onUpdate();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "salvar o cargo");
     } finally {
       setIsActionLoading(false);
@@ -136,7 +136,7 @@ export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
       );
       notify.success("Cargo excluído!");
       await onUpdate();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "excluir o cargo");
     } finally {
       setIsActionLoading(false);
@@ -147,7 +147,7 @@ export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-foreground">
             Cargos e Permissões
           </h3>
           <p className="text-sm text-muted-foreground">
@@ -171,7 +171,7 @@ export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
             <Card
               key={role.id}
               className={`transition-all hover:shadow-md ${
-                roleIsOwner ? "border-amber-200 bg-amber-50/30" : "bg-card"
+                roleIsOwner ? "border-secondary/20 bg-secondary/5" : "bg-card"
               }`}
             >
               <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
@@ -183,7 +183,7 @@ export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
                   <CardTitle className="text-base flex items-center gap-2">
                     {role.name}
                     {roleIsOwner && (
-                      <Crown className="w-3 h-3 text-amber-500 fill-amber-500" />
+                      <Crown className="w-3 h-3 text-secondary-foreground fill-secondary-foreground" />
                     )}
                   </CardTitle>
                 </div>
@@ -210,7 +210,7 @@ export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
                 {roleIsOwner && (
                   <Badge
                     variant="outline"
-                    className="bg-amber-100 text-amber-800 border-amber-200 text-[10px]"
+                    className="bg-secondary text-secondary-foreground border-secondary/20 text-[10px]"
                   >
                     Sistema
                   </Badge>

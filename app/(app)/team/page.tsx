@@ -1,98 +1,55 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft,
   Mail,
-  Loader2,
-  X,
   Users,
   ShieldCheck,
   Settings,
+  Sparkles,
 } from "lucide-react";
-import { useAuth } from "@/app/auth/auth-provider";
+import { LoadingState } from "@/components/lemon/loading-state";
 import { useTeam } from "@/app/(app)/team/team-provider";
-import { usePermission } from "@/hooks/use-permission";
-import { notify } from "@/lib/notify-helper";
-
-// DTOs e Entidades
-import type { TeamMemberProfileDTO } from "@/domain/dto/team.types.d.ts";
-import type { TeamRole } from "@/domain/entities/team-role";
-import type { TeamInvite } from "@/domain/entities/team-invite";
-
-// Casos de Uso
-import {
-  getTeamDataUseCase,
-  manageMembersUseCase,
-} from "@/infrastructure/dependency-injection";
+import { useTeamData } from "@/hooks/use-team-data";
 
 // Componentes
 import { TeamMembersTab } from "./components/team-members-tab";
 import { TeamRolesTab } from "./components/team-roles-tab";
 import { TeamSettingsTab } from "./components/team-settings-tab";
+import { TeamInvitesTab } from "./components/team-invites-tab";
+import { TeamSubscriptionTab } from "./components/team-subscription-tab";
 
 export default function TeamPage() {
   const { currentTeam } = useTeam();
-  const { can } = usePermission();
   const router = useRouter();
 
-  // Dados
-  const [members, setMembers] = useState<TeamMemberProfileDTO[]>([]);
-  const [roles, setRoles] = useState<TeamRole[]>([]);
-  const [invites, setInvites] = useState<TeamInvite[]>([]);
+  // React Query Hook
+  const {
+    data: teamData,
+    isLoading,
+    refetch,
+  } = useTeamData(currentTeam?.team.id);
 
-  // Estados de UI
-  const [isLoading, setIsLoading] = useState(true);
+  const members = teamData?.members || [];
+  const roles = teamData?.roles || [];
+  const invites = teamData?.invites || [];
+  const subscription = teamData?.subscription || null;
+  const teamDetails = teamData?.team || null;
 
-  // Carregar dados ao entrar ou trocar de time
-  useEffect(() => {
-    if (currentTeam) loadTeamData();
-  }, [currentTeam]);
-
-  const loadTeamData = async () => {
-    if (!currentTeam) return;
-    setIsLoading(true);
-    try {
-      const data = await getTeamDataUseCase.execute(currentTeam.team.id);
-      setMembers(data.members);
-      setRoles(data.roles);
-      setInvites(data.invites);
-    } catch (error: any) {
-      notify.error(error, "carregar os dados da equipe");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const { session } = useAuth();
-
-  const handleCancelInvite = async (inviteId: string) => {
-    if (!currentTeam || !session?.user) return;
-    try {
-      await manageMembersUseCase.cancelInvite(
-        inviteId,
-        currentTeam.team.id,
-        session.user.id
-      );
-      notify.success("Convite cancelado");
-      await loadTeamData();
-    } catch (error: any) {
-      notify.error(error, "cancelar o convite");
-    }
+  const handleUpdate = async () => {
+    await refetch();
   };
 
   if (!currentTeam || isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="animate-spin h-8 w-8 text-primary mx-auto" />
-      </div>
-    );
+    return <LoadingState message="Carregando equipe..." />;
   }
+
+  const isPro = teamDetails?.isPro(!!subscription && subscription.isActive());
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -109,9 +66,20 @@ export default function TeamPage() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                {currentTeam.team.name}
-              </h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                  {currentTeam.team.name}
+                </h1>
+                {isPro ? (
+                  <Badge className="bg-primary text-primary-foreground shadow-sm border-0">
+                    <Sparkles className="w-3 h-3 mr-1" /> PRO
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="text-muted-foreground">
+                    Free
+                  </Badge>
+                )}
+              </div>
               <p className="text-sm text-muted-foreground mt-1">
                 Gerencie membros, cargos e configurações da equipe.
               </p>
@@ -121,124 +89,66 @@ export default function TeamPage() {
 
         {/* Content */}
         <Tabs defaultValue="members" className="w-full space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-[500px] bg-muted/50 p-1">
-            <TabsTrigger value="members" className="text-xs sm:text-sm">
-              <Users className="w-4 h-4 mr-2 hidden sm:inline-block" />
-              Membros
-            </TabsTrigger>
-            <TabsTrigger value="roles" className="text-xs sm:text-sm">
-              <ShieldCheck className="w-4 h-4 mr-2 hidden sm:inline-block" />
-              Cargos
-            </TabsTrigger>
-            <TabsTrigger value="invites" className="text-xs sm:text-sm">
-              <Mail className="w-4 h-4 mr-2 hidden sm:inline-block" />
-              Convites
-              {invites.length > 0 && (
-                <Badge
-                  variant="secondary"
-                  className="ml-2 h-5 px-1.5 text-[10px]"
-                >
-                  {invites.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="text-xs sm:text-sm">
-              <Settings className="w-4 h-4 mr-2 hidden sm:inline-block" />
-              Configurações
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="members" className="outline-none">
+          <div className="overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0">
+            <TabsList className="inline-flex w-auto min-w-full sm:w-auto bg-muted/50 p-1">
+              <TabsTrigger value="members" className="text-xs sm:text-sm px-4">
+                <Users className="w-4 h-4 mr-2 hidden sm:inline-block" />
+                Membros
+              </TabsTrigger>
+              <TabsTrigger value="roles" className="text-xs sm:text-sm px-4">
+                <ShieldCheck className="w-4 h-4 mr-2 hidden sm:inline-block" />
+                Cargos
+              </TabsTrigger>
+              <TabsTrigger value="invites" className="text-xs sm:text-sm px-4">
+                <Mail className="w-4 h-4 mr-2 hidden sm:inline-block" />
+                Convites
+                {invites.length > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="ml-2 h-5 px-1.5 text-[10px]"
+                  >
+                    {invites.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="subscription"
+                className="text-xs sm:text-sm px-4"
+              >
+                <Sparkles className="w-4 h-4 mr-2 hidden sm:inline-block" />
+                Assinatura
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="text-xs sm:text-sm px-4">
+                <Settings className="w-4 h-4 mr-2 hidden sm:inline-block" />
+                Configurações
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          <TabsContent value="members" className="outline-none mt-0">
             <TeamMembersTab
               members={members}
               roles={roles}
-              onUpdate={loadTeamData}
+              onUpdate={handleUpdate}
             />
           </TabsContent>
-
-          <TabsContent value="roles" className="outline-none">
-            <TeamRolesTab roles={roles} onUpdate={loadTeamData} />
+          <TabsContent value="roles" className="outline-none mt-0">
+            <TeamRolesTab roles={roles} onUpdate={handleUpdate} />
           </TabsContent>
-
-          <TabsContent
-            value="invites"
-            className="outline-none space-y-6 animate-in fade-in duration-500"
-          >
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Convites Pendentes
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Gerencie os convites enviados que ainda não foram aceitos.
-              </p>
-            </div>
-
-            {invites.length === 0 ? (
-              <Card className="border-dashed bg-muted/30">
-                <CardContent className="py-12 flex flex-col items-center text-center text-muted-foreground">
-                  <div className="bg-muted p-4 rounded-full mb-3">
-                    <Mail className="h-6 w-6 opacity-50" />
-                  </div>
-                  <p className="font-medium">Nenhum convite pendente</p>
-                  <p className="text-sm mt-1">
-                    Convide novos membros na aba "Membros".
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-4">
-                {invites.map((invite) => (
-                  <Card key={invite.id} className="overflow-hidden">
-                    <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                      <div className="flex items-center gap-4">
-                        <div className="bg-primary/10 p-3 rounded-full">
-                          <Mail className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-foreground">
-                            {invite.email}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge
-                              variant="outline"
-                              className="text-xs font-normal"
-                            >
-                              Enviado em{" "}
-                              {new Date(invite.createdAt).toLocaleDateString()}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              por {(invite as any).invitedByName || "Alguém"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 w-full sm:w-auto">
-                        <Badge
-                          variant="secondary"
-                          className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200"
-                        >
-                          Aguardando
-                        </Badge>
-                        {can("MANAGE_TEAM") && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-muted-foreground hover:text-red-600 hover:bg-red-50 ml-auto sm:ml-0"
-                            onClick={() => handleCancelInvite(invite.id)}
-                          >
-                            <X className="w-4 h-4 mr-2" /> Cancelar
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+          <TabsContent value="invites" className="outline-none mt-0">
+            <TeamInvitesTab invites={invites} onUpdate={handleUpdate} />
+          </TabsContent>
+          <TabsContent value="subscription" className="outline-none mt-0">
+            {teamDetails && (
+              <TeamSubscriptionTab
+                team={teamDetails}
+                subscription={subscription}
+              />
             )}
           </TabsContent>
-
-          <TabsContent value="settings" className="outline-none">
-            <TeamSettingsTab />
+          <TabsContent value="settings" className="outline-none mt-0">
+            {teamDetails && (
+              <TeamSettingsTab team={teamDetails} subscription={subscription} />
+            )}
           </TabsContent>
         </Tabs>
       </div>

@@ -1,196 +1,83 @@
 "use client";
 
-import { useState } from "react";
-import { useAuth } from "@/app/auth/auth-provider";
-import {
-  updateProfileUseCase,
-  updatePasswordUseCase,
-} from "@/infrastructure/dependency-injection";
-import { notify } from "@/lib/notify-helper";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, User, Lock, Save } from "lucide-react";
+import { ArrowLeft, User, ShieldCheck, Settings, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ProfileTab } from "./components/profile-tab";
+import { SecurityTab } from "./components/security-tab";
+import { PreferencesTab } from "./components/preferences-tab";
 
 export default function AccountPage() {
-  const { session, setSession } = useAuth();
-  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
-  const [isLoadingPassword, setIsLoadingPassword] = useState(false);
-
-  // Profile State
-  const [name, setName] = useState(session?.user?.name || "");
-
-  // Password State
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!session?.user) return;
-
-    setIsLoadingProfile(true);
-    try {
-      const updatedSession = await updateProfileUseCase.execute(
-        session.user.id,
-        {
-          name,
-        }
-      );
-      setSession(updatedSession);
-      notify.success("Perfil atualizado!");
-    } catch (error: any) {
-      notify.error(error, "atualizar perfil");
-    } finally {
-      setIsLoadingProfile(false);
-    }
-  };
-
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password !== confirmPassword) {
-      notify.error("As senhas não coincidem.", "alterar senha");
-      return;
-    }
-
-    setIsLoadingPassword(true);
-    try {
-      await updatePasswordUseCase.execute(password);
-      notify.success("Senha alterada com sucesso!");
-      setPassword("");
-      setConfirmPassword("");
-    } catch (error: any) {
-      notify.error(error, "alterar senha");
-    } finally {
-      setIsLoadingPassword(false);
-    }
-  };
+  const router = useRouter();
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Minha Conta</h1>
-        <p className="text-muted-foreground">
-          Gerencie suas informações pessoais e segurança.
-        </p>
+    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b pb-6">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => router.push("/dashboard")}
+              className="h-9 w-9"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                  Minha Conta
+                </h1>
+                <Badge variant="secondary" className="text-muted-foreground">
+                  Pessoal
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Gerencie suas informações pessoais, segurança e preferências.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <Tabs defaultValue="profile" className="w-full space-y-6">
+          <div className="overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0">
+            <TabsList className="inline-flex w-auto min-w-full sm:w-auto bg-muted/50 p-1">
+              <TabsTrigger value="profile" className="text-xs sm:text-sm px-4">
+                <User className="w-4 h-4 mr-2 hidden sm:inline-block" />
+                Perfil
+              </TabsTrigger>
+              <TabsTrigger value="security" className="text-xs sm:text-sm px-4">
+                <ShieldCheck className="w-4 h-4 mr-2 hidden sm:inline-block" />
+                Segurança
+              </TabsTrigger>
+              <TabsTrigger
+                value="preferences"
+                className="text-xs sm:text-sm px-4"
+              >
+                <Settings className="w-4 h-4 mr-2 hidden sm:inline-block" />
+                Preferências
+                <Sparkles className="w-3 h-3 ml-2 text-primary" />
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="profile" className="outline-none mt-0">
+            <ProfileTab />
+          </TabsContent>
+
+          <TabsContent value="security" className="outline-none mt-0">
+            <SecurityTab />
+          </TabsContent>
+
+          <TabsContent value="preferences" className="outline-none mt-0">
+            <PreferencesTab />
+          </TabsContent>
+        </Tabs>
       </div>
-
-      <Tabs defaultValue="profile" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="profile">Perfil</TabsTrigger>
-          <TabsTrigger value="security">Segurança</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="profile">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações Pessoais</CardTitle>
-              <CardDescription>
-                Atualize seu nome e informações de exibição.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleUpdateProfile} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    value={session?.user?.email || ""}
-                    disabled
-                    className="bg-muted"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    O email não pode ser alterado.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome Completo</Label>
-                  <div className="relative">
-                    <Input
-                      id="name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="pl-10"
-                      placeholder="Seu nome"
-                    />
-                    <User className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
-                  </div>
-                </div>
-
-                <Button disabled={isLoadingProfile}>
-                  {isLoadingProfile && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  <Save className="mr-2 h-4 w-4" />
-                  Salvar Alterações
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle>Alterar Senha</CardTitle>
-              <CardDescription>
-                Escolha uma senha forte para proteger sua conta.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleUpdatePassword} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="password">Nova Senha</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10"
-                      placeholder="••••••••"
-                      minLength={6}
-                    />
-                    <Lock className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-                  <div className="relative">
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="pl-10"
-                      placeholder="••••••••"
-                      minLength={6}
-                    />
-                    <Lock className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
-                  </div>
-                </div>
-
-                <Button disabled={isLoadingPassword}>
-                  {isLoadingPassword && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  <Save className="mr-2 h-4 w-4" />
-                  Atualizar Senha
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }

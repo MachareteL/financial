@@ -1,4 +1,5 @@
 import { Container } from "./container";
+import { ClientAnalyticsService } from "@/infrastructure/services/client-analytics.service";
 import {
   AuthSupabaseRepository,
   CategoryRepository,
@@ -9,6 +10,7 @@ import {
   IncomeRepository,
   InvestmentRepository,
   BudgetCategoryRepository,
+  SupabaseSubscriptionRepository,
 } from "../repositories";
 
 // Auth
@@ -57,6 +59,7 @@ import { GetInvestmentsUseCase } from "@/app/(app)/investments/_use-case/get-inv
 import { CreateInvestmentUseCase } from "@/app/(app)/investments/_use-case/create-investment.use-case";
 import { UpdateInvestmentUseCase } from "@/app/(app)/investments/_use-case/update-investment.use-case";
 import { DeleteInvestmentUseCase } from "@/app/(app)/investments/_use-case/delete-investment.use-case";
+import { SimulateInvestmentGrowthUseCase } from "@/app/(app)/investments/_use-case/simulate-investment-growth.use-case";
 
 // Team Management
 import { GetTeamDataUseCase } from "@/app/(app)/team/_use-case/get-team-data.use-case";
@@ -78,45 +81,56 @@ import { GeminiAiService } from "../services/gemini-ai.service";
 // AI Use Cases
 import { ParseReceiptUseCase } from "@/app/(app)/expenses/_use-case/parse-receipt.use-case";
 
+// Subscription & Billing
+import { CheckFeatureAccessUseCase } from "@/app/(app)/team/_use-case/check-feature-access.use-case";
+
+import { createBrowserClient } from "@supabase/ssr";
+
 const container = Container.getInstance();
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 const authRepository = container.get(
   "authRepository",
-  () => new AuthSupabaseRepository()
+  () => new AuthSupabaseRepository(supabase)
 );
 const categoryRepository = container.get(
   "categoryRepository",
-  () => new CategoryRepository()
+  () => new CategoryRepository(supabase)
 );
 const teamRepository = container.get(
   "teamRepository",
-  () => new TeamRepository()
+  () => new TeamRepository(supabase)
 );
 const expenseRepository = container.get(
   "expenseRepository",
-  () => new ExpenseRepository()
+  () => new ExpenseRepository(supabase)
 );
 const incomeRepository = container.get(
   "incomeRepository",
-  () => new IncomeRepository()
+  () => new IncomeRepository(supabase)
 );
 const storageRepository = container.get(
   "storageRepository",
-  () => new StorageRepository()
+  () => new StorageRepository(supabase)
 );
 const budgetRepository = container.get(
   "budgetRepository",
-  () => new BudgetRepository()
+  () => new BudgetRepository(supabase)
 );
 const budgetCategoryRepository = container.get(
   "budgetCategoryRepository",
-  () => new BudgetCategoryRepository()
+  () => new BudgetCategoryRepository(supabase)
 );
 const investmentRepository = container.get(
   "investmentRepository",
-  () => new InvestmentRepository()
+  () => new InvestmentRepository(supabase)
 );
 
+// Services
 // Services
 const aiService = container.get(
   "aiService",
@@ -127,6 +141,11 @@ const aiService = container.get(
     )
 );
 
+const subscriptionRepository = container.get(
+  "subscriptionRepository",
+  () => new SupabaseSubscriptionRepository(supabase)
+);
+
 // Auth
 export const getCurrentAuthUserUseCase = container.get(
   "getCurrentAuthUserUseCase",
@@ -134,11 +153,11 @@ export const getCurrentAuthUserUseCase = container.get(
 );
 export const signInUseCase = container.get(
   "signInUseCase",
-  () => new SignInUseCase(authRepository)
+  () => new SignInUseCase(authRepository, new ClientAnalyticsService())
 );
 export const signUpUseCase = container.get(
   "signUpUseCase",
-  () => new SignUpUseCase(authRepository)
+  () => new SignUpUseCase(authRepository, new ClientAnalyticsService())
 );
 export const signOutUseCase = container.get(
   "signOutUseCase",
@@ -170,7 +189,8 @@ export const createTeamUseCase = container.get(
     new CreateTeamUseCase(
       teamRepository,
       categoryRepository,
-      budgetCategoryRepository
+      budgetCategoryRepository,
+      subscriptionRepository
     )
 );
 
@@ -201,7 +221,8 @@ export const createExpenseUseCase = container.get(
     new CreateExpenseUseCase(
       expenseRepository,
       storageRepository,
-      teamRepository
+      teamRepository,
+      new ClientAnalyticsService()
     )
 );
 export const getExpensesUseCase = container.get(
@@ -319,11 +340,15 @@ export const deleteInvestmentUseCase = container.get(
   "deleteInvestmentUseCase",
   () => new DeleteInvestmentUseCase(investmentRepository, teamRepository)
 );
+export const simulateInvestmentGrowthUseCase = container.get(
+  "simulateInvestmentGrowthUseCase",
+  () => new SimulateInvestmentGrowthUseCase()
+);
 
 // Team Management
 export const getTeamDataUseCase = container.get(
   "getTeamDataUseCase",
-  () => new GetTeamDataUseCase(teamRepository)
+  () => new GetTeamDataUseCase(teamRepository, subscriptionRepository)
 );
 
 export const manageRolesUseCase = container.get(
@@ -339,7 +364,7 @@ export const manageMembersUseCase = container.get(
 // AI
 export const parseReceiptUseCase = container.get(
   "parseReceiptUseCase",
-  () => new ParseReceiptUseCase(aiService)
+  () => new ParseReceiptUseCase(aiService, new ClientAnalyticsService())
 );
 
 // Team Invites (Onboarding)
@@ -357,4 +382,15 @@ export const acceptInviteUseCase = container.get(
 export const declineInviteUseCase = container.get(
   "declineInviteUseCase",
   () => new DeclineInviteUseCase(teamRepository)
+);
+
+// Subscription & Billing
+export const checkFeatureAccessUseCase = container.get(
+  "checkFeatureAccessUseCase",
+  () =>
+    new CheckFeatureAccessUseCase(
+      teamRepository,
+      subscriptionRepository,
+      new ClientAnalyticsService()
+    )
 );

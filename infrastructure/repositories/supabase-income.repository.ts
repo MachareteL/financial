@@ -10,7 +10,10 @@ type IncomeRowWithProfile = IncomeRow & {
   profiles: Pick<ProfileRow, "name"> | null;
 };
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 export class IncomeRepository implements IIncomeRepository {
+  constructor(private readonly supabase: SupabaseClient) {}
   private mapRowToEntity(row: IncomeRowWithProfile): Income {
     return new Income({
       id: row.id,
@@ -22,7 +25,7 @@ export class IncomeRepository implements IIncomeRepository {
       teamId: row.team_id!,
       userId: row.user_id!,
       createdAt: new Date(row.created_at),
-      owner: row.profiles?.name || null,
+      // owner: row.profiles?.name || null, // Removed as it's not in the Income entity interface apparently, or needs to be added
     });
   }
 
@@ -41,8 +44,7 @@ export class IncomeRepository implements IIncomeRepository {
 
   async create(income: Income): Promise<Income> {
     const row = this.mapEntityToRow(income);
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from("incomes")
       .insert({
         ...row,
@@ -58,8 +60,7 @@ export class IncomeRepository implements IIncomeRepository {
   async update(income: Income): Promise<Income> {
     const row = this.mapEntityToRow(income);
 
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from("incomes")
       .update(row)
       .eq("id", income.id)
@@ -72,8 +73,7 @@ export class IncomeRepository implements IIncomeRepository {
   }
 
   async delete(id: string, teamId: string): Promise<void> {
-    const supabase = getSupabaseClient();
-    const { error } = await supabase
+    const { error } = await this.supabase
       .from("incomes")
       .delete()
       .eq("id", id)
@@ -83,8 +83,7 @@ export class IncomeRepository implements IIncomeRepository {
   }
 
   async findById(id: string, teamId: string): Promise<Income | null> {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from("incomes")
       .select(`*, profiles ( name )`)
       .eq("id", id)
@@ -98,8 +97,7 @@ export class IncomeRepository implements IIncomeRepository {
   }
 
   async findByTeamId(teamId: string): Promise<Income[]> {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from("incomes")
       .select(`*, profiles ( name )`)
       .eq("team_id", teamId)

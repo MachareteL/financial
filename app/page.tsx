@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,27 +12,30 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/app/auth/auth-provider";
+import { useAuth } from "@/components/providers/auth-provider";
 import {
   ArrowRight,
-  CheckCircle,
-  Heart,
-  MessageCircle,
-  PieChart,
-  Shield,
   Sparkles,
   TrendingUp,
-  Users,
-  Zap,
   Menu,
   X,
+  Users,
+  PieChart,
+  CheckCircle2,
+  Scan,
+  History,
+  Calculator,
 } from "lucide-react";
 import { useState } from "react";
+import { useTheme } from "next-themes";
+import { JsonLd } from "@/components/seo/json-ld";
+import { Logo } from "@/components/lemon/logo";
 
 export default function LandingPage() {
   const { session, loading } = useAuth();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  useTheme();
 
   const handleGetStarted = () => {
     if (session) {
@@ -43,52 +47,86 @@ export default function LandingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
+  const softwareSchema = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Lemon Financial",
+    applicationCategory: "FinanceApplication",
+    operatingSystem: "Web",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "BRL",
+    },
+  };
+
+  const financialProductSchema = {
+    "@context": "https://schema.org",
+    "@type": "FinancialProduct",
+    name: "Lemon Financial Pro",
+    description:
+      "Organização financeira automática para casais que constroem juntos.",
+    brand: {
+      "@type": "Brand",
+      name: "Lemon",
+    },
+    offers: {
+      "@type": "Offer",
+      price: "29.90",
+      priceCurrency: "BRL",
+    },
+  };
+
   return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-blue-100">
+    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
+      <JsonLd schema={softwareSchema} />
+      <JsonLd schema={financialProductSchema} />
       {/* --- HEADER --- */}
-      <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md transition-all">
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md transition-all">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
-              <TrendingUp className="h-5 w-5" />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-slate-900">
-              Finanças<span className="text-blue-600">EmPar</span>
-            </span>
+            <Logo className="h-8 w-8" />
+            <span className="text-xl font-bold tracking-tight">Lemon</span>
           </div>
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8">
-            <a
-              href="#metodo"
-              className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
-            >
-              O Método
-            </a>
-            <a
-              href="#funcionalidades"
-              className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
+            <Link
+              href="/#features"
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             >
               Funcionalidades
-            </a>
-            <a
-              href="#depoimentos"
-              className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
+            </Link>
+            <Link
+              href="/quiz"
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             >
-              Depoimentos
-            </a>
-            <a
-              href="#precos"
-              className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
+              Quiz
+            </Link>
+            <Link
+              href="/#method"
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            >
+              O Método
+            </Link>
+            <Link
+              href="/#pricing"
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             >
               Planos
-            </a>
+            </Link>
+            <Link
+              href="/blog"
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            >
+              Blog
+            </Link>
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
@@ -99,10 +137,10 @@ export default function LandingPage() {
             ) : (
               <>
                 <Button variant="ghost" onClick={() => router.push("/auth")}>
-                  Entrar
+                  Login
                 </Button>
                 <Button onClick={() => router.push("/auth")}>
-                  Começar Grátis
+                  Começar Agora
                 </Button>
               </>
             )}
@@ -110,7 +148,7 @@ export default function LandingPage() {
 
           {/* Mobile Menu Toggle */}
           <button
-            className="md:hidden p-2 text-slate-600"
+            className="md:hidden p-2 text-muted-foreground"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? (
@@ -123,36 +161,50 @@ export default function LandingPage() {
 
         {/* Mobile Nav Dropdown */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-100 bg-white px-4 py-4 shadow-lg">
+          <div className="md:hidden border-t border-border bg-background px-4 py-4 shadow-lg">
             <div className="flex flex-col space-y-4">
-              <a
-                href="#metodo"
-                className="text-base font-medium text-slate-600"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                O Método
-              </a>
-              <a
-                href="#funcionalidades"
-                className="text-base font-medium text-slate-600"
+              <Link
+                href="/#features"
+                className="text-base font-medium text-muted-foreground"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Funcionalidades
-              </a>
-              <a
-                href="#precos"
-                className="text-base font-medium text-slate-600"
+              </Link>
+              <Link
+                href="/quiz"
+                className="text-base font-medium text-muted-foreground"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Quiz
+              </Link>
+              <Link
+                href="/#method"
+                className="text-base font-medium text-muted-foreground"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                O Método
+              </Link>
+              <Link
+                href="/#pricing"
+                className="text-base font-medium text-muted-foreground"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Planos
-              </a>
+              </Link>
+              <Link
+                href="/blog"
+                className="text-base font-medium text-muted-foreground"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Blog
+              </Link>
               <div className="pt-2 flex flex-col gap-2">
                 <Button
                   variant="outline"
                   onClick={() => router.push("/auth")}
                   className="w-full"
                 >
-                  Entrar
+                  Login
                 </Button>
                 <Button onClick={handleGetStarted} className="w-full">
                   Começar Agora
@@ -167,479 +219,388 @@ export default function LandingPage() {
         {/* --- HERO SECTION --- */}
         <section className="relative overflow-hidden pt-16 pb-24 lg:pt-32 lg:pb-40">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
-            <div className="absolute top-20 right-0 w-[500px] h-[500px] bg-blue-100/50 rounded-full blur-3xl -z-10" />
-            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-100/50 rounded-full blur-3xl -z-10" />
+            <div className="absolute top-20 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-3xl -z-10 opacity-50 dark:opacity-20" />
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-500/20 rounded-full blur-3xl -z-10 opacity-50 dark:opacity-20" />
           </div>
 
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center lg:text-left lg:flex lg:items-center lg:gap-16">
             {/* Texto Hero */}
-            <div className="lg:w-1/2">
+            <div className="lg:w-1/2 animate-in slide-in-from-bottom-10 fade-in duration-700">
               <Badge
                 variant="secondary"
-                className="mb-6 px-4 py-1.5 text-sm font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-100"
+                className="mb-6 px-4 py-1.5 text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 border-primary/20"
               >
-                <Sparkles className="w-3.5 h-3.5 mr-2 inline-block text-blue-600" />
-                Novo: Leitura de notas fiscais com IA
+                <Sparkles className="w-3.5 h-3.5 mr-2 inline-block" />
+                Finanças Inteligentes com IA
               </Badge>
-              <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl mb-6">
-                O fim das brigas por dinheiro e das{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                  planilhas chatas.
-                </span>
+              <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl mb-6">
+                O fim das planilhas que vocês{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-chart-2">
+                  sempre esquecem
+                </span>{" "}
+                de preencher.
               </h1>
-              <p className="text-lg text-slate-600 mb-8 leading-relaxed">
-                O primeiro sistema financeiro inteligente feito para a vida a
-                dois (e em família). Junte as finanças, automatize os registros
-                com IA e realize sonhos, sem perder a individualidade.
+              <p className="text-xl text-muted-foreground mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                Construam a vida financeira a dois sem o trabalho braçal. A IA
+                do Lemon organiza os gastos automaticamente para vocês focarem
+                no futuro.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Button
                   size="lg"
-                  className="h-14 px-8 text-lg shadow-lg shadow-blue-600/20"
+                  className="h-14 px-8 text-lg shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all group"
                   onClick={handleGetStarted}
                 >
-                  Começar Grátis Agora
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  Começar a construir juntos
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
                 <Button
                   size="lg"
                   variant="outline"
-                  className="h-14 px-8 text-lg"
+                  className="h-14 px-8 text-lg border-2"
+                  onClick={() => {
+                    document
+                      .getElementById("pain")
+                      ?.scrollIntoView({ behavior: "smooth" });
+                  }}
                 >
-                  Ver como funciona
+                  Entender o problema
                 </Button>
               </div>
-              <p className="mt-4 text-sm text-slate-500 flex items-center justify-center lg:justify-start gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" /> Sem cartão de
-                crédito necessário
-                <span className="mx-2">•</span>
-                <CheckCircle className="w-4 h-4 text-green-500" /> Cancele
-                quando quiser
-              </p>
+              <div className="mt-6 flex items-center justify-center lg:justify-start gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
+                    <CheckCircle2 className="w-3 h-3 text-primary" />
+                  </div>
+                  <span>Sem cartão necessário</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
+                    <CheckCircle2 className="w-3 h-3 text-primary" />
+                  </div>
+                  <span>Teste grátis</span>
+                </div>
+              </div>
             </div>
 
             {/* Visual Mockup Hero */}
-            <div className="mt-16 lg:mt-0 lg:w-1/2 relative perspective-1000">
+            <div className="mt-16 lg:mt-0 lg:w-1/2 relative perspective-1000 animate-in slide-in-from-right-10 fade-in duration-1000 delay-200">
               {/* Card Flutuante Principal */}
-              <div className="relative z-10 bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 transform transition-transform hover:scale-[1.02] duration-500">
-                <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
+              <div className="relative z-10 bg-card rounded-3xl shadow-2xl border border-border p-6 transform transition-transform hover:scale-[1.02] duration-500">
+                <div className="flex items-center justify-between mb-8">
                   <div>
-                    <p className="text-sm text-slate-500 font-medium">
-                      Saldo da Família
+                    <p className="text-sm text-muted-foreground font-medium">
+                      Meta da Casa Própria
                     </p>
-                    <h3 className="text-3xl font-bold text-slate-900">
-                      R$ 12.450,00
+                    <h3 className="text-4xl font-bold tracking-tight mt-1">
+                      R$ 150.000,00
                     </h3>
+                    <div className="w-full bg-secondary h-2 rounded-full mt-2 overflow-hidden">
+                      <div className="bg-primary h-full rounded-full w-[35%]"></div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      35% alcançado
+                    </p>
                   </div>
-                  <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <TrendingUp className="text-green-600 h-6 w-6" />
+                  <div className="h-12 w-12 bg-primary/10 rounded-2xl flex items-center justify-center">
+                    <TrendingUp className="text-primary h-6 w-6" />
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  {/* Notificação Simulada */}
-                  <div className="flex items-start gap-3 bg-blue-50 p-3 rounded-lg border border-blue-100">
-                    <div className="bg-blue-600 p-1.5 rounded-full mt-0.5">
-                      <Sparkles className="w-3 h-3 text-white" />
+                  {/* Simulação de Scan */}
+                  <div className="flex items-center gap-4 bg-secondary/50 p-4 rounded-2xl border border-border/50 backdrop-blur-sm">
+                    <div className="bg-primary/20 p-2 rounded-xl text-primary">
+                      <Scan className="w-6 h-6" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-blue-900">
-                        Automação Inteligente
+                      <p className="text-sm font-semibold">Lendo recibo...</p>
+                      <p className="text-xs text-muted-foreground">
+                        Identificando itens e valores
                       </p>
-                      <p className="text-xs text-blue-700 mt-0.5">
-                        Receita de R$ 5.000 detectada.
-                        <br />
-                        <span className="font-bold">R$ 1.000 (20%)</span> já foi
-                        separado para a "Viagem Disney ✈️".
-                      </p>
+                    </div>
+                    <div className="ml-auto">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
                     </div>
                   </div>
 
                   {/* Lista de Gastos Recentes */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
-                          <Users className="w-4 h-4" />
+                  <div className="space-y-3 pt-2">
+                    <div className="flex justify-between items-center p-3 hover:bg-muted/50 rounded-xl transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400">
+                          <Users className="w-5 h-5" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium">Jantar Fora</p>
-                          <p className="text-xs text-slate-500">
-                            Ontem • Ana pagou
+                          <p className="text-sm font-medium">
+                            Jantar de Comemoração
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Ontem • Lazer
                           </p>
                         </div>
                       </div>
-                      <span className="text-sm font-bold text-slate-900">
-                        -R$ 180,00
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center py-2">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
-                          <Zap className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">Internet Fibra</p>
-                          <p className="text-xs text-slate-500">
-                            Hoje • Recorrente
-                          </p>
-                        </div>
-                      </div>
-                      <span className="text-sm font-bold text-slate-900">
-                        -R$ 120,00
-                      </span>
+                      <span className="text-sm font-bold">-R$ 240,00</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Elementos Decorativos de Fundo */}
-              <div className="absolute -top-6 -right-6 w-full h-full bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl -z-10 opacity-10 transform rotate-3"></div>
-              <div className="absolute -bottom-8 -left-8 bg-white p-4 rounded-xl shadow-xl border border-slate-100 flex items-center gap-3 animate-bounce-slow">
-                <div className="bg-green-100 p-2 rounded-full">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500 font-medium uppercase">
-                    Meta Atingida
-                  </p>
-                  <p className="text-sm font-bold text-slate-900">
-                    Fundo de Emergência 🔒
-                  </p>
-                </div>
-              </div>
+              <div className="absolute -top-10 -right-10 w-full h-full bg-gradient-to-br from-primary to-green-400 rounded-3xl -z-10 opacity-20 blur-2xl transform rotate-6"></div>
             </div>
           </div>
         </section>
 
-        {/* --- PAIN POINTS (PROBLEMA) --- */}
-        <section className="py-20 bg-slate-50">
+        {/* --- PAIN SECTION ("O Susto") --- */}
+        <section
+          id="pain"
+          className="relative py-24 bg-muted/30 overflow-hidden"
+        >
+          {/* Wall Light Effect */}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-64 bg-primary/20 blur-[120px] rounded-t-full pointer-events-none" />
+
+          <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-6">
+              Aquele susto na fatura do cartão acontece porque vocês estão{" "}
+              <span className="text-destructive">voando às cegas</span>.
+            </h2>
+            <div className="text-xl text-muted-foreground leading-relaxed">
+              Vocês combinam de anotar, a rotina atropela, e a planilha fica
+              esquecida por semanas. O resultado? Vocês só descobrem que
+              gastaram demais quando a fatura chega. <br />
+              <br />
+              <strong className="text-foreground text-3xl md:text-4xl font-extrabold tracking-tight block mt-8">
+                O Lemon acende a luz.
+              </strong>
+            </div>
+          </div>
+        </section>
+
+        {/* --- HOW IT WORKS ("Como Funciona") --- */}
+        <section className="py-24 bg-background">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">
-                Gerenciar o dinheiro da casa não deveria ser um segundo emprego.
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
+                Três passos para a paz financeira
               </h2>
-              <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
-                Você sente que trabalha muito, mas o dinheiro desaparece? A falta
-                de um sistema claro gera ansiedade e conflitos desnecessários.
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Você não precisa ser um expert em finanças. O Lemon guia vocês.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <Card className="border-none shadow-md hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mb-4">
-                    <MessageCircle className="w-6 h-6 text-red-600" />
-                  </div>
-                  <CardTitle className="text-xl">"Quem pagou o quê?"</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-base">
-                    Chega de cobrar PIX do parceiro no final do mês ou esquecer
-                    quem pagou a conta de luz. Tenha tudo centralizado e
-                    transparente em um só lugar.
-                  </CardDescription>
-                </CardContent>
-              </Card>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
+              {/* Linha conectora (Desktop) */}
+              <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-transparent via-border to-transparent -z-10" />
 
-              <Card className="border-none shadow-md hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mb-4">
-                    <PieChart className="w-6 h-6 text-slate-600" />
-                  </div>
-                  <CardTitle className="text-xl">
-                    O "Buraco Negro" dos Gastos
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-base">
-                    O dinheiro entra e some? Saiba exatamente quanto está indo
-                    para iFood, Uber e "blusinhas", sem precisar somar notinha
-                    por notinha manualmente.
-                  </CardDescription>
-                </CardContent>
-              </Card>
-
-              <Card className="border-none shadow-md hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4">
-                    <ArrowRight className="w-6 h-6 text-orange-600" />
-                  </div>
-                  <CardTitle className="text-xl">
-                    Planilhas Abandonadas
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-base">
-                    Você começa empolgado e para na segunda semana porque dá
-                    muito trabalho. Nosso app faz o trabalho pesado de
-                    organização para você.
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* --- SOLUTION (MÉTODO 50/30/20) --- */}
-        <section id="metodo" className="py-20 lg:py-32">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="lg:flex lg:items-center lg:gap-16">
-              <div className="lg:w-1/2 mb-12 lg:mb-0 order-2 lg:order-1">
-                <div className="relative">
-                  {/* Gráfico Visual CSS */}
-                  <div className="aspect-square max-w-md mx-auto relative">
-                    <div className="absolute inset-0 rounded-full border-[40px] border-blue-100"></div>
-                    <div
-                      className="absolute inset-0 rounded-full border-[40px] border-transparent border-t-green-500 border-r-green-500 transform -rotate-45"
-                      style={{ clipPath: "polygon(50% 50%, 0 0, 100% 0)" }}
-                    ></div>
-                    {/* Representação simplificada visual */}
-                    <div className="absolute inset-0 flex items-center justify-center flex-col">
-                      <span className="text-4xl font-bold text-slate-800">
-                        O Método
-                      </span>
-                      <span className="text-sm text-slate-500 font-medium uppercase tracking-wider">
-                        Automático
-                      </span>
-                    </div>
-                    
-                    {/* Labels Flutuantes */}
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-6 bg-white shadow-lg px-4 py-2 rounded-full border border-slate-100">
-                      <span className="font-bold text-green-600">
-                        50% Necessidades
-                      </span>
-                    </div>
-                    <div className="absolute bottom-1/4 right-0 translate-x-6 bg-white shadow-lg px-4 py-2 rounded-full border border-slate-100">
-                      <span className="font-bold text-amber-500">
-                        30% Desejos
-                      </span>
-                    </div>
-                    <div className="absolute bottom-1/4 left-0 -translate-x-6 bg-white shadow-lg px-4 py-2 rounded-full border border-slate-100">
-                      <span className="font-bold text-blue-600">
-                        20% Futuro
-                      </span>
-                    </div>
-                  </div>
+              {/* Passo 1 */}
+              <div className="relative flex flex-col items-center text-center">
+                <div className="w-24 h-24 bg-background border-4 border-muted rounded-full flex items-center justify-center mb-6 shadow-sm z-10">
+                  <span className="text-3xl font-bold text-muted-foreground">
+                    1
+                  </span>
                 </div>
-              </div>
-
-              <div className="lg:w-1/2 order-1 lg:order-2">
-                <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl mb-6">
-                  Mais que um app, um <br />
-                  <span className="text-blue-600">método de prosperidade.</span>
-                </h2>
-                <p className="text-lg text-slate-600 mb-8">
-                  Não adianta apenas anotar. É preciso dar destino ao dinheiro.
-                  Nosso sistema já vem configurado com a regra de ouro das
-                  finanças, ajustando-se automaticamente à sua realidade.
-                </p>
-
-                <div className="space-y-6">
-                  <div className="flex gap-4">
-                    <div className="mt-1 h-8 w-8 flex-none rounded-full bg-green-100 flex items-center justify-center">
-                      <span className="font-bold text-green-700">50</span>
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-900">
-                        Necessidades Essenciais
-                      </h4>
-                      <p className="text-slate-600 text-sm">
-                        Aluguel, mercado, contas. O essencial para a casa rodar
-                        sem estresse.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="mt-1 h-8 w-8 flex-none rounded-full bg-amber-100 flex items-center justify-center">
-                      <span className="font-bold text-amber-700">30</span>
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-900">
-                        Desejos & Estilo de Vida
-                      </h4>
-                      <p className="text-slate-600 text-sm">
-                        Jantares, lazer, hobbies. Porque a vida é para ser
-                        vivida (com responsabilidade).
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="mt-1 h-8 w-8 flex-none rounded-full bg-blue-100 flex items-center justify-center">
-                      <span className="font-bold text-blue-700">20</span>
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-900">
-                        Futuro & Sonhos
-                      </h4>
-                      <p className="text-slate-600 text-sm">
-                        Investimentos, aposentadoria e aquela viagem dos sonhos.
-                        Pague-se primeiro.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* --- FEATURES (O UAU) --- */}
-        <section id="funcionalidades" className="py-20 bg-slate-900 text-white">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <Badge className="bg-blue-600 hover:bg-blue-700 border-none text-white mb-4">
-                Tecnologia de Ponta
-              </Badge>
-              <h2 className="text-3xl font-bold sm:text-4xl">
-                Funcionalidades que eliminam o trabalho chato.
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Feature 1 */}
-              <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700 hover:border-blue-500 transition-colors group">
-                <div className="w-12 h-12 bg-blue-900/50 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <Sparkles className="w-6 h-6 text-blue-400" />
-                </div>
-                <h3 className="text-xl font-bold mb-3">Adeus Digitação</h3>
-                <p className="text-slate-400 leading-relaxed">
-                  Tirou, tá salvo. Nossa Inteligência Artificial lê a foto dos
-                  seus recibos, extrai o valor, a data e categoriza
-                  automaticamente em segundos.
+                <h3 className="text-xl font-bold mb-3">Crie seu Espaço</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Convide seu parceiro(a). O Lemon cria um ambiente seguro para
+                  vocês unirem as visões.
                 </p>
               </div>
 
-              {/* Feature 2 */}
-              <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700 hover:border-purple-500 transition-colors group">
-                <div className="w-12 h-12 bg-purple-900/50 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <Users className="w-6 h-6 text-purple-400" />
+              {/* Passo 2 */}
+              <div className="relative flex flex-col items-center text-center">
+                <div className="w-24 h-24 bg-background border-4 border-primary rounded-full flex items-center justify-center mb-6 shadow-lg shadow-primary/20 z-10">
+                  <span className="text-3xl font-bold text-primary">2</span>
                 </div>
-                <h3 className="text-xl font-bold mb-3">Modo Multiplayer</h3>
-                <p className="text-slate-400 leading-relaxed">
-                  Crie seu Time. Convide quem você ama e gerencie o orçamento
-                  doméstico com permissões inteligentes. O que é seu, é seu. O
-                  que é nosso, é transparente.
+                <h3 className="text-xl font-bold mb-3">Defina o Orçamento</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Insira a renda do casal. Nossa IA sugere automaticamente a
+                  divisão ideal 50/30/20 para suas Necessidades, Desejos e
+                  Futuro.
                 </p>
               </div>
 
-              {/* Feature 3 */}
-              <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700 hover:border-green-500 transition-colors group">
-                <div className="w-12 h-12 bg-green-900/50 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <Shield className="w-6 h-6 text-green-400" />
+              {/* Passo 3 */}
+              <div className="relative flex flex-col items-center text-center">
+                <div className="w-24 h-24 bg-background border-4 border-muted rounded-full flex items-center justify-center mb-6 shadow-sm z-10">
+                  <span className="text-3xl font-bold text-muted-foreground">
+                    3
+                  </span>
                 </div>
-                <h3 className="text-xl font-bold mb-3">Controle Total</h3>
-                <p className="text-slate-400 leading-relaxed">
-                  Painéis visuais que mostram a saúde financeira em tempo real.
-                  Saiba se você pode gastar ou se é hora de segurar a onda,
-                  antes de o mês acabar.
+                <h3 className="text-xl font-bold mb-3">Viva (e registre)</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Esqueça a digitação. Gastou? Tire uma foto do recibo e o Lemon
+                  preenche automaticamente.
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* --- TESTIMONIALS (PROVA SOCIAL) --- */}
-        <section id="depoimentos" className="py-20 bg-blue-50">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center text-slate-900 mb-12">
-              Casais que pararam de brigar e começaram a realizar
+        {/* --- QUIZ CTA SECTION --- */}
+        <section className="py-24 bg-primary/5 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+            <div className="absolute top-1/2 left-10 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2" />
+            <div className="absolute bottom-[-10%] right-[-5%] w-80 h-80 bg-purple-500/10 rounded-full blur-3xl" />
+          </div>
+
+          <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+            <Badge
+              variant="outline"
+              className="mb-6 border-primary/20 text-primary bg-primary/5"
+            >
+              <Sparkles className="w-3.5 h-3.5 mr-2" />+ Autoconhecimento
+            </Badge>
+
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-6">
+              Faça o teste de perfil gratuito!
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <Card className="bg-white border-none shadow-sm p-6">
-                <div className="flex gap-1 mb-4 text-amber-400">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <Sparkles key={i} className="w-4 h-4 fill-current" />
-                  ))}
+
+            <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
+              Descubra seu arquétipo financeiro e veja como sua personalidade
+              combina com a do seu amor.
+            </p>
+
+            <Button
+              size="lg"
+              className="h-14 px-10 text-lg shadow-lg shadow-primary/20 hover:scale-105 transition-transform"
+              onClick={() => router.push("/quiz")}
+            >
+              Fazer o Teste Gratuito
+            </Button>
+
+            <p className="mt-6 text-sm text-muted-foreground">
+              Leva 5 minutos • 100% Gratuito
+            </p>
+          </div>
+        </section>
+
+        {/* --- BENEFITS SECTION (Bento Grid) --- */}
+        <section id="features" className="py-24 lg:py-32">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-20">
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
+                Construído para o Casal Moderno
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Ferramentas que se adaptam à sua rotina, não o contrário.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Card IA - Grande */}
+              <Card className="md:col-span-2 bg-card border-border/50 hover:border-primary/50 transition-all hover:shadow-lg group overflow-hidden">
+                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <Scan className="w-32 h-32 text-primary" />
                 </div>
-                <p className="text-slate-600 italic mb-6">
-                  "Antes a gente brigava todo final de mês tentando entender
-                  quem gastou o quê. Agora a gente abre o app, vê que a meta de
-                  'Desejos' foi atingida e vai comemorar sem culpa. Mudou nosso
-                  casamento."
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600">
-                    MJ
+                <CardHeader>
+                  <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <Scan className="w-6 h-6 text-primary" />
                   </div>
-                  <div>
-                    <p className="font-bold text-slate-900">Mariana & João</p>
-                    <p className="text-xs text-slate-500">
-                      Usuários há 6 meses
-                    </p>
-                  </div>
-                </div>
+                  <CardTitle className="text-2xl">Zero Digitação</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-lg">
+                    Foto, enviou, tá salvo. Nossa IA lê cupons fiscais,
+                    identifica categorias e divide os valores automaticamente.
+                    Esqueça a digitação manual de cada cafezinho.
+                  </CardDescription>
+                </CardContent>
               </Card>
 
-              <Card className="bg-white border-none shadow-sm p-6">
-                <div className="flex gap-1 mb-4 text-amber-400">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <Sparkles key={i} className="w-4 h-4 fill-current" />
-                  ))}
-                </div>
-                <p className="text-slate-600 italic mb-6">
-                  "Eu odiava planilhas. O fato de poder tirar foto da nota
-                  fiscal e ele já saber que foi 'Mercado' é mágico. Conseguimos
-                  juntar para nossa viagem em tempo recorde."
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600">
-                    PC
+              {/* Card Visão Longo Prazo */}
+              <Card className="bg-card border-border/50 hover:border-primary/50 transition-all hover:shadow-lg group">
+                <CardHeader>
+                  <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <History className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                   </div>
-                  <div>
-                    <p className="font-bold text-slate-900">Pedro Costa</p>
-                    <p className="text-xs text-slate-500">Recém-casado</p>
+                  <CardTitle>Histórico Unificado</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-base">
+                    Vejam o patrimônio do casal crescendo mês a mês. Um feed
+                    único de todas as finanças da casa.
+                  </CardDescription>
+                </CardContent>
+              </Card>
+
+              {/* Card Método 50/30/20 */}
+              <Card className="bg-card border-border/50 hover:border-primary/50 transition-all hover:shadow-lg group">
+                <CardHeader>
+                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <Calculator className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                   </div>
+                  <CardTitle>Orçamento Automático</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-base">
+                    Aplicamos o método 50/30/20 automaticamente. Saibam
+                    exatamente quanto podem gastar sem culpa em lazer.
+                  </CardDescription>
+                </CardContent>
+              </Card>
+
+              {/* Card Analytics */}
+              <Card className="md:col-span-2 bg-card border-border/50 hover:border-primary/50 transition-all hover:shadow-lg group overflow-hidden">
+                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <PieChart className="w-32 h-32 text-primary" />
                 </div>
+                <CardHeader>
+                  <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <PieChart className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <CardTitle className="text-2xl">Clareza Total</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-lg">
+                    Gráficos que mostram a verdade. Entenda para onde está indo
+                    o dinheiro e ajuste a rota antes do mês acabar.
+                  </CardDescription>
+                </CardContent>
               </Card>
             </div>
           </div>
         </section>
 
         {/* --- PRICING --- */}
-        <section id="precos" className="py-20">
+        <section id="pricing" className="py-24 bg-muted/30">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-slate-900">
-                Invista no seu futuro por menos de uma pizza
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
+                Investimento no seu futuro
               </h2>
-              <p className="mt-4 text-slate-600">
-                Escolha o plano ideal para o seu momento de vida.
+              <p className="text-lg text-muted-foreground">
+                Menos que um jantar fora para organizar a vida financeira do ano
+                todo.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               {/* Plano Free */}
-              <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow relative">
+              <Card className="border-border shadow-sm hover:shadow-md transition-all">
                 <CardHeader>
-                  <CardTitle className="text-2xl">Essencial</CardTitle>
+                  <CardTitle className="text-2xl">Starter</CardTitle>
                   <CardDescription>
-                    Para quem está começando a se organizar.
+                    Para quem está começando a organizar.
                   </CardDescription>
                   <div className="mt-4">
-                    <span className="text-4xl font-bold text-slate-900">
-                      R$ 0
-                    </span>
-                    <span className="text-slate-500">/mês</span>
+                    <span className="text-4xl font-bold">R$ 0</span>
+                    <span className="text-muted-foreground">/mês</span>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-3 text-sm text-slate-600">
+                  <ul className="space-y-3 text-sm text-muted-foreground">
                     <li className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-blue-600" /> 1
+                      <CheckCircle2 className="w-4 h-4 text-primary" /> 1
                       Usuário
                     </li>
                     <li className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-blue-600" /> Método
-                      50/30/20 Básico
+                      <CheckCircle2 className="w-4 h-4 text-primary" />{" "}
+                      Lançamentos manuais
                     </li>
                     <li className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-blue-600" />{" "}
-                      Lançamentos manuais ilimitados
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-blue-600" /> 5
-                      Leituras com IA / mês
+                      <CheckCircle2 className="w-4 h-4 text-primary" /> 5 Scans
+                      com IA / mês
                     </li>
                   </ul>
                 </CardContent>
@@ -654,54 +615,49 @@ export default function LandingPage() {
                 </CardFooter>
               </Card>
 
-              {/* Plano Pro - Destaque */}
-              <Card className="border-blue-600 shadow-xl relative overflow-hidden bg-slate-900 text-white transform scale-105 z-10">
-                <div className="absolute top-0 right-0 bg-blue-600 text-xs font-bold px-3 py-1 rounded-bl-lg">
-                  MAIS POPULAR
+              {/* Plano Pro */}
+              <Card className="border-primary shadow-2xl relative overflow-hidden bg-card transform md:scale-105 z-10">
+                <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg">
+                  RECOMENDADO
                 </div>
                 <CardHeader>
                   <CardTitle className="text-2xl flex items-center gap-2">
-                    Casal Pro <Heart className="w-5 h-5 text-red-500 fill-current" />
+                    Pro
+                    <Sparkles className="w-5 h-5 text-primary fill-current" />
                   </CardTitle>
-                  <CardDescription className="text-slate-300">
-                    O poder total para construir riqueza juntos.
-                  </CardDescription>
+                  <CardDescription>Para o Casal Construtor.</CardDescription>
                   <div className="mt-4">
                     <span className="text-4xl font-bold">R$ 29,90</span>
-                    <span className="text-slate-400">/mês</span>
+                    <span className="text-muted-foreground">/mês</span>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-3 text-sm text-slate-300">
-                    <li className="flex items-center gap-2 text-white">
-                      <CheckCircle className="w-4 h-4 text-green-400" /> Membros
-                      Ilimitados (Convide seu amor)
+                  <ul className="space-y-3 text-sm text-muted-foreground">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary" /> Acesso
+                      para o Casal (2 contas)
                     </li>
-                    <li className="flex items-center gap-2 text-white">
-                      <CheckCircle className="w-4 h-4 text-green-400" /> Leitura
-                      com IA Ilimitada 📸
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary" /> Scans
+                      com IA Ilimitados
                     </li>
-                    <li className="flex items-center gap-2 text-white">
-                      <CheckCircle className="w-4 h-4 text-green-400" />{" "}
-                      Personalize as Regras (%)
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary" />{" "}
+                      Analytics Avançado
                     </li>
-                    <li className="flex items-center gap-2 text-white">
-                      <CheckCircle className="w-4 h-4 text-green-400" />{" "}
-                      Gráficos Avançados
-                    </li>
-                    <li className="flex items-center gap-2 text-white">
-                      <CheckCircle className="w-4 h-4 text-green-400" />{" "}
-                      Metas de Sonhos Compartilhados
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary" /> Metas
+                      Compartilhadas
                     </li>
                   </ul>
                 </CardContent>
                 <CardFooter>
                   <Button
                     size="lg"
-                    className="w-full bg-blue-600 hover:bg-blue-700 border-none text-white"
+                    className="w-full"
                     onClick={() => router.push("/auth")}
                   >
-                    Testar Premium Grátis
+                    Testar Pro Grátis
                   </Button>
                 </CardFooter>
               </Card>
@@ -710,42 +666,52 @@ export default function LandingPage() {
         </section>
 
         {/* --- CTA FINAL --- */}
-        <section className="py-20 bg-slate-50 border-t border-slate-200">
+        <section className="py-24 border-t border-border">
           <div className="mx-auto max-w-4xl text-center px-4">
-            <h2 className="text-3xl font-bold text-slate-900 mb-6">
-              Comece hoje a construir o futuro que vocês sonham.
+            <h2 className="text-3xl font-bold tracking-tight mb-6">
+              Comecem a construir hoje.
             </h2>
-            <p className="text-lg text-slate-600 mb-8">
-              Junte-se a milhares de famílias que trocaram o estresse financeiro
-              pela paz de espírito.
+            <p className="text-lg text-muted-foreground mb-10">
+              O futuro que vocês querem depende da organização que vocês têm
+              hoje.
             </p>
             <Button
               size="lg"
               className="h-14 px-12 text-lg shadow-xl"
               onClick={handleGetStarted}
             >
-              Criar Minha Conta Agora
+              Criar Conta Grátis
             </Button>
           </div>
         </section>
       </main>
 
       {/* --- FOOTER --- */}
-      <footer className="bg-white py-12 border-t border-slate-200">
+      <footer className="bg-background py-12 border-t border-border">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-6 w-6 text-blue-600" />
-            <span className="text-lg font-bold text-slate-900">
-              FinançasEmPar
-            </span>
+            <Logo className="h-6 w-6" />
+            <span className="text-lg font-bold">Lemon</span>
           </div>
-          <div className="text-sm text-slate-500">
-            © 2025 FinançasEmPar. Feito com <span className="text-red-500">❤️</span> para famílias que sonham grande.
+          <div className="text-sm text-muted-foreground">
+            © 2025 Lemon Financial. Todos os direitos reservados.
           </div>
-          <div className="flex gap-6 text-sm font-medium text-slate-600">
-            <a href="#" className="hover:text-blue-600">Termos</a>
-            <a href="#" className="hover:text-blue-600">Privacidade</a>
-            <a href="#" className="hover:text-blue-600">Contato</a>
+          <div className="flex gap-6 text-sm font-medium text-muted-foreground">
+            <Link
+              href="/terms"
+              className="hover:text-primary transition-colors"
+            >
+              Termos
+            </Link>
+            <Link
+              href="/privacy"
+              className="hover:text-primary transition-colors"
+            >
+              Privacidade
+            </Link>
+            <a href="#" className="hover:text-primary transition-colors">
+              Contato
+            </a>
           </div>
         </div>
       </footer>

@@ -40,3 +40,15 @@ export type DeleteInvestmentDTO = {
   teamId: string;
   userId: string;
 };
+
+export type SimulateInvestmentGrowthDTO = {
+  investments: InvestmentDetailsDTO[];
+  years: number;
+};
+
+export type InvestmentGrowthProjectionDTO = {
+  month: string;
+  total: number;
+  invested: number;
+  yield: number;
+};

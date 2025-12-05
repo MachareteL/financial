@@ -44,13 +44,21 @@ export function DailyFlowChart({ data }: DailyFlowChartProps) {
               >
                 <defs>
                   <linearGradient id="colorSpent" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    <stop
+                      offset="5%"
+                      stopColor="hsl(var(--primary))"
+                      stopOpacity={0.3}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor="hsl(var(--primary))"
+                      stopOpacity={0}
+                    />
                   </linearGradient>
                 </defs>
                 <XAxis
                   dataKey="day"
-                  stroke="#94a3b8"
+                  stroke="hsl(var(--muted-foreground))"
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
@@ -67,7 +75,7 @@ export function DailyFlowChart({ data }: DailyFlowChartProps) {
                 <CartesianGrid
                   strokeDasharray="3 3"
                   vertical={false}
-                  stroke="#f1f5f9"
+                  stroke="hsl(var(--border))"
                 />
                 <Tooltip
                   contentStyle={{
@@ -92,11 +100,15 @@ export function DailyFlowChart({ data }: DailyFlowChartProps) {
                 <Area
                   type="monotone"
                   dataKey="spent"
-                  stroke="#3b82f6"
+                  stroke="hsl(var(--primary))"
                   strokeWidth={3}
                   fillOpacity={1}
                   fill="url(#colorSpent)"
-                  activeDot={{ r: 6, strokeWidth: 0, fill: "#2563eb" }}
+                  activeDot={{
+                    r: 6,
+                    strokeWidth: 0,
+                    fill: "hsl(var(--primary))",
+                  }}
                 />
               </AreaChart>
             </ResponsiveContainer>

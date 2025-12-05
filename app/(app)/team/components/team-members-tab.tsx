@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { UserPlus, Trash2, Loader2, Shield, Crown } from "lucide-react";
-import { useAuth } from "@/app/auth/auth-provider";
+import { useAuth } from "@/components/providers/auth-provider";
 import { useTeam } from "@/app/(app)/team/team-provider";
 import { usePermission } from "@/hooks/use-permission";
 import { notify } from "@/lib/notify-helper";
@@ -79,7 +79,7 @@ export function TeamMembersTab({
       setInviteRoleId("");
       setIsInviteOpen(false);
       await onUpdate();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "enviar o convite");
     } finally {
       setIsActionLoading(false);
@@ -97,7 +97,7 @@ export function TeamMembersTab({
       });
       notify.success("Cargo atualizado com sucesso!");
       await onUpdate();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "atualizar o cargo");
     }
   };
@@ -118,7 +118,7 @@ export function TeamMembersTab({
         description: "A lista de acesso foi atualizada.",
       });
       await onUpdate();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "remover o membro");
     } finally {
       setIsActionLoading(false);
@@ -129,7 +129,7 @@ export function TeamMembersTab({
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-foreground">
             Membros Ativos
           </h3>
           <p className="text-sm text-muted-foreground">
@@ -198,7 +198,7 @@ export function TeamMembersTab({
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {members.map((member) => {
           const memberIsOwner = isProtectedRole(member.teamRole?.name);
           const isMe = member.id === session?.user?.id;
@@ -207,37 +207,42 @@ export function TeamMembersTab({
             <Card
               key={member.id}
               className={`overflow-hidden transition-all hover:shadow-md border-muted ${
-                memberIsOwner ? "bg-amber-50/50 border-amber-100" : "bg-card"
+                memberIsOwner
+                  ? "bg-gradient-to-br from-secondary/20 to-secondary/5 border-secondary/20"
+                  : "bg-card hover:border-primary/20"
               }`}
             >
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 overflow-hidden">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-sm ${
+                      className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-sm shadow-sm ${
                         memberIsOwner
-                          ? "bg-amber-100 text-amber-700"
+                          ? "bg-secondary text-secondary-foreground"
                           : "bg-primary/10 text-primary"
                       }`}
                     >
                       {member.name.substring(0, 2).toUpperCase()}
                     </div>
-                    <div className="overflow-hidden">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium truncate text-sm">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-medium truncate text-sm text-foreground">
                           {member.name}
                         </p>
                         {memberIsOwner && (
-                          <Crown className="w-3 h-3 text-amber-500 fill-amber-500" />
+                          <Crown className="w-3.5 h-3.5 text-secondary-foreground fill-secondary-foreground flex-shrink-0" />
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground truncate max-w-[140px]">
+                      <p className="text-xs text-muted-foreground truncate">
                         {member.email}
                       </p>
                     </div>
                   </div>
                   {isMe && (
-                    <Badge variant="secondary" className="text-[10px]">
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] flex-shrink-0"
+                    >
                       Você
                     </Badge>
                   )}
@@ -245,12 +250,12 @@ export function TeamMembersTab({
 
                 <div className="space-y-3 pt-3 border-t">
                   <div className="flex flex-col gap-1.5">
-                    <Label className="text-xs text-muted-foreground">
+                    <Label className="text-xs text-muted-foreground font-normal">
                       Cargo
                     </Label>
 
                     {memberIsOwner ? (
-                      <div className="flex items-center gap-2 text-xs font-medium text-amber-700 bg-amber-100/50 px-2.5 py-1.5 rounded-md border border-amber-200/50">
+                      <div className="flex items-center gap-2 text-xs font-medium text-secondary-foreground bg-secondary/50 px-2.5 py-1.5 rounded-md border border-secondary/50 w-full">
                         <Shield className="w-3 h-3" />
                         {member.teamRole?.name}
                       </div>
@@ -261,7 +266,7 @@ export function TeamMembersTab({
                           handleUpdateMemberRole(member.id, val)
                         }
                       >
-                        <SelectTrigger className="h-8 text-xs">
+                        <SelectTrigger className="h-8 text-xs w-full">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -276,7 +281,7 @@ export function TeamMembersTab({
                         </SelectContent>
                       </Select>
                     ) : (
-                      <div className="text-xs font-medium bg-muted/50 px-2.5 py-1.5 rounded-md border">
+                      <div className="text-xs font-medium bg-muted/50 px-2.5 py-1.5 rounded-md border w-full">
                         {member.teamRole ? member.teamRole.name : "Sem cargo"}
                       </div>
                     )}
@@ -286,7 +291,7 @@ export function TeamMembersTab({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 h-8 text-xs"
+                      className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 h-8 text-xs"
                       onClick={() => handleRemoveMember(member.id)}
                     >
                       <Trash2 className="w-3 h-3 mr-2" /> Remover

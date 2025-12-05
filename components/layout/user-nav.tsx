@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/app/auth/auth-provider";
+import { useAuth } from "@/components/providers/auth-provider";
 import { signOutUseCase } from "@/infrastructure/dependency-injection";
 import { useRouter } from "next/navigation";
 import { LogOut, User, Settings } from "lucide-react";

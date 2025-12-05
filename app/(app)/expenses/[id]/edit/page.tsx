@@ -13,13 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
@@ -28,27 +22,24 @@ import {
   CreditCard,
   AlertTriangle,
   Loader2,
-  Trash2,
   Save,
   Upload,
   X,
 } from "lucide-react";
-import { useAuth } from "@/app/auth/auth-provider";
+import { LoadingState } from "@/components/lemon/loading-state";
+import Image from "next/image";
+import { useAuth } from "@/components/providers/auth-provider";
 import { usePermission } from "@/hooks/use-permission";
 
-import {
-  getCategoriesUseCase,
-  getExpenseByIdUseCase,
-  updateExpenseUseCase,
-  deleteExpenseUseCase,
-} from "@/infrastructure/dependency-injection";
-import type { CategoryDetailsDTO } from "@/domain/dto/category.types.d.ts";
-import type {
-  ExpenseDetailsDTO,
-  UpdateExpenseDTO,
-} from "@/domain/dto/expense.types.d.ts";
+import { updateExpenseUseCase } from "@/infrastructure/dependency-injection";
+import type { UpdateExpenseDTO } from "@/domain/dto/expense.types.d.ts";
 import { useTeam } from "@/app/(app)/team/team-provider";
 import { notify } from "@/lib/notify-helper";
+import { compressImage } from "@/lib/compression";
+
+// Hooks
+import { useCategories } from "@/hooks/use-categories";
+import { useExpense } from "@/hooks/use-expenses";
 
 export default function EditExpensePage() {
   const { session, loading: authLoading } = useAuth();
@@ -62,13 +53,15 @@ export default function EditExpensePage() {
   const params = useParams();
   const expenseId = params.id as string;
 
-  // Estados
-  const [categories, setCategories] = useState<CategoryDetailsDTO[]>([]);
-  const [expense, setExpense] = useState<ExpenseDetailsDTO | null>(null);
+  // React Query Hooks
+  const { data: categories = [], isLoading: isLoadingCategories } =
+    useCategories(teamId);
+  const { data: expense, isLoading: isLoadingExpense } = useExpense({
+    expenseId,
+    teamId,
+  });
 
-  const [isLoadingData, setIsLoadingData] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Formulário
   const [description, setDescription] = useState("");
@@ -83,6 +76,18 @@ export default function EditExpensePage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
+  // Inicializa o formulário quando os dados da despesa são carregados
+  useEffect(() => {
+    if (expense) {
+      setDescription(expense.description || "");
+      setAmount(expense.amount.toString());
+      // Tenta pegar o ID direto ou do objeto aninhado
+      setCategoryId(expense.categoryId || expense.category?.id || "");
+      setDate(expense.date);
+      setExistingReceiptUrl(expense.receiptUrl || null);
+    }
+  }, [expense]);
+
   useEffect(() => {
     if (authLoading) return;
     if (!session || !userId) {
@@ -93,52 +98,29 @@ export default function EditExpensePage() {
       router.push("/onboarding");
       return;
     }
-
-    const loadData = async () => {
-      setIsLoadingData(true);
-      try {
-        const [categoriesData, expenseData] = await Promise.all([
-          getCategoriesUseCase.execute(teamId),
-          getExpenseByIdUseCase.execute({ expenseId, teamId }),
-        ]);
-
-        setCategories(categoriesData);
-
-        if (expenseData) {
-          setExpense(expenseData);
-          setDescription(expenseData.description || "");
-          setAmount(expenseData.amount.toString());
-          setCategoryId(expenseData.categoryId);
-          setDate(expenseData.date);
-          setExistingReceiptUrl(expenseData.receiptUrl || null); // Salva a URL original
-        } else {
-          notify.error(
-            new Error("Gasto não encontrado"),
-            "carregar os dados do gasto"
-          );
-          router.push("/expenses");
-        }
-      } catch (error: any) {
-        notify.error(error, "carregar os dados do gasto");
-        router.push("/expenses");
-      } finally {
-        setIsLoadingData(false);
-      }
-    };
-    loadData();
-  }, [teamId, expenseId]);
+  }, [teamId, authLoading, session, userId, router]);
 
   // --- Lógica de Upload ---
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
         notify.error(new Error("Arquivo muito grande"), "selecionar o arquivo");
         return;
       }
-      setSelectedFile(file);
+
+      // Preview imediato
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
+
+      // Comprime a imagem
+      try {
+        const compressedFile = await compressImage(file);
+        setSelectedFile(compressedFile);
+      } catch (error) {
+        console.error("Erro na compressão:", error);
+        setSelectedFile(file);
+      }
     }
   };
 
@@ -163,7 +145,15 @@ export default function EditExpensePage() {
     e.preventDefault();
     if (!teamId || !expense) return;
 
-    setIsSaving(true);
+    if (!categoryId) {
+      notify.error(
+        "Categoria obrigatória",
+        "Por favor, selecione uma categoria para a despesa."
+      );
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
       const dto: UpdateExpenseDTO = {
@@ -184,59 +174,36 @@ export default function EditExpensePage() {
 
       await updateExpenseUseCase.execute(dto);
 
-      notify.success("Gasto atualizado!", {
+      notify.success("Despesa atualizada!", {
         description: "As alterações foram salvas com sucesso.",
       });
       router.push("/expenses");
-    } catch (error: any) {
-      notify.error(error, "salvar o gasto");
+    } catch (error: unknown) {
+      notify.error(error, "salvar a despesa");
     } finally {
-      setIsSaving(false);
+      setIsLoading(false);
     }
   };
 
-  const handleDelete = async () => {
-    if (!teamId || !expense) return;
-    const confirmMessage = expense.isInstallment
-      ? "Este é um gasto parcelado. Deseja excluir APENAS esta parcela?"
-      : "Tem certeza que deseja excluir este gasto?";
+  if (authLoading || isLoadingCategories || isLoadingExpense) {
+    return <LoadingState message="Carregando dados da despesa..." />;
+  }
 
-    if (!confirm(confirmMessage)) return;
-
-    setIsDeleting(true);
-    try {
-      await deleteExpenseUseCase.execute({
-        expenseId: expense.id,
-        teamId,
-        userId: userId!,
-      });
-      notify.success("Gasto excluído!", {
-        description: "O gasto foi removido com sucesso.",
-      });
-      router.push("/expenses");
-    } catch (error: any) {
-      notify.error(error, "excluir o gasto");
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  if (authLoading || isLoadingData) {
+  if (!expense) {
+    // Se não está carregando e não tem despesa, provavelmente deu erro ou não existe
+    // Opcional: Redirecionar ou mostrar erro
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="animate-spin h-8 w-8 text-gray-900 mx-auto" />
+        <p>Despesa não encontrada.</p>
       </div>
     );
   }
-
-  if (!expense) return null;
-  const isReadOnly = false;
 
   // Determina qual imagem mostrar (Preview do novo upload OU Imagem existente)
   const displayImageUrl = previewUrl || existingReceiptUrl;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-background p-4">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
@@ -244,8 +211,12 @@ export default function EditExpensePage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Editar Gasto</h1>
-            <p className="text-gray-600">Alterar detalhes do lançamento</p>
+            <h1 className="text-2xl font-bold text-foreground">
+              Editar Despesa
+            </h1>
+            <p className="text-muted-foreground">
+              Alterar detalhes do lançamento
+            </p>
           </div>
         </div>
 
@@ -254,7 +225,7 @@ export default function EditExpensePage() {
           {expense.isRecurring && (
             <Badge
               variant="secondary"
-              className="flex items-center gap-1 bg-blue-100 text-blue-800"
+              className="flex items-center gap-1 bg-secondary text-secondary-foreground"
             >
               <Repeat className="h-3 w-3" />
               Recorrente ({expense.recurrenceType})
@@ -263,7 +234,7 @@ export default function EditExpensePage() {
           {expense.isInstallment && (
             <Badge
               variant="secondary"
-              className="flex items-center gap-1 bg-purple-100 text-purple-800"
+              className="flex items-center gap-1 bg-warning/10 text-warning"
             >
               <CreditCard className="h-3 w-3" />
               Parcela {expense.installmentNumber}/{expense.totalInstallments}
@@ -273,15 +244,15 @@ export default function EditExpensePage() {
 
         {/* Aviso para Parcelas */}
         {expense.isInstallment && (
-          <Card className="border-orange-200 bg-orange-50">
+          <Card className="border-warning/20 bg-warning/5">
             <CardContent className="pt-4 pb-4">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5" />
+                <AlertTriangle className="h-5 w-5 text-warning mt-0.5" />
                 <div>
-                  <p className="font-medium text-orange-800">
-                    Atenção: Gasto Parcelado
+                  <p className="font-medium text-warning">
+                    Atenção: Despesa Parcelada
                   </p>
-                  <p className="text-sm text-orange-700">
+                  <p className="text-sm text-warning/90">
                     As alterações feitas aqui afetarão{" "}
                     <strong>apenas esta parcela</strong>.
                   </p>
@@ -296,7 +267,7 @@ export default function EditExpensePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Edit className="h-5 w-5" />
-              Dados do Gasto
+              Dados da Despesa
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -308,7 +279,7 @@ export default function EditExpensePage() {
                     id="description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    disabled={isSaving}
+                    disabled={isLoading}
                     required
                   />
                 </div>
@@ -322,7 +293,7 @@ export default function EditExpensePage() {
                       step="0.01"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
-                      disabled={isSaving}
+                      disabled={isLoading}
                       required
                     />
                   </div>
@@ -334,7 +305,7 @@ export default function EditExpensePage() {
                       type="date"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
-                      disabled={isSaving}
+                      disabled={isLoading}
                       required
                     />
                   </div>
@@ -345,7 +316,7 @@ export default function EditExpensePage() {
                   <Select
                     value={categoryId}
                     onValueChange={setCategoryId}
-                    disabled={isSaving}
+                    disabled={isLoading}
                     required
                   >
                     <SelectTrigger>
@@ -366,15 +337,30 @@ export default function EditExpensePage() {
               {/* Seção de Recibo (Upload/Visualização) */}
               <div className="space-y-2 border-t pt-6">
                 <Label>Nota Fiscal / Recibo</Label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50">
+                <div className="border-2 border-dashed border-input rounded-lg p-6 bg-muted/10">
                   {displayImageUrl ? (
                     <div className="space-y-4">
                       <div className="relative group">
-                        <img
-                          src={displayImageUrl}
-                          alt="Preview"
-                          className="max-w-full h-48 object-contain mx-auto rounded shadow-sm bg-white"
-                        />
+                        {displayImageUrl.startsWith("blob:") ? (
+                          <>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={displayImageUrl}
+                              alt="Preview"
+                              className="max-w-full h-48 object-contain mx-auto rounded shadow-sm bg-white"
+                            />
+                          </>
+                        ) : (
+                          <div className="relative w-full h-48">
+                            <Image
+                              src={displayImageUrl}
+                              alt="Preview"
+                              fill
+                              className="object-contain mx-auto rounded shadow-sm bg-white"
+                              sizes="(max-width: 768px) 100vw, 400px"
+                            />
+                          </div>
+                        )}
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded flex items-start justify-end p-2">
                           <Button
                             type="button"
@@ -388,7 +374,7 @@ export default function EditExpensePage() {
                           </Button>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-600 text-center truncate">
+                      <p className="text-sm text-muted-foreground text-center truncate">
                         {selectedFile
                           ? `Novo arquivo: ${selectedFile.name}`
                           : "Recibo atual"}
@@ -396,11 +382,11 @@ export default function EditExpensePage() {
                     </div>
                   ) : (
                     <div className="text-center">
-                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                      <Upload className="mx-auto h-12 w-12 text-muted-foreground/50" />
                       <div className="mt-4">
                         <label
                           htmlFor="receipt"
-                          className="cursor-pointer font-medium text-blue-600 hover:text-blue-500"
+                          className="cursor-pointer font-medium text-primary hover:text-primary/80"
                         >
                           Clique para fazer upload (ou substituir)
                           <input
@@ -412,7 +398,7 @@ export default function EditExpensePage() {
                             onChange={handleFileSelect}
                           />
                         </label>
-                        <p className="mt-1 block text-sm text-gray-500">
+                        <p className="mt-1 block text-sm text-muted-foreground">
                           PNG, JPG, PDF (Max 10MB)
                         </p>
                       </div>
@@ -428,43 +414,21 @@ export default function EditExpensePage() {
                   variant="outline"
                   onClick={() => router.back()}
                   className="flex-1"
-                  disabled={isSaving || isDeleting}
+                  disabled={isLoading}
                 >
                   Cancelar
                 </Button>
 
                 {can("MANAGE_EXPENSES") && (
-                  <>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      onClick={handleDelete}
-                      disabled={isSaving || isDeleting}
-                      className="flex-1"
-                    >
-                      {isDeleting ? (
-                        <Loader2 className="animate-spin h-4 w-4" />
-                      ) : (
-                        <>
-                          <Trash2 className="w-4 h-4 mr-2" /> Excluir
-                        </>
-                      )}
-                    </Button>
-
-                    <Button
-                      type="submit"
-                      disabled={isSaving || isDeleting}
-                      className="flex-1"
-                    >
-                      {isSaving ? (
-                        <Loader2 className="animate-spin h-4 w-4" />
-                      ) : (
-                        <>
-                          <Save className="w-4 h-4 mr-2" /> Salvar
-                        </>
-                      )}
-                    </Button>
-                  </>
+                  <Button type="submit" disabled={isLoading} className="flex-1">
+                    {isLoading ? (
+                      <Loader2 className="animate-spin h-4 w-4" />
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" /> Salvar
+                      </>
+                    )}
+                  </Button>
                 )}
               </div>
             </form>

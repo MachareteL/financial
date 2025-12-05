@@ -12,7 +12,6 @@ import {
   TrendingDown,
   Info,
   ArrowUpRight,
-  ArrowDownRight,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { DashboardDataDTO } from "@/domain/dto/dashboard.types.d.ts";
@@ -37,7 +36,7 @@ export function SummaryCards({ data, isLoading }: SummaryCardsProps) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-pulse">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-40 bg-slate-100 rounded-2xl" />
+          <div key={i} className="h-40 bg-muted rounded-2xl" />
         ))}
       </div>
     );
@@ -46,14 +45,14 @@ export function SummaryCards({ data, isLoading }: SummaryCardsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {/* BALANCE CARD */}
-      <Card className="border-none shadow-lg bg-gradient-to-br from-indigo-600 via-blue-600 to-blue-500 text-white relative overflow-hidden group">
+      <Card className="border-none shadow-lg bg-gradient-to-br from-primary via-primary/80 to-chart-2 text-primary-foreground relative overflow-hidden group">
         <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-700" />
-        <div className="absolute bottom-0 left-0 -mb-8 -ml-8 w-24 h-24 bg-indigo-500/30 rounded-full blur-xl" />
+        <div className="absolute bottom-0 left-0 -mb-8 -ml-8 w-24 h-24 bg-primary/30 rounded-full blur-xl" />
 
         <CardContent className="p-6 relative z-10 flex flex-col justify-between h-full">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-blue-100 text-xs font-medium uppercase tracking-wider mb-1">
+              <p className="text-primary-foreground/80 text-xs font-medium uppercase tracking-wider mb-1">
                 Saldo Atual
               </p>
               <h2 className="text-3xl font-bold tracking-tight">
@@ -61,48 +60,50 @@ export function SummaryCards({ data, isLoading }: SummaryCardsProps) {
               </h2>
             </div>
             <div className="bg-white/20 p-2.5 rounded-xl backdrop-blur-md shadow-sm">
-              <Wallet className="w-5 h-5 text-white" />
+              <Wallet className="w-5 h-5 text-primary-foreground" />
             </div>
           </div>
 
           <div className="mt-6">
             {data.totalIncome > 0 ? (
               <div className="space-y-2">
-                <div className="flex justify-between text-xs text-blue-100/80">
+                <div className="flex justify-between text-xs text-primary-foreground/80">
                   <span>Disponível</span>
-                  <span className="font-bold text-white">
+                  <span className="font-bold text-primary-foreground">
                     {((data.balance / data.totalIncome) * 100).toFixed(0)}%
                   </span>
                 </div>
                 <Progress
                   value={(data.balance / data.totalIncome) * 100}
-                  className="h-1.5 bg-blue-900/30"
-                  indicatorClassName="bg-emerald-400"
+                  className="h-1.5 bg-primary-foreground/20"
+                  indicatorClassName="bg-success"
                 />
               </div>
             ) : (
               <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm w-fit">
-                <span className="text-xs font-medium">Sem orçamento</span>
+                <span className="text-xs font-medium">
+                  Orçamento não definido
+                </span>
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="hover:bg-white/20 p-1 rounded-full transition-colors">
-                      <Info className="w-3.5 h-3.5 text-blue-200 hover:text-white" />
+                      <Info className="w-3.5 h-3.5 text-primary-foreground/70 hover:text-primary-foreground" />
                     </button>
                   </PopoverTrigger>
                   <PopoverContent
                     className="w-72 p-4 border-none shadow-xl"
                     align="start"
                   >
-                    <h4 className="font-semibold text-sm mb-2 text-slate-800">
+                    <h4 className="font-semibold text-sm mb-2 text-foreground">
                       Defina sua Receita
                     </h4>
-                    <p className="text-xs text-slate-500 mb-3 leading-relaxed">
+                    <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
                       Para calcular seu saldo e metas corretamente, defina o
                       orçamento deste mês.
                     </p>
                     <Button
                       size="sm"
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                       onClick={() => router.push("/budget")}
                     >
                       Ir para Orçamento
@@ -116,23 +117,23 @@ export function SummaryCards({ data, isLoading }: SummaryCardsProps) {
       </Card>
 
       {/* INCOME CARD */}
-      <Card className="border-slate-100 shadow-sm bg-white hover:shadow-md transition-shadow duration-300">
+      <Card className="border-border shadow-sm bg-card hover:shadow-md transition-shadow duration-300">
         <CardContent className="p-6 flex flex-col justify-between h-full">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">
+              <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider mb-1">
                 Entradas
               </p>
-              <h2 className="text-2xl font-bold text-slate-900">
+              <h2 className="text-2xl font-bold text-foreground">
                 {formatCurrency(data.totalIncome)}
               </h2>
             </div>
-            <div className="bg-emerald-50 p-2.5 rounded-xl">
-              <TrendingUp className="w-5 h-5 text-emerald-600" />
+            <div className="bg-success/10 p-2.5 rounded-xl">
+              <TrendingUp className="w-5 h-5 text-success" />
             </div>
           </div>
 
-          <div className="mt-4 flex items-center gap-2 text-xs text-emerald-600 font-medium bg-emerald-50/50 px-2 py-1 rounded-md w-fit">
+          <div className="mt-4 flex items-center gap-2 text-xs text-success font-medium bg-success/10 px-2 py-1 rounded-md w-fit">
             <ArrowUpRight className="w-3 h-3" />
             <span>Receitas do mês</span>
           </div>
@@ -140,36 +141,36 @@ export function SummaryCards({ data, isLoading }: SummaryCardsProps) {
       </Card>
 
       {/* EXPENSES CARD */}
-      <Card className="border-slate-100 shadow-sm bg-white hover:shadow-md transition-shadow duration-300">
+      <Card className="border-border shadow-sm bg-card hover:shadow-md transition-shadow duration-300">
         <CardContent className="p-6 flex flex-col justify-between h-full">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">
+              <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider mb-1">
                 Saídas
               </p>
-              <h2 className="text-2xl font-bold text-slate-900">
+              <h2 className="text-2xl font-bold text-foreground">
                 {formatCurrency(data.totalSpent)}
               </h2>
             </div>
-            <div className="bg-rose-50 p-2.5 rounded-xl">
-              <TrendingDown className="w-5 h-5 text-rose-600" />
+            <div className="bg-rose-50 dark:bg-rose-900/20 p-2.5 rounded-xl">
+              <TrendingDown className="w-5 h-5 text-rose-600 dark:text-rose-400" />
             </div>
           </div>
 
           <div className="mt-4 space-y-2">
-            <div className="flex justify-between text-xs text-slate-500">
+            <div className="flex justify-between text-xs text-muted-foreground">
               <span>Comprometido</span>
-              <span className="font-bold text-slate-700">
+              <span className="font-bold text-foreground">
                 {getPercentage(data.totalSpent, data.totalIncome).toFixed(0)}%
               </span>
             </div>
             <Progress
               value={getPercentage(data.totalSpent, data.totalIncome)}
-              className="h-1.5 bg-slate-100"
+              className="h-1.5 bg-muted"
               indicatorClassName={
                 data.totalSpent > data.totalIncome
-                  ? "bg-rose-500"
-                  : "bg-blue-500"
+                  ? "bg-destructive"
+                  : "bg-primary"
               }
             />
           </div>

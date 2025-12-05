@@ -1,13 +1,14 @@
-import type { IStorageRepository } from '@/domain/interfaces/storage.repository.interface';
-import { getSupabaseClient } from '../database/supabase.client';
+import type { IStorageRepository } from "@/domain/interfaces/storage.repository.interface";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export class StorageRepository implements IStorageRepository {
+  constructor(private readonly supabase: SupabaseClient) {}
+
   async upload(file: File, path: string, bucket: string): Promise<string> {
-    const supabase = getSupabaseClient();
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await this.supabase.storage
       .from(bucket)
       .upload(path, file, {
-        cacheControl: '3600',
+        cacheControl: "3600",
         upsert: true,
       });
 
@@ -16,9 +17,7 @@ export class StorageRepository implements IStorageRepository {
       throw new Error(`Erro no upload: ${uploadError.message}`);
     }
 
-    const { data } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(path);
+    const { data } = this.supabase.storage.from(bucket).getPublicUrl(path);
 
     if (!data.publicUrl) {
       throw new Error("Não foi possível obter a URL pública do arquivo.");

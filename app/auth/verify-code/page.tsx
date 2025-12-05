@@ -45,7 +45,7 @@ function VerifyCodeContent() {
       });
 
       router.push("/account/update-password");
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error(error, "verificar código");
     } finally {
       setIsLoading(false);

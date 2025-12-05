@@ -3,8 +3,7 @@
 import type React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useAuth } from "./auth-provider";
+import { useAuth } from "@/components/providers/auth-provider";
 import { notify } from "@/lib/notify-helper";
 
 // Use Cases
@@ -29,7 +28,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Loader2, TrendingUp, CheckCircle2, Mail } from "lucide-react";
+import { Loader2, TrendingUp, CheckCircle2, Sparkles } from "lucide-react";
+import { LegalDisclaimer } from "@/app/auth/_components/legal-disclaimer";
+import { Logo } from "@/components/lemon/logo";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -57,7 +58,7 @@ export default function AuthPage() {
         description: "Login realizado com sucesso.",
       });
       router.push("/dashboard");
-    } catch (err: any) {
+    } catch (err: unknown) {
       notify.error(err, "fazer login");
     } finally {
       setIsLoading(false);
@@ -82,7 +83,7 @@ export default function AuthPage() {
       // Opcional: Auto-login após cadastro se a API permitir, ou pedir para logar
       // Por padrão do fluxo anterior, o usuário não é logado automaticamente se tiver verify email
       // Mas se o RLS permitir, ele pode logar. Vamos manter o usuário na tela para ele fazer login ou ver o aviso.
-    } catch (err: any) {
+    } catch (err: unknown) {
       notify.error(err, "criar conta");
     } finally {
       setIsLoading(false);
@@ -102,7 +103,7 @@ export default function AuthPage() {
       setIsResetOpen(false);
       router.push(`/auth/verify-code?email=${encodeURIComponent(resetEmail)}`);
       setResetEmail("");
-    } catch (err: any) {
+    } catch (err: unknown) {
       notify.error(err, "enviar email de recuperação");
     } finally {
       setIsLoading(false);
@@ -110,59 +111,81 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="w-full h-screen lg:grid lg:grid-cols-2 overflow-hidden bg-white">
+    <div className="w-full h-screen lg:grid lg:grid-cols-2 overflow-hidden bg-background">
       {/* --- ESQUERDA: BRANDING (Visível apenas em Desktop) --- */}
-      <div className="hidden lg:flex flex-col justify-between bg-slate-900 text-white p-10 relative overflow-hidden">
-        {/* Background Effects */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600 rounded-full blur-[120px] opacity-20 -translate-y-1/2 translate-x-1/2"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-600 rounded-full blur-[120px] opacity-20 translate-y-1/2 -translate-x-1/2"></div>
-
-        <div className="relative z-10 flex items-center gap-2 text-lg font-bold tracking-tight">
-          <div className="bg-blue-600 p-1.5 rounded-lg">
-            <TrendingUp className="w-5 h-5 text-white" />
-          </div>
-          FinançasEmPar
+      <div className="hidden lg:flex flex-col justify-between bg-zinc-900 text-white p-10 relative overflow-hidden">
+        <div className="absolute top-10 left-10 z-10 flex items-center gap-2 font-bold text-2xl">
+          <Logo className="w-8 h-8" />
+          Lemon
         </div>
 
-        <div className="relative z-10 max-w-md">
-          <blockquote className="space-y-4">
-            <p className="text-2xl font-medium leading-relaxed">
-              "Finalmente paramos de brigar por dinheiro. O método 50/30/20
-              automático organizou nossa vida financeira em semanas."
+        {/* Visual Background Effects */}
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] translate-y-1/4 -translate-x-1/4 pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[100px] -translate-y-1/4 translate-x-1/4 pointer-events-none"></div>
+
+        {/* Abstract Grid Pattern */}
+        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-10 pointer-events-none"></div>
+
+        <div className="relative z-10 mt-auto mb-20 max-w-lg">
+          <div className="space-y-6">
+            <h2 className="text-3xl font-bold leading-tight">
+              A causa <span className="text-primary">#1</span> de estresse entre
+              casais é financeira.
+            </h2>
+            <p className="text-lg text-zinc-300 leading-relaxed">
+              Assumam o controle da própria vida financeira. Insights realistas
+              e personalizados mostram exatamente onde cortar, sem sacrificar o
+              que importa.
             </p>
-            <footer className="text-sm text-slate-400">
-              Sofia & Marcos <br />
-              <span className="text-slate-500">Usuários desde 2024</span>
-            </footer>
-          </blockquote>
+
+            <div className="mt-8 bg-zinc-800/50 border border-zinc-700 p-6 rounded-xl backdrop-blur-sm relative overflow-hidden group hover:border-primary/50 transition-colors">
+              <div className="absolute -right-6 -bottom-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                <Sparkles className="w-32 h-32 text-primary" />
+              </div>
+
+              <div className="flex items-start gap-4 relative z-10">
+                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-lg mb-1">
+                    Lemon AI impulsiona seus resultados
+                  </h3>
+                  <p className="text-zinc-400 text-sm leading-relaxed">
+                    Teste gratuitamente e receba insights automáticos: descubra
+                    onde o dinheiro está vazando e como otimizar o orçamento do
+                    casal sem esforço.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="relative z-10 text-xs text-slate-500">
-          © 2025 FinançasEmPar Inc.
+        <div className="relative z-10 text-xs text-zinc-500">
+          © 2025 Lemon Financial Inc.
         </div>
       </div>
 
       {/* --- DIREITA: FORMULÁRIOS --- */}
-      <div className="flex items-center justify-center p-6 lg:p-10 bg-slate-50/50">
+      <div className="flex items-center justify-center p-6 lg:p-10 bg-background">
         <div className="mx-auto w-full max-w-[400px] space-y-8">
           <div className="flex flex-col space-y-2 text-center">
             <div className="lg:hidden flex justify-center mb-4">
-              <div className="bg-blue-600 p-2 rounded-xl">
-                <TrendingUp className="w-6 h-6 text-white" />
-              </div>
+              <Logo className="w-10 h-10" />
             </div>
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-              Acesse sua conta
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Bem-vindo ao Lemon
             </h1>
-            <p className="text-sm text-slate-500">
-              Gerencie as finanças da sua família em um só lugar.
+            <p className="text-sm text-muted-foreground">
+              Sua jornada para a liberdade financeira começa aqui.
             </p>
           </div>
 
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="signin">Entrar</TabsTrigger>
-              <TabsTrigger value="signup">Cadastrar</TabsTrigger>
+              <TabsTrigger value="signup">Criar Conta</TabsTrigger>
             </TabsList>
 
             {/* LOGIN */}
@@ -179,7 +202,7 @@ export default function AuthPage() {
                     type="email"
                     placeholder="seu@email.com"
                     required
-                    className="bg-white"
+                    className="bg-background"
                   />
                 </div>
                 <div className="space-y-2">
@@ -192,7 +215,7 @@ export default function AuthPage() {
                         <Button
                           variant="link"
                           size="sm"
-                          className="px-0 font-normal text-xs text-blue-600 h-auto"
+                          className="px-0 font-normal text-xs text-primary h-auto"
                         >
                           Esqueceu a senha?
                         </Button>
@@ -235,12 +258,12 @@ export default function AuthPage() {
                     name="password"
                     type="password"
                     required
-                    className="bg-white"
+                    className="bg-background"
                   />
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 shadow-sm"
+                  className="w-full shadow-sm font-bold"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -265,7 +288,7 @@ export default function AuthPage() {
                     name="name"
                     placeholder="Como você quer ser chamado?"
                     required
-                    className="bg-white"
+                    className="bg-background"
                   />
                 </div>
                 <div className="space-y-2">
@@ -276,7 +299,7 @@ export default function AuthPage() {
                     type="email"
                     placeholder="seu@email.com"
                     required
-                    className="bg-white"
+                    className="bg-background"
                   />
                 </div>
                 <div className="space-y-2">
@@ -287,47 +310,46 @@ export default function AuthPage() {
                     type="password"
                     placeholder="Mínimo 6 caracteres"
                     required
-                    className="bg-white"
+                    className="bg-background"
                   />
                 </div>
 
-                <div className="text-xs text-slate-500 space-y-2 py-2">
-                  <p className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3 h-3 text-green-500" /> Gestão
-                    de time familiar
+                <div className="bg-muted/40 p-4 rounded-lg space-y-3 border border-border/50">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    O que você ganha:
                   </p>
-                  <p className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3 h-3 text-green-500" /> Leitura
-                    de recibos com IA
-                  </p>
+                  <div className="text-sm space-y-2">
+                    <p className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary" />
+                      <span>IA que lê seus recibos</span>
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary" />
+                      <span>Método 50/30/20 automático</span>
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary" />
+                      <span>Gestão compartilhada (Casal)</span>
+                    </p>
+                  </div>
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 shadow-sm"
+                  className="w-full shadow-sm font-bold"
                   disabled={isLoading}
                 >
                   {isLoading ? (
                     <Loader2 className="animate-spin mr-2 h-4 w-4" />
                   ) : (
-                    "Criar Conta Grátis"
+                    "Começar Grátis"
                   )}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
 
-          <p className="text-center text-xs text-slate-500 px-8">
-            Ao continuar, você concorda com nossos{" "}
-            <Link href="#" className="underline hover:text-slate-800">
-              Termos de Serviço
-            </Link>{" "}
-            e{" "}
-            <Link href="#" className="underline hover:text-slate-800">
-              Política de Privacidade
-            </Link>
-            .
-          </p>
+          <LegalDisclaimer />
         </div>
       </div>
     </div>

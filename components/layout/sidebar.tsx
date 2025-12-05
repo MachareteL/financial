@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   TrendingUp,
@@ -10,8 +10,8 @@ import {
   Tag,
   Wallet,
   Users,
-  PieChart,
-} from "lucide-react"
+} from "lucide-react";
+import { Logo } from "@/components/lemon/logo";
 
 const navLinks = [
   { href: "/dashboard", label: "Visão Geral", icon: LayoutDashboard },
@@ -20,25 +20,28 @@ const navLinks = [
   { href: "/investments", label: "Investimentos", icon: Wallet },
   { href: "/categories", label: "Categorias", icon: Tag },
   { href: "/team", label: "Equipe", icon: Users },
-]
+];
 
 export function Sidebar() {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
     <aside className="hidden h-screen w-64 flex-col border-r bg-background sm:flex fixed left-0 top-0 z-30">
       {/* Logo Area */}
       <div className="flex h-16 items-center border-b px-6">
-        <Link href="/dashboard" className="flex items-center gap-2 font-bold text-xl tracking-tight text-primary">
-          <PieChart className="h-6 w-6 fill-primary/20" />
-          <span>Finanças</span>
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-2 font-bold text-xl tracking-tight text-foreground"
+        >
+          <Logo className="h-8 w-8" />
+          <span>Lemon</span>
         </Link>
       </div>
 
       {/* Navigation Links */}
       <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
         {navLinks.map((link) => {
-          const isActive = pathname.startsWith(link.href)
+          const isActive = pathname.startsWith(link.href);
           return (
             <Link
               key={link.href}
@@ -53,12 +56,14 @@ export function Sidebar() {
               <link.icon
                 className={cn(
                   "h-4 w-4 transition-colors",
-                  isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                  isActive
+                    ? "text-primary"
+                    : "text-muted-foreground group-hover:text-foreground"
                 )}
               />
               {link.label}
             </Link>
-          )
+          );
         })}
       </nav>
 
@@ -69,5 +74,5 @@ export function Sidebar() {
         </p>
       </div>
     </aside>
-  )
+  );
 }

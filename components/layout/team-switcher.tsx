@@ -10,8 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTeam } from "@/app/(app)/team/team-provider";
-import { useAuth } from "@/app/auth/auth-provider";
-import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/providers/auth-provider";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -51,7 +50,6 @@ interface TeamSwitcherProps {
 export function TeamSwitcher({ isMobile = false }: TeamSwitcherProps) {
   const { currentTeam, teams, setCurrentTeam } = useTeam();
   const { session } = useAuth();
-  const router = useRouter();
 
   const [open, setOpen] = React.useState(false);
   const [showNewTeamDialog, setShowNewTeamDialog] = React.useState(false);
@@ -85,8 +83,7 @@ export function TeamSwitcher({ isMobile = false }: TeamSwitcherProps) {
       setShowNewTeamDialog(false);
       setOpen(false);
       setTeamName("");
-
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       notify.error(error, "criar a equipe");
     } finally {

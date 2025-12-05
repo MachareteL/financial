@@ -1,23 +1,26 @@
-import type { ICategoryRepository } from '@/domain/interfaces/category.repository.interface'
-import { Category } from '@/domain/entities/category'
-import { BudgetCategory } from '@/domain/entities/budget-category'
-import { getSupabaseClient } from '../database/supabase.client'
-import type { Database } from '@/domain/dto/database.types.d.ts'
+import type { ICategoryRepository } from "@/domain/interfaces/category.repository.interface";
+import { Category } from "@/domain/entities/category";
+import { BudgetCategory } from "@/domain/entities/budget-category";
+import { getSupabaseClient } from "../database/supabase.client";
+import type { Database } from "@/domain/dto/database.types.d.ts";
 
-type CategoryRow = Database['public']['Tables']['categories']['Row']
-type BudgetCategoryRow = Database['public']['Tables']['budget_categories']['Row']
+type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
+type BudgetCategoryRow =
+  Database["public"]["Tables"]["budget_categories"]["Row"];
 
 type CategoryRowWithRelations = CategoryRow & {
-  budget_categories: BudgetCategoryRow | null
-}
+  budget_categories: BudgetCategoryRow | null;
+};
 
 const CATEGORY_SELECT_QUERY = `
   *,
   budget_categories (*)
-`
+`;
+
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export class CategoryRepository implements ICategoryRepository {
-  private supabase = getSupabaseClient()
+  constructor(private readonly supabase: SupabaseClient) {}
 
   // 1. MAPEAMENTO: DO BANCO (Row) PARA A ENTIDADE
   private mapRowToEntity(row: CategoryRowWithRelations): Category {
@@ -29,7 +32,7 @@ export class CategoryRepository implements ICategoryRepository {
           percentage: Number(row.budget_categories.percentage),
           createdAt: new Date(row.budget_categories.created_at),
         })
-      : null
+      : null;
 
     return new Category({
       id: row.id,
@@ -38,106 +41,115 @@ export class CategoryRepository implements ICategoryRepository {
       teamId: row.team_id!,
       createdAt: new Date(row.created_at),
       budgetCategory: budgetCategory,
-    })
+    });
   }
 
   // 2. MAPEAMENTO: DA ENTIDADE PARA O BANCO (Row)
-  private mapEntityToRow(entity: Category): Omit<CategoryRow, 'id' | 'created_at' | 'classification'> {
+  private mapEntityToRow(
+    entity: Category
+  ): Omit<CategoryRow, "id" | "created_at" | "classification"> {
     return {
       name: entity.name,
       budget_category_id: entity.budgetCategoryId,
       team_id: entity.teamId,
-    }
+    };
   }
 
   async findByTeamId(teamId: string): Promise<Category[]> {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
-      .from('categories')
+    const { data, error } = await this.supabase
+      .from("categories")
       .select(CATEGORY_SELECT_QUERY)
-      .eq('team_id', teamId)
-      .order('name')
+      .eq("team_id", teamId)
+      .order("name");
 
-    if (error) throw new Error(error.message)
-    return (data || []).map(row => this.mapRowToEntity(row as CategoryRowWithRelations))
+    if (error) throw new Error(error.message);
+    return (data || []).map((row) =>
+      this.mapRowToEntity(row as CategoryRowWithRelations)
+    );
   }
 
   async findById(categoryId: string, teamId: string): Promise<Category | null> {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
-      .from('categories')
+    const { data, error } = await this.supabase
+      .from("categories")
       .select(CATEGORY_SELECT_QUERY)
-      .eq('id', categoryId)
-      .eq('team_id', teamId)
-      .maybeSingle()
+      .eq("id", categoryId)
+      .eq("team_id", teamId)
+      .maybeSingle();
 
-    if (error) throw new Error(error.message)
-    return data ? this.mapRowToEntity(data as CategoryRowWithRelations) : null
+    if (error) throw new Error(error.message);
+    return data ? this.mapRowToEntity(data as CategoryRowWithRelations) : null;
   }
 
   async create(category: Category): Promise<Category> {
-    const row = this.mapEntityToRow(category)
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
-      .from('categories')
+    const row = this.mapEntityToRow(category);
+    const { data, error } = await this.supabase
+      .from("categories")
       .insert({
         ...row,
         id: category.id,
         created_at: category.createdAt.toISOString(),
       })
       .select(CATEGORY_SELECT_QUERY)
-      .single()
+      .single();
 
-    if (error) throw new Error(error.message)
-    return this.mapRowToEntity(data as CategoryRowWithRelations)
+    if (error) throw new Error(error.message);
+    return this.mapRowToEntity(data as CategoryRowWithRelations);
   }
 
   async update(category: Category): Promise<Category> {
-    const row = this.mapEntityToRow(category)
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
-      .from('categories')
+    const row = this.mapEntityToRow(category);
+    const { data, error } = await this.supabase
+      .from("categories")
       .update(row)
-      .eq('id', category.id)
-      .eq('team_id', category.teamId)
+      .eq("id", category.id)
+      .eq("team_id", category.teamId)
       .select(CATEGORY_SELECT_QUERY)
-      .single()
+      .single();
 
-    if (error) throw new Error(error.message)
-    return this.mapRowToEntity(data as CategoryRowWithRelations)
+    if (error) throw new Error(error.message);
+    return this.mapRowToEntity(data as CategoryRowWithRelations);
   }
 
   async delete(categoryId: string, teamId: string): Promise<void> {
-    const supabase = getSupabaseClient();
-    const { error } = await supabase
-      .from('categories')
+    const { error } = await this.supabase
+      .from("categories")
       .delete()
-      .eq('id', categoryId)
-      .eq('team_id', teamId)
+      .eq("id", categoryId)
+      .eq("team_id", teamId);
 
-    if (error) throw new Error(error.message)
+    if (error) throw new Error(error.message);
   }
 
   // 3. ATUALIZADO: Recebe as 'pastas' para saber os IDs
-  async createDefaultCategories(teamId: string, budgetCategories: BudgetCategory[]): Promise<Category[]> {
+  async createDefaultCategories(
+    teamId: string,
+    budgetCategories: BudgetCategory[]
+  ): Promise<Category[]> {
     const budgetCatIds = {
-      necessidades: budgetCategories.find(bc => bc.name === 'Necessidades')?.id,
-      desejos: budgetCategories.find(bc => bc.name === 'Desejos')?.id,
-      poupanca: budgetCategories.find(bc => bc.name === 'Poupança')?.id,
-    }
+      necessidades: budgetCategories.find((bc) => bc.name === "Necessidades")
+        ?.id,
+      desejos: budgetCategories.find((bc) => bc.name === "Desejos")?.id,
+      poupanca: budgetCategories.find((bc) => bc.name === "Poupança")?.id,
+    };
 
-    if (!budgetCatIds.necessidades || !budgetCatIds.desejos || !budgetCatIds.poupanca) {
-       throw new Error("Não foi possível encontrar as 'pastas' de orçamento padrão ao criar categorias.");
+    if (
+      !budgetCatIds.necessidades ||
+      !budgetCatIds.desejos ||
+      !budgetCatIds.poupanca
+    ) {
+      throw new Error(
+        "Não foi possível encontrar as 'pastas' de orçamento padrão ao criar categorias."
+      );
     }
 
     const defaultCategories = [
-      { name: 'Moradia', budget_category_id: budgetCatIds.necessidades },
-      { name: 'Transporte', budget_category_id: budgetCatIds.necessidades },
-      { name: 'Alimentação', budget_category_id: budgetCatIds.necessidades },
-      { name: 'Saúde', budget_category_id: budgetCatIds.necessidades },
-      { name: 'Lazer', budget_category_id: budgetCatIds.desejos },
-      { name: 'Investimentos', budget_category_id: budgetCatIds.poupanca },
-      { name: 'Outros', budget_category_id: budgetCatIds.necessidades },
+      { name: "Moradia", budget_category_id: budgetCatIds.necessidades },
+      { name: "Transporte", budget_category_id: budgetCatIds.necessidades },
+      { name: "Alimentação", budget_category_id: budgetCatIds.necessidades },
+      { name: "Saúde", budget_category_id: budgetCatIds.necessidades },
+      { name: "Lazer", budget_category_id: budgetCatIds.desejos },
+      { name: "Investimentos", budget_category_id: budgetCatIds.poupanca },
+      { name: "Outros", budget_category_id: budgetCatIds.necessidades },
     ];
 
     const categoriesToInsert = defaultCategories.map((cat) => ({
@@ -145,15 +157,17 @@ export class CategoryRepository implements ICategoryRepository {
       team_id: teamId,
       id: crypto.randomUUID(),
       created_at: new Date().toISOString(),
-    }))
+    }));
 
     const supabase = getSupabaseClient();
     const { data, error } = await supabase
-      .from('categories')
+      .from("categories")
       .insert(categoriesToInsert)
       .select(CATEGORY_SELECT_QUERY);
 
-    if (error) throw new Error(error.message)
-    return (data || []).map(row => this.mapRowToEntity(row as CategoryRowWithRelations))
+    if (error) throw new Error(error.message);
+    return (data || []).map((row) =>
+      this.mapRowToEntity(row as CategoryRowWithRelations)
+    );
   }
 }

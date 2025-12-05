@@ -1,6 +1,7 @@
 import type { IExpenseRepository } from "@/domain/interfaces/expense.repository.interface";
 import type { IStorageRepository } from "@/domain/interfaces/storage.repository.interface"; // <-- Importar
 import type { UpdateExpenseDTO } from "@/domain/dto/expense.types.d.ts";
+import type { UpdateExpenseProps } from "@/domain/entities/expense";
 
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 
@@ -50,14 +51,26 @@ export class UpdateExpenseUseCase {
       }
     }
 
-    const updatedExpense = existingExpense.update({
+    const updateProps: UpdateExpenseProps = {
       description: dto.description,
       amount: dto.amount,
-      date: dto.date ? new Date(dto.date.replace(/-/g, "/")) : undefined,
       categoryId: dto.categoryId,
       receiptUrl: finalReceiptUrl,
       installmentValue: dto.installmentValue,
-    });
+    };
+
+    if (dto.date) {
+      updateProps.date = new Date(dto.date.replace(/-/g, "/"));
+    }
+
+    // Remove undefined keys so they don't overwrite existing values
+    Object.keys(updateProps).forEach(
+      (key) =>
+        updateProps[key as keyof UpdateExpenseProps] === undefined &&
+        delete updateProps[key as keyof UpdateExpenseProps]
+    );
+
+    const updatedExpense = existingExpense.update(updateProps);
 
     await this.expenseRepository.update(updatedExpense);
   }

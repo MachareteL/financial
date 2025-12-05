@@ -52,6 +52,25 @@ export class ManageMembersUseCase {
     );
     if (!hasPermission) throw new Error("Permissão negada.");
 
+    // 2. Verificar se o usuário a ser removido tem permissão de gerenciar o time (Admin/Owner)
+    const hasManagePermission = await this.teamRepository.verifyPermission(
+      memberId,
+      teamId,
+      "MANAGE_TEAM"
+    );
+
+    if (hasManagePermission) {
+      const adminCount = await this.teamRepository.countMembersWithPermission(
+        teamId,
+        "MANAGE_TEAM"
+      );
+      if (adminCount <= 1) {
+        throw new Error(
+          "Promova outro membro antes."
+        );
+      }
+    }
+
     await this.teamRepository.removeMember(teamId, memberId);
   }
 

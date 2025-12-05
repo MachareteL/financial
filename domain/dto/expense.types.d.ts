@@ -59,3 +59,28 @@ export type DeleteExpenseDTO = {
   teamId: string;
   userId: string;
 };
+
+export type GetExpenseByIdDTO = {
+  expenseId: string;
+  teamId: string;
+};
+
+export type GetExpensesDTO = {
+  teamId: string;
+  startDate?: Date;
+  endDate?: Date;
+  page?: number;
+  limit?: number;
+};
+
+export type GetExpensesSummaryDTO = {
+  teamId: string;
+  startDate?: Date;
+  endDate?: Date;
+  categoryId?: string;
+};
+
+export type ExpensesSummaryDTO = {
+  total: number;
+  count: number;
+};
