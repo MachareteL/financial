@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
-import { getPendingInvitesUseCase } from "@/infrastructure/dependency-injection";
+import { getPendingInvitesAction } from "@/app/(app)/invites/_actions/get-pending-invites";
 import { notify } from "@/lib/notify-helper";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -23,9 +23,7 @@ export function InviteChecker() {
       if (!session?.user?.email) return;
 
       try {
-        const invites = await getPendingInvitesUseCase.execute(
-          session.user.email
-        );
+        const invites = await getPendingInvitesAction(session.user.email);
 
         if (invites.length > 0) {
           hasChecked.current = true; // Marca como checado para não spammar

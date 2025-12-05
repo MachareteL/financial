@@ -3,7 +3,7 @@ import { TeamProvider } from "@/app/(app)/team/team-provider";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
-import { InviteChecker } from "@/components/invite-checker";
+import { InviteChecker } from "@/app/(app)/_components/invite-checker";
 
 import { SubscriptionCheck } from "@/components/subscription/subscription-check";
 import { ProCelebrationModal } from "@/components/subscription/pro-celebration-modal";

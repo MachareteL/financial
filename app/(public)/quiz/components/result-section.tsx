@@ -210,7 +210,6 @@ export function ResultSection({
           <ShareableResultCard
             result={quizResult}
             archetypeData={ARCHETYPES[quizResult.archetype]}
-            themeColors={ARCHETYPE_THEME_COLORS[quizResult.archetype]}
           />
         </div>
       </div>

@@ -29,7 +29,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Loader2, TrendingUp, CheckCircle2, Sparkles } from "lucide-react";
-import { LegalDisclaimer } from "@/components/auth/legal-disclaimer";
+import { LegalDisclaimer } from "@/app/auth/_components/legal-disclaimer";
+import { Logo } from "@/components/lemon/logo";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -114,9 +115,7 @@ export default function AuthPage() {
       {/* --- ESQUERDA: BRANDING (Visível apenas em Desktop) --- */}
       <div className="hidden lg:flex flex-col justify-between bg-zinc-900 text-white p-10 relative overflow-hidden">
         <div className="absolute top-10 left-10 z-10 flex items-center gap-2 font-bold text-2xl">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-zinc-900">
-            <TrendingUp className="w-5 h-5" />
-          </div>
+          <Logo className="w-8 h-8" />
           Lemon
         </div>
 
@@ -173,9 +172,7 @@ export default function AuthPage() {
         <div className="mx-auto w-full max-w-[400px] space-y-8">
           <div className="flex flex-col space-y-2 text-center">
             <div className="lg:hidden flex justify-center mb-4">
-              <div className="bg-primary p-2 rounded-xl text-primary-foreground">
-                <TrendingUp className="w-6 h-6" />
-              </div>
+              <Logo className="w-10 h-10" />
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
               Bem-vindo ao Lemon

@@ -29,6 +29,7 @@ import {
 import { useState } from "react";
 import { useTheme } from "next-themes";
 import { JsonLd } from "@/components/seo/json-ld";
+import { Logo } from "@/components/lemon/logo";
 
 export default function LandingPage() {
   const { session, loading } = useAuth();
@@ -89,9 +90,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md transition-all">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <TrendingUp className="h-5 w-5" />
-            </div>
+            <Logo className="h-8 w-8" />
             <span className="text-xl font-bold tracking-tight">Lemon</span>
           </div>
 
@@ -102,6 +101,12 @@ export default function LandingPage() {
               className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             >
               Funcionalidades
+            </Link>
+            <Link
+              href="/quiz"
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            >
+              Quiz
             </Link>
             <Link
               href="/#method"
@@ -163,6 +168,13 @@ export default function LandingPage() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Funcionalidades
+              </Link>
+              <Link
+                href="/quiz"
+                className="text-base font-medium text-muted-foreground"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Quiz
               </Link>
               <Link
                 href="/#method"
@@ -424,6 +436,44 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* --- QUIZ CTA SECTION --- */}
+        <section className="py-24 bg-primary/5 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+            <div className="absolute top-1/2 left-10 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2" />
+            <div className="absolute bottom-[-10%] right-[-5%] w-80 h-80 bg-purple-500/10 rounded-full blur-3xl" />
+          </div>
+
+          <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+            <Badge
+              variant="outline"
+              className="mb-6 border-primary/20 text-primary bg-primary/5"
+            >
+              <Sparkles className="w-3.5 h-3.5 mr-2" />+ Autoconhecimento
+            </Badge>
+
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-6">
+              Faça o teste de perfil gratuito!
+            </h2>
+
+            <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
+              Descubra seu arquétipo financeiro e veja como sua personalidade
+              combina com a do seu amor.
+            </p>
+
+            <Button
+              size="lg"
+              className="h-14 px-10 text-lg shadow-lg shadow-primary/20 hover:scale-105 transition-transform"
+              onClick={() => router.push("/quiz")}
+            >
+              Fazer o Teste Gratuito
+            </Button>
+
+            <p className="mt-6 text-sm text-muted-foreground">
+              Leva 5 minutos • 100% Gratuito
+            </p>
+          </div>
+        </section>
+
         {/* --- BENEFITS SECTION (Bento Grid) --- */}
         <section id="features" className="py-24 lg:py-32">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -639,9 +689,7 @@ export default function LandingPage() {
       <footer className="bg-background py-12 border-t border-border">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-primary text-primary-foreground">
-              <TrendingUp className="h-4 w-4" />
-            </div>
+            <Logo className="h-6 w-6" />
             <span className="text-lg font-bold">Lemon</span>
           </div>
           <div className="text-sm text-muted-foreground">

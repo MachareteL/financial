@@ -74,9 +74,9 @@ export function WelcomeScreen({
           variants={item}
           className="text-5xl md:text-7xl font-black tracking-tight text-foreground mb-6 leading-[1.1]"
         >
-          Qual é a sua <br className="hidden md:block" />
+          Descubra seu <br className="hidden md:block" />
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/80 to-secondary animate-gradient">
-            sintonia financeira?
+            Perfil Financeiro
           </span>
         </motion.h1>
 
@@ -85,8 +85,7 @@ export function WelcomeScreen({
           className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-10"
         >
           Dinheiro não é só matemática, é comportamento. Descubra seu{" "}
-          <strong>DNA Financeiro</strong> e entenda a química real entre você e
-          seu amor.
+          <strong>DNA Financeiro</strong> e adquira mais autoconhecimento.
         </motion.p>
 
         <motion.div

@@ -11,6 +11,7 @@ import {
   Wallet,
   Users,
 } from "lucide-react";
+import { Logo } from "@/components/lemon/logo";
 
 const navLinks = [
   { href: "/dashboard", label: "Visão Geral", icon: LayoutDashboard },
@@ -32,9 +33,7 @@ export function Sidebar() {
           href="/dashboard"
           className="flex items-center gap-2 font-bold text-xl tracking-tight text-foreground"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <TrendingUp className="h-5 w-5" />
-          </div>
+          <Logo className="h-8 w-8" />
           <span>Lemon</span>
         </Link>
       </div>

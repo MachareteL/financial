@@ -11,6 +11,9 @@ export const metadata: Metadata = {
     "quiz dinheiro",
     "arquétipo financeiro",
     "lemon financial",
+    "teste de personalidade",
+    "teste de perfil financeiro",
+    "quiz de casal",
   ],
   openGraph: {
     title: "Qual é a sua vibe com o dinheiro? | Lemon",

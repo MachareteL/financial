@@ -1,6 +1,6 @@
 import { getPostBySlug, getPostSlugs } from "@/lib/blog";
 import { MDXRemote } from "next-mdx-remote/rsc";
-import { NewsletterCTA } from "@/components/blog/newsletter-cta";
+import { NewsletterCTA } from "@/app/(public)/blog/_components/newsletter-cta";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, ChevronLeft, UserIcon } from "lucide-react";

@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { TrendingUp, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { JsonLd } from "@/components/seo/json-ld";
+import { Logo } from "@/components/lemon/logo";
 
 export default function PublicLayout({
   children,
@@ -47,9 +48,7 @@ export default function PublicLayout({
               href="/"
               className="flex items-center gap-2 transition-opacity hover:opacity-80"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <TrendingUp className="h-5 w-5" />
-              </div>
+              <Logo className="h-8 w-8" />
               <span className="text-xl font-bold tracking-tight text-foreground">
                 Lemon
               </span>
