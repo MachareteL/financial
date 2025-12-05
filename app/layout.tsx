@@ -25,36 +25,62 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://lemonfinancas.com.br"),
   title: {
     template: "%s | Lemon",
-    default: "Lemon | Finanças para Casais",
+    default: "Lemon | Finanças para Casais que Constroem Juntos",
   },
   description:
     "Planejamento financeiro completo e controle de gastos. A evolução da planilha financeira, perfeito para organização pessoal e finanças para casais.",
   keywords: [
     "planejamento financeiro",
-    "educação financeira",
     "controle de gastos",
     "gestão financeira pessoal",
     "finanças para casais",
-    "app casal",
-    "planilha de gastos",
-    "excel financeiro",
-    "planilha de gastos casal",
-    "excel financeiro",
-    "app controle financeiro compartilhado",
+    "controle financeiro casal",
+    "app para casais",
+    "educação financeira",
+    "gestão financeira compartilhada",
+    "juntar finanças",
     "planilha com IA",
+    "planilha de gastos casal",
+    "planejamento financeiro familiar",
     "b3",
     "imposto de renda",
   ],
+  authors: [{ name: "Lemon Financial" }],
+  category: "Finance",
   openGraph: {
     type: "website",
     locale: "pt_BR",
     siteName: "Lemon",
+    title: "Lemon | Finanças para Casais que Constroem Juntos",
+    description:
+      "O app de finanças feito para casais que dividem a vida e o dinheiro. Organização automática e metas compartilhadas.",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Lemon - Finanças Inteligentes para Casais",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     site: "@lemonfinancas",
     creator: "@lemonfinancas",
-    images: ["/og-image.png"], // Assuming a default OG image exists or will be handled by opengraph-image.tsx
+    title: "Lemon | Finanças para Casais",
+    description: "Organização financeira automática para casais.",
+    images: ["/og-image.jpg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 

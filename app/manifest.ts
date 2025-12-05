@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Lemon",
     short_name: "Lemon",
-    description: "Finanças Inteligentes para Casais",
+    description: "Finanças inteligentes para Casais que Constroem Juntos",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

@@ -70,14 +70,15 @@ export default function LandingPage() {
     "@context": "https://schema.org",
     "@type": "FinancialProduct",
     name: "Lemon Financial Pro",
-    description: "Organização financeira para casais com IA.",
+    description:
+      "Organização financeira automática para casais que constroem juntos.",
     brand: {
       "@type": "Brand",
       name: "Lemon",
     },
     offers: {
       "@type": "Offer",
-      price: "19.90",
+      price: "29.90",
       priceCurrency: "BRL",
     },
   };
