@@ -10,6 +10,7 @@ import {
   Tag,
   Wallet,
   Users,
+  LifeBuoy,
 } from "lucide-react";
 import { Logo } from "@/components/lemon/logo";
 
@@ -20,6 +21,7 @@ const navLinks = [
   { href: "/investments", label: "Investimentos", icon: Wallet },
   { href: "/categories", label: "Categorias", icon: Tag },
   { href: "/team", label: "Equipe", icon: Users },
+  { href: "/feedback", label: "Central de Ajuda", icon: LifeBuoy },
 ];
 
 export function Sidebar() {

@@ -76,7 +76,11 @@ import { GetPendingInvitesUseCase } from "@/app/(app)/team/_use-case/get-pending
 import { AcceptInviteUseCase } from "@/app/(app)/team/_use-case/accept-invite.use-case";
 import { DeclineInviteUseCase } from "@/app/(app)/team/_use-case/decline-invite.use-case";
 // Services
-import { GeminiAiService } from "../services/gemini-ai.service";
+import { GeminiAiService } from "@/infrastructure/services/gemini-ai.service";
+import { ResendEmailService } from "@/infrastructure/services/resend-email.service";
+
+// Feedback
+import { SendFeedbackUseCase } from "@/app/(app)/feedback/_use-case/send-feedback.use-case";
 
 // AI Use Cases
 import { ParseReceiptUseCase } from "@/app/(app)/expenses/_use-case/parse-receipt.use-case";
@@ -131,7 +135,6 @@ const investmentRepository = container.get(
 );
 
 // Services
-// Services
 const aiService = container.get(
   "aiService",
   () =>
@@ -139,6 +142,18 @@ const aiService = container.get(
       process.env.GOOGLE_API_KEY!,
       process.env.GOOGLE_GEMINI_MODEL
     )
+);
+
+import { SupabaseFeedbackRepository } from "@/infrastructure/repositories/supabase-feedback.repository";
+
+// ...
+
+const emailService = new ResendEmailService(process.env.RESEND_API_KEY || "");
+const feedbackRepository = new SupabaseFeedbackRepository(supabase);
+
+export const sendFeedbackUseCase = new SendFeedbackUseCase(
+  emailService,
+  feedbackRepository
 );
 
 const subscriptionRepository = container.get(
