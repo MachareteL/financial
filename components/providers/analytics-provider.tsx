@@ -3,6 +3,7 @@
 import posthog from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/react";
 import { useEffect } from "react";
 
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
@@ -20,6 +21,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     <PostHogProvider client={posthog}>
       {children}
       <SpeedInsights />
+      <Analytics />
     </PostHogProvider>
   );
 }
