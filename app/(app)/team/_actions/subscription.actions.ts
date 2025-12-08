@@ -7,7 +7,6 @@ import {
   getGetSubscriptionStatusUseCase,
   getVerifyTeamPermissionUseCase,
 } from "@/infrastructure/dependency-injection/server-container";
-import { redirect } from "next/navigation";
 
 export async function subscribeTeamAction(teamId: string, planId: string) {
   const supabase = await getSupabaseClient();

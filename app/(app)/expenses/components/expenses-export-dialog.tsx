@@ -73,8 +73,8 @@ export function ExportExpensesDialog({
 
       notify.success("Exportação concluída com sucesso!");
       setOpen(false);
-    } catch (error: any) {
-      if (error.message?.includes("PRO")) {
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("PRO")) {
         notify.error("Funcionalidade exclusiva para PRO.", "Exportar");
       } else {
         notify.error(error, "exportar despesas");

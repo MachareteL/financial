@@ -1,20 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Loader2,
-  CheckCircle2,
-  X,
   Infinity,
   Bot,
   Zap,
@@ -24,6 +15,7 @@ import {
   Sparkles,
   ArrowRight,
   ShieldCheck,
+  LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { subscribeTeamAction } from "../../_actions/subscription.actions";
@@ -236,7 +228,7 @@ export function UpgradePricingCards({
   );
 }
 
-function FeatureItem({ icon: Icon, text }: { icon: any; text: string }) {
+function FeatureItem({ icon: Icon, text }: { icon: LucideIcon; text: string }) {
   return (
     <div className="flex items-center gap-3">
       <div className="bg-primary/10 p-2 rounded-lg shrink-0">
