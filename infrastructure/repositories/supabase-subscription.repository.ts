@@ -71,13 +71,29 @@ export class SupabaseSubscriptionRepository implements ISubscriptionRepository {
   }
 
   private mapToEntity(data: SubscriptionRow): Subscription {
+    // Validate status or fallback to a safe default if somehow invalid data exists
+    const validStatuses = [
+      "active",
+      "past_due",
+      "canceled",
+      "trialing",
+      "incomplete",
+      "incomplete_expired",
+      "unpaid",
+      "paused",
+    ];
+
+    const status = validStatuses.includes(data.status)
+      ? (data.status as any)
+      : "canceled"; // Safe fallback
+
     return new Subscription({
       id: data.id,
       teamId: data.team_id,
       externalId: data.external_id,
       externalCustomerId: data.external_customer_id,
       gatewayId: data.gateway_id,
-      status: data.status as any, // Status enum might need explicit casting if not matching exactly string
+      status: status,
       planId: data.plan_id,
       currentPeriodEnd: data.current_period_end
         ? new Date(data.current_period_end)

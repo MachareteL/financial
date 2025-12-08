@@ -22,42 +22,52 @@ export class StripePaymentGateway implements IPaymentGateway {
     successUrl: string,
     cancelUrl: string
   ): Promise<string> {
-    const session = await this.stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price: planId,
-          quantity: 1,
+    try {
+      const session = await this.stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price: planId,
+            quantity: 1,
+          },
+        ],
+        mode: "subscription",
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        customer_email: email,
+        client_reference_id: teamId,
+        subscription_data: {
+          metadata: {
+            team_id: teamId,
+          },
         },
-      ],
-      mode: "subscription",
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      customer_email: email,
-      client_reference_id: teamId,
-      subscription_data: {
-        metadata: {
-          team_id: teamId,
-        },
-      },
-    });
+      });
 
-    if (!session.url) {
-      throw new Error("Failed to create checkout session URL");
+      if (!session.url) {
+        throw new Error("Failed to create checkout session URL");
+      }
+
+      return session.url;
+    } catch (error) {
+      console.error("Error creating checkout session:", error);
+      throw new Error("Failed to initialize payment session");
     }
-
-    return session.url;
   }
 
   async createPortalSession(
     externalCustomerId: string,
     returnUrl: string
   ): Promise<string> {
-    const session = await this.stripe.billingPortal.sessions.create({
-      customer: externalCustomerId,
-      return_url: returnUrl,
-    });
+    try {
+      const session = await this.stripe.billingPortal.sessions.create({
+        customer: externalCustomerId,
+        return_url: returnUrl,
+      });
 
-    return session.url;
+      return session.url;
+    } catch (error) {
+      console.error("Error creating portal session:", error);
+      throw new Error("Failed to access subscription portal");
+    }
   }
 }

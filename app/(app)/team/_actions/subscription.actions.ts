@@ -5,6 +5,7 @@ import {
   getSubscribeTeamUseCase,
   getManageSubscriptionUseCase,
   getGetSubscriptionStatusUseCase,
+  getVerifyTeamPermissionUseCase,
 } from "@/infrastructure/dependency-injection/server-container";
 import { redirect } from "next/navigation";
 
@@ -16,6 +17,19 @@ export async function subscribeTeamAction(teamId: string, planId: string) {
 
   if (!user || !user.email) {
     throw new Error("Unauthorized or missing email");
+  }
+
+  const verifyTeamPermissionUseCase = await getVerifyTeamPermissionUseCase();
+  const hasPermission = await verifyTeamPermissionUseCase.execute(
+    user.id,
+    teamId,
+    "MANAGE_TEAM"
+  );
+
+  if (!hasPermission) {
+    throw new Error(
+      "Você não tem permissão para assinar planos para este time."
+    );
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -31,9 +45,8 @@ export async function subscribeTeamAction(teamId: string, planId: string) {
     cancelUrl,
     user.id
   );
-  if (url) {
-    redirect(url);
-  }
+
+  return url;
 }
 
 export async function manageSubscriptionAction(teamId: string) {
@@ -46,15 +59,24 @@ export async function manageSubscriptionAction(teamId: string) {
     throw new Error("Unauthorized");
   }
 
+  const verifyTeamPermissionUseCase = await getVerifyTeamPermissionUseCase();
+  const hasPermission = await verifyTeamPermissionUseCase.execute(
+    user.id,
+    teamId,
+    "MANAGE_TEAM"
+  );
+
+  if (!hasPermission) {
+    throw new Error("Você não tem permissão para gerenciar assinaturas.");
+  }
+
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const returnUrl = `${baseUrl}/team`;
 
   const manageSubscriptionUseCase = await getManageSubscriptionUseCase();
   const url = await manageSubscriptionUseCase.execute(teamId, returnUrl);
 
-  if (url) {
-    redirect(url);
-  }
+  return url;
 }
 
 export async function getSubscriptionStatusAction(teamId: string) {
