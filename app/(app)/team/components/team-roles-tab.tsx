@@ -28,7 +28,7 @@ interface TeamRolesTabProps {
 }
 
 const AVAILABLE_PERMISSIONS = [
-  { key: "MANAGE_EXPENSES", label: "Gerenciar Gastos" },
+  { key: "MANAGE_EXPENSES", label: "Gerenciar Despesas" },
   { key: "MANAGE_BUDGET", label: "Gerenciar Orçamento e Categorias" },
   { key: "MANAGE_INVESTMENTS", label: "Gerenciar Investimentos" },
   { key: "MANAGE_TEAM", label: "Gerenciar Equipe e Cargos" },

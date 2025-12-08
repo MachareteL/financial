@@ -242,7 +242,7 @@ export default function LandingPage() {
               </h1>
               <p className="text-xl text-muted-foreground mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0">
                 Construam a vida financeira a dois sem o trabalho braçal. A IA
-                do Lemon organiza os gastos automaticamente para vocês focarem
+                do Lemon organiza as despesas automaticamente para vocês focarem
                 no futuro.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -324,7 +324,7 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  {/* Lista de Gastos Recentes */}
+                  {/* Lista de Despesas Recentes */}
                   <div className="space-y-3 pt-2">
                     <div className="flex justify-between items-center p-3 hover:bg-muted/50 rounded-xl transition-colors">
                       <div className="flex items-center gap-4">

@@ -157,7 +157,7 @@ export function BudgetHealth({ folders }: BudgetHealthProps) {
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm items-end">
                     <span className="text-slate-500 font-medium text-xs">
-                      Gasto
+                      Despesa
                     </span>
                     <span className="font-bold text-slate-900 text-base">
                       {formatCurrency(folder.spent)}
