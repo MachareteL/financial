@@ -1,20 +1,20 @@
 import { Container } from "./container";
 import { StripePaymentGateway } from "@/infrastructure/services/stripe-payment.gateway";
 import { SupabaseSubscriptionRepository } from "../repositories/supabase-subscription.repository";
-import { GetSubscriptionStatusUseCase } from "@/app/(app)/team/_use-case/get-subscription-status.use-case";
+import { TeamRepository } from "../repositories/supabase-team.repository";
+import { CategoryRepository } from "../repositories/supabase-category.repository";
+import { BudgetCategoryRepository } from "../repositories/supabase-budget-category.repository";
+import { PostHogAnalyticsService } from "@/infrastructure/services/posthog-analytics.service";
+import { GeminiAiService } from "@/infrastructure/services/gemini-ai.service";
 import { SubscribeTeamUseCase } from "@/app/(app)/team/_use-case/subscribe-team.use-case";
 import { ManageSubscriptionUseCase } from "@/app/(app)/team/_use-case/manage-subscription.use-case";
+import { GetSubscriptionStatusUseCase } from "@/app/(app)/team/_use-case/get-subscription-status.use-case";
 import { CheckFeatureAccessUseCase } from "@/app/(app)/team/_use-case/check-feature-access.use-case";
 import { VerifyTeamPermissionUseCase } from "@/app/(app)/team/_use-case/verify-team-permission.use-case";
-import { TeamRepository } from "../repositories/supabase-team.repository";
-import { GeminiAiService } from "@/infrastructure/services/gemini-ai.service";
+import { CreateTeamUseCase } from "@/app/(app)/team/_use-case/create-team.use-case";
 import { ParseReceiptUseCase } from "@/app/(app)/expenses/_use-case/parse-receipt.use-case";
 import { RateLimitService } from "@/infrastructure/services/rate-limit.service";
 import { getSupabaseClient } from "../database/supabase.server";
-import { CategoryRepository } from "../repositories/supabase-category.repository";
-import { BudgetCategoryRepository } from "../repositories/supabase-budget-category.repository";
-import { CreateTeamUseCase } from "@/app/(app)/team/_use-case/create-team.use-case";
-import { PostHogAnalyticsService } from "@/infrastructure/services/posthog-analytics.service";
 
 const container = Container.getInstance();
 
@@ -143,6 +143,29 @@ export const getParseReceiptUseCase = () => {
   );
 };
 
+import { ExpenseRepository } from "../repositories/supabase-expense.repository";
+import { ExportExpensesUseCase } from "@/app/(app)/expenses/_use-case/export-expenses.use-case";
+import { ExcelExporterService } from "@/infrastructure/services/excel-exporter.service";
+
 export const getRateLimitService = () => {
   return container.get("rateLimitService", () => new RateLimitService());
+};
+
+export const getExpenseRepository = async () => {
+  const supabase = await getSupabaseClient();
+  return container.get(
+    "expenseRepository",
+    () => new ExpenseRepository(supabase)
+  );
+};
+
+export const getExportExpensesUseCase = async () => {
+  const expenseRepo = await getExpenseRepository();
+  const subRepo = await getSubscriptionRepository();
+  const excelService = new ExcelExporterService();
+
+  return container.get(
+    "exportExpensesUseCase",
+    () => new ExportExpensesUseCase(expenseRepo, subRepo, excelService)
+  );
 };
