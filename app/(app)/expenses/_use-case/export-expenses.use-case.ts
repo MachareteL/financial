@@ -1,4 +1,5 @@
 import { IExpenseRepository } from "@/domain/interfaces/expense.repository.interface";
+import { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 import { ISubscriptionRepository } from "@/domain/interfaces/subscription.repository.interface";
 import { IExpenseExporter } from "@/domain/interfaces/expense-exporter.interface";
 
@@ -6,6 +7,7 @@ export class ExportExpensesUseCase {
   constructor(
     private expenseRepository: IExpenseRepository,
     private subscriptionRepository: ISubscriptionRepository,
+    private teamRepository: ITeamRepository,
     private excelExporterService: IExpenseExporter
   ) {}
 
@@ -16,9 +18,20 @@ export class ExportExpensesUseCase {
   ): Promise<string> {
     // 1. Verify PRO Status
     const subscription = await this.subscriptionRepository.findByTeamId(teamId);
-    const isPro =
-      subscription &&
-      (subscription.status === "active" || subscription.status === "trialing");
+    const team = await this.teamRepository.getTeamById(teamId);
+
+    if (!team) {
+      throw new Error("Time não encontrado.");
+    }
+
+    const hasActiveSubscription =
+      subscription?.status === "active" || subscription?.status === "trialing";
+
+    // Check if internal trial is active
+    const isInternalTrialActive =
+      team.trialEndsAt && new Date() < team.trialEndsAt;
+
+    const isPro = hasActiveSubscription || isInternalTrialActive;
 
     if (!isPro) {
       throw new Error("Funcionalidade exclusiva para planos PRO.");

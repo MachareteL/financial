@@ -162,10 +162,12 @@ export const getExpenseRepository = async () => {
 export const getExportExpensesUseCase = async () => {
   const expenseRepo = await getExpenseRepository();
   const subRepo = await getSubscriptionRepository();
+  const teamRepo = await getTeamRepository();
   const excelService = new ExcelExporterService();
 
   return container.get(
     "exportExpensesUseCase",
-    () => new ExportExpensesUseCase(expenseRepo, subRepo, excelService)
+    () =>
+      new ExportExpensesUseCase(expenseRepo, subRepo, teamRepo, excelService)
   );
 };

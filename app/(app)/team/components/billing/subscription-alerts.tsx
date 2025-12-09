@@ -2,8 +2,6 @@
 
 import { AlertTriangle, Sparkles, Info } from "lucide-react";
 import type { Subscription } from "@/domain/entities/subscription";
-import type { Team } from "@/domain/entities/team";
-import { cn } from "@/lib/utils";
 
 interface SubscriptionAlertsProps {
   subscription: Subscription | null;

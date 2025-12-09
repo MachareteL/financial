@@ -266,7 +266,10 @@ export default function ExpensesPage() {
               teamId={teamId}
               isPro={
                 currentTeam?.subscription?.status === "active" ||
-                currentTeam?.subscription?.status === "trialing"
+                currentTeam?.subscription?.status === "trialing" ||
+                (currentTeam?.team.trialEndsAt
+                  ? new Date() < new Date(currentTeam.team.trialEndsAt)
+                  : false)
               }
             />
             {can("MANAGE_EXPENSES") && (
