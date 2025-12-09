@@ -17,7 +17,7 @@ export async function exportExpensesAction(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error("Unauthorized");
+    throw new Error("Sessão inválida. Faça login novamente.");
   }
 
   // 1. Verify Permission
@@ -29,7 +29,7 @@ export async function exportExpensesAction(
   );
 
   if (!hasPermission) {
-    throw new Error("Sem permissão para exportar despesas.");
+    throw new Error("Você não tem permissão para exportar as despesas.");
   }
 
   // 2. Execute Export

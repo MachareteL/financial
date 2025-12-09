@@ -20,7 +20,7 @@ export class UpdateExpenseUseCase {
     );
 
     if (!hasPermission) {
-      throw new Error("Permissão negada: Você não pode editar despesas.");
+      throw new Error("Você não tem permissão para editar despesas.");
     }
     const existingExpense = await this.expenseRepository.findById(
       dto.expenseId,
@@ -28,7 +28,9 @@ export class UpdateExpenseUseCase {
     );
 
     if (!existingExpense) {
-      throw new Error("Gasto não encontrado ou você não tem permissão");
+      throw new Error(
+        "Não encontramos essa despesa ou você não tem permissão."
+      );
     }
 
     let finalReceiptUrl = dto.receiptUrl;
@@ -47,7 +49,7 @@ export class UpdateExpenseUseCase {
         );
       } catch (error) {
         console.error("Erro ao atualizar recibo:", error);
-        throw new Error("Falha ao fazer upload do novo recibo.");
+        throw new Error("Falha ao enviar o recibo. Tente novamente.");
       }
     }
 

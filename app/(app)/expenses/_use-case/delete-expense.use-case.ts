@@ -17,7 +17,7 @@ export class DeleteExpenseUseCase {
     );
 
     if (!hasPermission) {
-      throw new Error("Permissão negada: Você não pode excluir despesas.");
+      throw new Error("Você não tem permissão para apagar despesas.");
     }
     await this.expenseRepository.delete(dto.expenseId, dto.teamId);
   }

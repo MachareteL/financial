@@ -50,7 +50,9 @@ export function UpgradePricingCards({
       if (url) {
         window.location.href = url;
       } else {
-        throw new Error("Falha ao gerar URL de pagamento.");
+        throw new Error(
+          "Tivemos um problema para gerar o link de pagamento. Tente novamente."
+        );
       }
     } catch (error: unknown) {
       notify.error(error, "iniciar assinatura");

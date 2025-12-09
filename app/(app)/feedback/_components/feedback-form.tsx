@@ -89,7 +89,7 @@ export function FeedbackForm() {
         toast.error(result.error);
       } else {
         toast.success(
-          "Feedback enviado com sucesso! Obrigado por nos ajudar a melhorar."
+          "Recebemos sua mensagem! Obrigado por nos ajudar a melhorar o Lemon."
         );
         form.reset({
           type: "bug",

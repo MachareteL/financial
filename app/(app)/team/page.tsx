@@ -64,7 +64,7 @@ export default function TeamPage() {
         const { data } = await refetch();
         if (data?.subscription) {
           toast.dismiss("sub-check");
-          toast.success("Assinatura confirmada com sucesso!");
+          toast.success("Tudo certo! Sua assinatura está confirmada.");
           setIsPolling(false);
           clearInterval(interval);
           // Clean URL

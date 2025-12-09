@@ -11,7 +11,7 @@ export class ManageSubscriptionUseCase {
     const subscription = await this.subscriptionRepository.findByTeamId(teamId);
 
     if (!subscription) {
-      throw new Error("Assinatura não encontrada para este time.");
+      throw new Error("Não encontramos uma assinatura ativa para este time.");
     }
 
     const portalUrl = await this.paymentGateway.createPortalSession(

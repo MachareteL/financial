@@ -4,9 +4,10 @@ export class UpdateTeamUseCase {
   constructor(private teamRepository: ITeamRepository) {}
 
   async execute(teamId: string, name: string, userId: string): Promise<void> {
-    if (!teamId) throw new Error("ID do time é obrigatório.");
+    if (!teamId)
+      throw new Error("Não conseguimos encontrar o time. Tente recarregar.");
     if (!name || name.trim().length < 3) {
-      throw new Error("O nome do time deve ter pelo menos 3 caracteres.");
+      throw new Error("O nome do time deve possuir pelo menos 3 caracteres.");
     }
 
     const hasPermission = await this.teamRepository.verifyPermission(

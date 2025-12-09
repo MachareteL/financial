@@ -12,7 +12,7 @@ export class ParseReceiptUseCase {
   async execute(file: File, userId: string): Promise<ReceiptDataDTO | null> {
     const MAX_SIZE = 8 * 1024 * 1024; // 8MB
     if (file.size > MAX_SIZE) {
-      throw new Error("Este arquivo excede o limite de 8MB.");
+      throw new Error("Esse arquivo é muito grande (limite 8MB).");
     }
 
     const validTypes = [

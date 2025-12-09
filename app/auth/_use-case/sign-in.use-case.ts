@@ -12,7 +12,7 @@ export class SignInUseCase {
 
   async execute(input: SignInInputDTO): Promise<UserSession> {
     if (!input.email || !input.password)
-      throw new Error("Email e senha são obrigatórios");
+      throw new Error("Insira um email e senha válidos.");
     const session = await this.authRepository.signIn(
       input.email,
       input.password

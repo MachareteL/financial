@@ -14,7 +14,8 @@ export class ManageMembersUseCase {
       dto.teamId,
       "MANAGE_TEAM"
     );
-    if (!hasPermission) throw new Error("Permissão negada.");
+    if (!hasPermission)
+      throw new Error("Você não tem permissão para gerenciar membros.");
 
     return await this.teamRepository.createTeamInvite({
       teamId: dto.teamId,
@@ -31,7 +32,8 @@ export class ManageMembersUseCase {
       dto.teamId,
       "MANAGE_TEAM"
     );
-    if (!hasPermission) throw new Error("Permissão negada.");
+    if (!hasPermission)
+      throw new Error("Você não tem permissão para gerenciar membros.");
 
     await this.teamRepository.updateMemberRole(
       dto.teamId,
@@ -50,7 +52,8 @@ export class ManageMembersUseCase {
       teamId,
       "MANAGE_TEAM"
     );
-    if (!hasPermission) throw new Error("Permissão negada.");
+    if (!hasPermission)
+      throw new Error("Você não tem permissão para gerenciar membros.");
 
     // 2. Verificar se o usuário a ser removido tem permissão de gerenciar o time (Admin/Owner)
     const hasManagePermission = await this.teamRepository.verifyPermission(
@@ -66,7 +69,7 @@ export class ManageMembersUseCase {
       );
       if (adminCount <= 1) {
         throw new Error(
-          "Promova outro membro antes."
+          "Você precisa promover outro membro a administrador antes de sair."
         );
       }
     }
@@ -84,7 +87,8 @@ export class ManageMembersUseCase {
       teamId,
       "MANAGE_TEAM"
     );
-    if (!hasPermission) throw new Error("Permissão negada.");
+    if (!hasPermission)
+      throw new Error("Você não tem permissão para gerenciar membros.");
 
     await this.teamRepository.deleteTeamInvite(inviteId, teamId);
   }

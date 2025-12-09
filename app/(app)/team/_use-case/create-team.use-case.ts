@@ -41,7 +41,7 @@ export class CreateTeamUseCase {
 
       if (hasFreeTeam) {
         throw new Error(
-          "Você já possui um time gratuito. Para criar mais times, faça upgrade dos existentes para o plano PRO."
+          "Você já tem um time gratuito. Para criar mais, que tal fazer um upgrade?"
         );
       }
     }
