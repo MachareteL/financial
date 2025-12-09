@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +27,7 @@ import { TeamSettingsTab } from "./components/team-settings-tab";
 import { TeamInvitesTab } from "./components/team-invites-tab";
 import { TeamSubscriptionTab } from "./components/team-subscription-tab";
 
-export default function TeamPage() {
+function TeamContent() {
   const { currentTeam } = useTeam();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -191,5 +191,13 @@ export default function TeamPage() {
         </Tabs>
       </div>
     </div>
+  );
+}
+
+export default function TeamPage() {
+  return (
+    <Suspense fallback={<LoadingState message="Carregando equipe..." />}>
+      <TeamContent />
+    </Suspense>
   );
 }
