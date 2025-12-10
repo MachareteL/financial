@@ -48,20 +48,13 @@ export const metadata: Metadata = {
   authors: [{ name: "Lemon Financial" }],
   category: "Finance",
   openGraph: {
+    url: "https://lemonfinancas.com.br",
     type: "website",
     locale: "pt_BR",
     siteName: "Lemon",
     title: "Lemon | Vida financeira com inteligência artificial.",
     description:
       "Gerencie sua vida financeira com inteligência artificial. Lemon ajuda você a organizar suas finanças e metas utilizando o poder da IA. Organize suas finanças em grupo.",
-    images: [
-      {
-        url: "/og-image.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Lemon - Finanças Inteligentes.",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -70,7 +63,6 @@ export const metadata: Metadata = {
     title: "Lemon | Finanças com IA",
     description:
       "Gerencie sua vida financeira com inteligência artificial. Lemon ajuda você a organizar suas finanças e metas utilizando o poder da IA. Organize suas finanças em time!",
-    images: ["/og-image.jpg"],
   },
   robots: {
     index: true,

@@ -17,14 +17,6 @@ export const metadata: Metadata = {
       "Dicas financeiras, guias de investimentos e novidades sobre o Lemon para casais.",
     type: "website",
     url: "https://lemonfinancas.com.br/blog",
-    images: [
-      {
-        url: "/og-blog.jpg", // Ensure this image exists or use a generic one
-        width: 1200,
-        height: 630,
-        alt: "Blog Lemon Finanças",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",

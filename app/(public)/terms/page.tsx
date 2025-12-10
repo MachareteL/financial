@@ -15,6 +15,12 @@ import { Badge } from "@/components/ui/badge";
 export const metadata: Metadata = {
   title: "Termos de Uso | Lemon",
   description: "Termos de uso e condições do serviço Lemon.",
+  openGraph: {
+    title: "Termos de Uso | Lemon",
+    description: "Termos de uso e condições do serviço Lemon.",
+    type: "website",
+    url: "https://lemonfinancas.com.br/terms",
+  },
 };
 
 export default function TermsPage() {

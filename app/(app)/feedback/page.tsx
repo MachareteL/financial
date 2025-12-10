@@ -10,6 +10,12 @@ import {
 export const metadata = {
   title: "Central de Ajuda | Lemon",
   description: "Reporte bugs, envie sugestões ou reclamações.",
+  openGraph: {
+    title: "Central de Ajuda | Lemon",
+    description: "Reporte bugs, envie sugestões ou reclamações.",
+    type: "website",
+    url: "https://lemonfinancas.com.br/feedback",
+  },
 };
 
 export default function FeedbackPage() {
