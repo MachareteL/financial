@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 
-export const alt = "Lemon - Finanças Inteligentes para Casais";
+export const alt = "Quiz de Personalidade Financeira - Lemon";
 export const size = {
   width: 1200,
   height: 630,
@@ -51,7 +51,7 @@ export default async function Image() {
             letterSpacing: "-0.05em",
           }}
         >
-          Lemon
+          Quiz
         </div>
       </div>
       <div
@@ -60,19 +60,22 @@ export default async function Image() {
           color: "#a3a3a3", // Neutral-400
           fontWeight: 500,
           letterSpacing: "-0.02em",
+          textAlign: "center",
+          maxWidth: "80%",
         }}
       >
-        Finanças Inteligentes para Casais.
+        Descubra seu Perfil Financeiro
       </div>
       <div
         style={{
-          fontSize: 20,
+          marginTop: "20px",
+          fontSize: 24,
           color: "#84cc16",
           fontWeight: 500,
           letterSpacing: "-0.02em",
         }}
       >
-        Suas finanças com inteligência artificial.
+        Lemon - Finanças para Casais
       </div>
     </div>,
     {

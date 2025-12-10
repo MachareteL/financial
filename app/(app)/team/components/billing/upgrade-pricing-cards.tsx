@@ -163,9 +163,6 @@ export function UpgradePricingCards({
                   <Check className="w-3 h-3 text-emerald-500" /> Exportação de
                   dados
                 </span>
-                <span className="flex items-center gap-2">
-                  <Check className="w-3 h-3 text-emerald-500" /> App Mobile
-                </span>
               </div>
             </div>
           </div>
@@ -212,8 +209,7 @@ export function UpgradePricingCards({
                 )}
               </Button>
               <div className="text-xs text-muted-foreground space-y-1">
-                <p>Cancela quando quiser.</p>
-                <p>7 dias de garantia.</p>
+                <p>Cancele quando quiser.</p>
               </div>
             </div>
           </div>

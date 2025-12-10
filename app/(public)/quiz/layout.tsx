@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Qual é a sua Personalidade Financeira? | Lemon",
+  title: "Qual é o seu perfil financeiro? Teste agora!",
   description:
     "Descubra seu Perfil Financeiro e veja como ele combina com o do seu amor. Teste gratuito e rápido para casais.",
   keywords: [
@@ -19,9 +19,9 @@ export const metadata: Metadata = {
     "quiz de compatibilidade financeira",
   ],
   openGraph: {
-    title: "Qual é a sua vibe com o dinheiro?",
+    title: "Qual é o seu perfil financeiro?",
     description:
-      "Fiz o teste do Lemon e descobri meu perfil financeiro. Descubra o seu e veja se combinamos!",
+      "Faça o teste de perfil gratuito! Descubra seu arquétipo financeiro. Individual ou em dupla!",
     type: "website",
     images: [
       {
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Qual é a sua Personalidade Financeira?",
+    title: "Qual é o seu arquétipo financeiro?",
     description: "Descubra seu arquétipo financeiro em 5 minutos.",
   },
   alternates: {
