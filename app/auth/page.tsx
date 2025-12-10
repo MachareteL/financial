@@ -31,6 +31,7 @@ import {
 import { Loader2, TrendingUp, CheckCircle2, Sparkles } from "lucide-react";
 import { LegalDisclaimer } from "@/app/auth/_components/legal-disclaimer";
 import { Logo } from "@/components/lemon/logo";
+import { AuthApiError } from "@supabase/supabase-js";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -80,11 +81,15 @@ export default function AuthPage() {
       notify.success("Conta criada com sucesso!", {
         description: "Seu acesso já está liberado. Bem-vindo ao time!",
       });
-      // Opcional: Auto-login após cadastro se a API permitir, ou pedir para logar
-      // Por padrão do fluxo anterior, o usuário não é logado automaticamente se tiver verify email
-      // Mas se o RLS permitir, ele pode logar. Vamos manter o usuário na tela para ele fazer login ou ver o aviso.
     } catch (err: unknown) {
-      notify.error(err, "criar conta");
+      if ((err as { stack: string }).stack.includes("profiles_id_fkey")) {
+        notify.info("Faça login.", "Esse email já está cadastrado.");
+        return;
+      }
+      notify.error(
+        "Algo inesperado aconteceu, tente novamente mais tarde.",
+        "criar conta"
+      );
     } finally {
       setIsLoading(false);
     }
