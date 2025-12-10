@@ -22,7 +22,7 @@ export class CreateExpenseUseCase {
     );
 
     if (!hasPermission) {
-      throw new Error("Permissão negada: Você não pode criar despesas.");
+      throw new Error("Você não tem permissão para adicionar despesas.");
     }
 
     let receiptUrl: string | null = null;

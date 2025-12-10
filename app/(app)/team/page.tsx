@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,9 @@ import {
 import { LoadingState } from "@/components/lemon/loading-state";
 import { useTeam } from "@/app/(app)/team/team-provider";
 import { useTeamData } from "@/hooks/use-team-data";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 
 // Componentes
 import { TeamMembersTab } from "./components/team-members-tab";
@@ -24,9 +27,11 @@ import { TeamSettingsTab } from "./components/team-settings-tab";
 import { TeamInvitesTab } from "./components/team-invites-tab";
 import { TeamSubscriptionTab } from "./components/team-subscription-tab";
 
-export default function TeamPage() {
+function TeamContent() {
   const { currentTeam } = useTeam();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [isPolling, setIsPolling] = useState(false);
 
   // React Query Hook
   const {
@@ -44,6 +49,39 @@ export default function TeamPage() {
   const handleUpdate = async () => {
     await refetch();
   };
+
+  useEffect(() => {
+    const success = searchParams.get("success");
+    if (success === "true" && !isPolling) {
+      setIsPolling(true);
+      toast.loading("Confirmando sua assinatura...", {
+        id: "sub-check",
+        duration: 10000,
+      });
+
+      // Poll every 2 seconds for 10 seconds or until subscription appears
+      const interval = setInterval(async () => {
+        const { data } = await refetch();
+        if (data?.subscription) {
+          toast.dismiss("sub-check");
+          toast.success("Tudo certo! Sua assinatura está confirmada.");
+          setIsPolling(false);
+          clearInterval(interval);
+          // Clean URL
+          router.replace("/team");
+        }
+      }, 2000);
+
+      // Stop polling after 15 seconds max
+      setTimeout(() => {
+        clearInterval(interval);
+        setIsPolling(false);
+        toast.dismiss("sub-check");
+      }, 15000);
+
+      return () => clearInterval(interval);
+    }
+  }, [searchParams, refetch, router, isPolling]);
 
   if (!currentTeam || isLoading) {
     return <LoadingState message="Carregando equipe..." />;
@@ -153,5 +191,13 @@ export default function TeamPage() {
         </Tabs>
       </div>
     </div>
+  );
+}
+
+export default function TeamPage() {
+  return (
+    <Suspense fallback={<LoadingState message="Carregando equipe..." />}>
+      <TeamContent />
+    </Suspense>
   );
 }

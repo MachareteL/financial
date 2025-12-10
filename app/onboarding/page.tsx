@@ -358,7 +358,7 @@ export default function OnboardingPage() {
                       Organize Gastos e Metas
                     </h4>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      Registre despesas, categorize gastos e defina metas de
+                      Registre despesas, categorize despesas e defina metas de
                       economia. Tudo fica sincronizado para todos os membros da
                       equipe.
                     </p>

@@ -21,7 +21,7 @@ export function MobileNav() {
 
   const mainLinks = [
     { href: "/dashboard", label: "Início", icon: LayoutDashboard },
-    { href: "/expenses", label: "Gastos", icon: TrendingUp },
+    { href: "/expenses", label: "Despesas", icon: TrendingUp },
     { href: "/budget", label: "Orçamento", icon: Target },
   ];
 

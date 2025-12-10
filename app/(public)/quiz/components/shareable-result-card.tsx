@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 interface ShareableResultCardProps {
   result: QuizResult;
-  archetypeData: any;
+  archetypeData: { title: string; motto: string };
 }
 
 // Lemon Brand Colors (Hardcoded to ensure consistency in generated image)

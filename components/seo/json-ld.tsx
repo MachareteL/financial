@@ -1,7 +1,7 @@
 import React from "react";
 
 type JsonLdProps = {
-  schema: Record<string, any>;
+  schema: Record<string, unknown>;
 };
 
 export function JsonLd({ schema }: JsonLdProps) {

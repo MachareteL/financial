@@ -16,6 +16,28 @@ type StripeSubscription = Stripe.Subscription & {
   current_period_end: number;
 };
 
+// Helper to get Team ID from subscription or checkout session
+async function getTeamIdFromEvent(
+  event: Stripe.Event,
+  subscription: Stripe.Subscription,
+  repository: SupabaseSubscriptionRepository
+): Promise<string | null> {
+  // 1. Try metadata on subscription
+  if (subscription.metadata?.team_id) {
+    return subscription.metadata.team_id;
+  }
+
+  // 2. Try looking up by client_reference_id on the latest invoice/checkout session if possible
+  // This is hard to do from just the subscription object without extra API calls,
+  // but we can try to find an existing subscription by external ID in our DB?
+  const existing = await repository.findByExternalId(subscription.id);
+  if (existing) {
+    return existing.teamId;
+  }
+
+  return null;
+}
+
 // Create a Supabase client with the Service Role Key for admin access
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -47,6 +69,14 @@ export async function POST(req: Request) {
 
     switch (event.type) {
       case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        // Here we can log success or trigger immediate provisions if needed.
+        // Usually subscription.created handles the logic, but this confirms payment.
+        if (session.mode === "subscription" && session.client_reference_id) {
+          console.log(
+            `Checkout completed for team ${session.client_reference_id}`
+          );
+        }
         break;
       }
       case "customer.subscription.created":
@@ -59,11 +89,26 @@ export async function POST(req: Request) {
         // Fix for missing types in Stripe SDK v20.0.0
         const typedSub = sub as unknown as StripeSubscription;
 
-        const teamId = sub.metadata?.team_id;
+        let teamId = sub.metadata?.team_id;
 
         if (!teamId) {
-          console.error("Team ID not found in subscription metadata");
-          break;
+          console.warn(
+            `Missing team_id in metadata for subscription ${sub.id}. Attempting recovery...`
+          );
+          const recoveredTeamId = await getTeamIdFromEvent(
+            event,
+            sub,
+            subscriptionRepository
+          );
+
+          if (recoveredTeamId) {
+            teamId = recoveredTeamId;
+          } else {
+            console.error(
+              `FAILED to recover team_id for subscription ${sub.id}. Ignoring event.`
+            );
+            break;
+          }
         }
 
         const existingSub = await subscriptionRepository.findByExternalId(

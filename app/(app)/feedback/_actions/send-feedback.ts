@@ -9,11 +9,15 @@ import { FeedbackDTO } from "@/domain/dto/feedback.dto";
 
 const formSchema = z.object({
   type: z.enum(["bug", "suggestion", "complaint", "other"]),
-  title: z.string().min(5, "O título deve ter pelo menos 5 caracteres"),
+  title: z.string().min(5, "O título precisa ter pelo menos 5 letras."),
   description: z
     .string()
-    .min(20, "A descrição deve ter pelo menos 20 caracteres"),
-  email: z.string().email("Email inválido").optional().or(z.literal("")),
+    .min(20, "A descrição precisa ser mais detalhada (mínimo 20 caracteres)"),
+  email: z
+    .string()
+    .email("Esse email parece não estar certo")
+    .optional()
+    .or(z.literal("")),
 });
 
 export type FeedbackFormValues = z.infer<typeof formSchema>;
@@ -22,7 +26,7 @@ export async function sendFeedback(data: FeedbackFormValues) {
   const result = formSchema.safeParse(data);
 
   if (!result.success) {
-    return { error: "Dados inválidos" };
+    return { error: "Verifique se preencheu tudo certinho." };
   }
 
   // Get current user for tracking
@@ -42,6 +46,9 @@ export async function sendFeedback(data: FeedbackFormValues) {
     return { success: true };
   } catch (err) {
     console.error("Unexpected error sending email:", err);
-    return { error: "Erro interno ao enviar feedback." };
+    return {
+      error:
+        "Não conseguimos enviar seu feedback. Tente de novo em alguns instantes.",
+    };
   }
 }

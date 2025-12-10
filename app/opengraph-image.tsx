@@ -62,7 +62,17 @@ export default async function Image() {
           letterSpacing: "-0.02em",
         }}
       >
-        Finanças Inteligentes para Casais
+        Finanças Inteligentes para Casais.
+      </div>
+      <div
+        style={{
+          fontSize: 20,
+          color: "#84cc16",
+          fontWeight: 500,
+          letterSpacing: "-0.02em",
+        }}
+      >
+        Suas finanças com inteligência artificial.
       </div>
     </div>,
     {

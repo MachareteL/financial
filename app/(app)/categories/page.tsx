@@ -43,6 +43,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+import {
   Plus,
   Edit2,
   Trash2,
@@ -57,7 +68,9 @@ import {
   PiggyBank,
   Wallet,
   Sparkles,
+  AlertTriangle,
 } from "lucide-react";
+
 import { LoadingState } from "@/components/lemon/loading-state";
 
 // --- Visual Configuration ---
@@ -151,6 +164,7 @@ export default function CategoriesPage() {
   const [editingCategory, setEditingCategory] =
     useState<CategoryDetailsDTO | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
 
   // 1. Authentication Check
   useEffect(() => {
@@ -220,17 +234,19 @@ export default function CategoriesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!teamId || !userId || !confirm("Excluir esta categoria?")) return;
+  const confirmDelete = async () => {
+    if (!teamId || !userId || !categoryToDelete) return;
     try {
       await deleteCategoryMutation.mutateAsync({
-        categoryId: id,
+        categoryId: categoryToDelete,
         teamId,
         userId,
       });
       notify.success("Categoria excluída.");
     } catch (error: unknown) {
       notify.error(error, "excluir categoria");
+    } finally {
+      setCategoryToDelete(null);
     }
   };
 
@@ -377,7 +393,7 @@ export default function CategoriesPage() {
                                   <Edit2 className="w-4 h-4 mr-2" /> Editar
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                  onClick={() => handleDelete(cat.id)}
+                                  onClick={() => setCategoryToDelete(cat.id)}
                                   className="text-destructive focus:text-destructive"
                                 >
                                   <Trash2 className="w-4 h-4 mr-2" /> Excluir
@@ -517,6 +533,64 @@ export default function CategoriesPage() {
           </DialogContent>
         </Dialog>
       </div>
+
+      <AlertDialog
+        open={!!categoryToDelete}
+        onOpenChange={(open) => !open && setCategoryToDelete(null)}
+      >
+        <AlertDialogContent className="border-destructive/50">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="w-5 h-5" />
+              Tem certeza absoluta?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild className="space-y-3">
+              <div>
+                <p>
+                  Esta ação não pode ser desfeita. Isso excluirá permanentemente
+                  a categoria.
+                </p>
+                <div className="flex gap-3 p-4 mt-2 border-l-4 border-red-500 bg-red-50 dark:bg-red-900/10 rounded-r-lg">
+                  <div className="shrink-0">
+                    <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold text-red-800 dark:text-red-300">
+                      Perda de dados irreversível
+                    </p>
+                    <p className="text-sm text-red-700 dark:text-red-400 leading-relaxed">
+                      Ao excluir esta categoria,{" "}
+                      <span className="font-bold underline decoration-red-400 underline-offset-2">
+                        todas as despesas
+                      </span>{" "}
+                      vinculadas a ela também serão excluídas do sistema.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isMutating}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                confirmDelete();
+              }}
+              disabled={isMutating}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isMutating ? (
+                <Loader2 className="animate-spin w-4 h-4" />
+              ) : (
+                "Sim, excluir tudo"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -51,11 +51,7 @@ export function TeamMembersTab({
   const [inviteRoleId, setInviteRoleId] = useState<string>("");
 
   const isProtectedRole = (roleName?: string) => {
-    return (
-      roleName === "Proprietário" ||
-      roleName === "Owner" ||
-      roleName === "Administrador"
-    );
+    return roleName === "Proprietário" || roleName === "Owner";
   };
 
   const handleInviteMember = async (e: React.FormEvent) => {
@@ -168,9 +164,6 @@ export function TeamMembersTab({
                       <SelectValue placeholder="Selecione um cargo..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="default">
-                        Sem cargo (Acesso limitado)
-                      </SelectItem>
                       {roles
                         .filter((r) => !isProtectedRole(r.name))
                         .map((r) => (
@@ -184,7 +177,7 @@ export function TeamMembersTab({
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={isActionLoading}
+                  disabled={isActionLoading || !inviteRoleId}
                 >
                   {isActionLoading ? (
                     <Loader2 className="animate-spin mr-2" />
@@ -261,16 +254,15 @@ export function TeamMembersTab({
                       </div>
                     ) : can("MANAGE_TEAM") && !isMe ? (
                       <Select
-                        value={member.roleId || "default"}
+                        value={member.roleId || ""}
                         onValueChange={(val) =>
                           handleUpdateMemberRole(member.id, val)
                         }
                       >
                         <SelectTrigger className="h-8 text-xs w-full">
-                          <SelectValue />
+                          <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="default">Sem cargo</SelectItem>
                           {roles
                             .filter((r) => !isProtectedRole(r.name))
                             .map((r) => (

@@ -15,7 +15,8 @@ export class UpdateIncomeUseCase {
       dto.teamId,
       "MANAGE_BUDGET"
     );
-    if (!hasPermission) throw new Error("Permissão negada.");
+    if (!hasPermission)
+      throw new Error("Você não tem permissão para editar receitas.");
 
     const existingIncome = await this.incomeRepository.findById(
       dto.incomeId,
@@ -23,7 +24,9 @@ export class UpdateIncomeUseCase {
     );
 
     if (!existingIncome) {
-      throw new Error("Receita não encontrada ou você não tem permissão");
+      throw new Error(
+        "Não encontramos essa receita ou você não tem permissão."
+      );
     }
 
     const updatedIncome = existingIncome.update({

@@ -38,6 +38,7 @@ import { DeleteExpenseDialog } from "./components/delete-expense-dialog";
 import { ExpensesTable } from "./components/expenses-table";
 import { ExpensesAnalysis } from "./components/expenses-analysis";
 import { ReceiptViewer } from "./components/receipt-viewer";
+import { ExportExpensesDialog } from "./components/expenses-export-dialog"; // Import
 import { LoadingState } from "@/components/lemon/loading-state";
 
 const PAGE_SIZE = 20;
@@ -261,6 +262,16 @@ export default function ExpensesPage() {
                 })}
               </span>
             </div>
+            <ExportExpensesDialog
+              teamId={teamId}
+              isPro={
+                currentTeam?.subscription?.status === "active" ||
+                currentTeam?.subscription?.status === "trialing" ||
+                (currentTeam?.team.trialEndsAt
+                  ? new Date() < new Date(currentTeam.team.trialEndsAt)
+                  : false)
+              }
+            />
             {can("MANAGE_EXPENSES") && (
               <Button
                 onClick={() => router.push("/expenses/new")}

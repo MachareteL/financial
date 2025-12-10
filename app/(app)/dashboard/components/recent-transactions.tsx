@@ -20,13 +20,13 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
         <CardHeader className="pb-3 border-b border-slate-50">
           <div className="flex justify-between items-center">
             <CardTitle className="text-base font-bold text-slate-800">
-              Últimos Gastos
+              Últimas Despesas
             </CardTitle>
             <Button
               size="icon"
               className="h-8 w-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm shadow-primary/20"
               onClick={() => router.push("/expenses/new")}
-              title="Novo Gasto"
+              title="Nova Despesa"
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -74,7 +74,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
               </div>
               <div>
                 <p className="text-sm font-medium text-slate-900">
-                  Nenhum gasto recente
+                  Nenhuma despesa recente
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
                   Comece a registrar suas despesas para ver o histórico.

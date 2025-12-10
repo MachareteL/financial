@@ -51,15 +51,15 @@ export const metadata: Metadata = {
     type: "website",
     locale: "pt_BR",
     siteName: "Lemon",
-    title: "Lemon | Finanças para Casais que Constroem Juntos",
+    title: "Lemon | Vida financeira com inteligência artificial.",
     description:
-      "O app de finanças feito para casais que dividem a vida e o dinheiro. Organização automática e metas compartilhadas.",
+      "Gerencie sua vida financeira com inteligência artificial. Lemon ajuda você a organizar suas finanças e metas utilizando o poder da IA. Organize suas finanças em grupo.",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Lemon - Finanças Inteligentes para Casais",
+        alt: "Lemon - Finanças Inteligentes.",
       },
     ],
   },
@@ -67,8 +67,9 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@lemonfinancas",
     creator: "@lemonfinancas",
-    title: "Lemon | Finanças para Casais",
-    description: "Organização financeira automática para casais.",
+    title: "Lemon | Finanças com IA",
+    description:
+      "Gerencie sua vida financeira com inteligência artificial. Lemon ajuda você a organizar suas finanças e metas utilizando o poder da IA. Organize suas finanças em time!",
     images: ["/og-image.jpg"],
   },
   robots: {

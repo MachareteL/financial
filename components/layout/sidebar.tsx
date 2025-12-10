@@ -16,7 +16,7 @@ import { Logo } from "@/components/lemon/logo";
 
 const navLinks = [
   { href: "/dashboard", label: "Visão Geral", icon: LayoutDashboard },
-  { href: "/expenses", label: "Gastos", icon: TrendingUp },
+  { href: "/expenses", label: "Despesas", icon: TrendingUp },
   { href: "/budget", label: "Orçamento", icon: Target },
   { href: "/investments", label: "Investimentos", icon: Wallet },
   { href: "/categories", label: "Categorias", icon: Tag },

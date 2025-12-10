@@ -1,83 +1,178 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getAllPosts } from "@/lib/blog";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, UserIcon } from "lucide-react";
+import { CalendarIcon, UserIcon, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import type { Metadata } from "next";
 
-export const metadata = {
-  title: "Blog | Lemon Finanças",
-  description: "Dicas de finanças, investimentos e novidades sobre o Lemon.",
+export const metadata: Metadata = {
+  title: "Blog",
+  description:
+    "Dicas financeiras, guias de investimentos e novidades sobre o Lemon para casais.",
+  openGraph: {
+    title: "Blog | Lemon Finanças",
+    description:
+      "Dicas financeiras, guias de investimentos e novidades sobre o Lemon para casais.",
+    type: "website",
+    url: "https://lemonfinancas.com.br/blog",
+    images: [
+      {
+        url: "/og-blog.jpg", // Ensure this image exists or use a generic one
+        width: 1200,
+        height: 630,
+        alt: "Blog Lemon Finanças",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Blog | Lemon Finanças",
+    description:
+      "Dicas financeiras, guias de investimentos e novidades sobre o Lemon para casais.",
+  },
 };
 
 export default function BlogPage() {
   const posts = getAllPosts();
+  const featuredPost = posts[0];
+  const regularPosts = posts.slice(1);
 
   return (
-    <div className="container py-12 md:py-24">
-      <div className="flex flex-col items-center text-center space-y-4 mb-12">
-        <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-          Blog do Lemon
-        </h1>
-        <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-          Conteúdos para transformar sua vida financeira.
-        </p>
-      </div>
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <section className="relative border-b bg-muted/30">
+        <div className="container py-20 md:py-32">
+          <div className="mx-auto max-w-[800px] text-center space-y-6">
+            <Badge
+              variant="secondary"
+              className="px-4 py-1 text-sm rounded-full"
+            >
+              Blog do Lemon
+            </Badge>
+            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
+              Finanças para quem{" "}
+              <span className="text-primary">constrói junto</span>
+            </h1>
+            <p className="mx-auto max-w-[600px] text-lg text-muted-foreground md:text-xl leading-relaxed">
+              Conteúdos práticos sobre planejamento financeiro, investimentos e
+              organização para casais. Sem "economês".
+            </p>
+          </div>
+        </div>
+      </section>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {posts.map((post) => (
-          <Link key={post.slug} href={`/blog/${post.slug}`} className="group">
-            <Card className="h-full flex flex-col transition-all hover:border-primary/50 hover:shadow-md">
-              {post.coverImage && (
-                <div className="aspect-video w-full overflow-hidden rounded-t-lg bg-muted relative">
-                  <Image
-                    src={post.coverImage}
-                    alt={post.title}
-                    fill
-                    className="object-cover transition-transform group-hover:scale-105"
-                  />
+      <div className="container py-12 md:py-20">
+        {/* Featured Post */}
+        {featuredPost && (
+          <div className="mb-16">
+            <h2 className="text-2xl font-bold tracking-tight mb-8 flex items-center gap-2">
+              <span className="w-1 h-6 bg-primary rounded-full" />
+              Destaque
+            </h2>
+            <Link
+              href={`/blog/${featuredPost.slug}`}
+              className="group block overflow-hidden rounded-2xl border bg-card transition-all hover:shadow-lg hover:border-primary/20"
+            >
+              <div className="grid md:grid-cols-2 gap-6 md:gap-10">
+                <div className="relative aspect-video md:aspect-auto w-full h-full min-h-[300px] bg-muted overflow-hidden">
+                  {featuredPost.coverImage && (
+                    <Image
+                      src={featuredPost.coverImage}
+                      alt={featuredPost.title}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  )}
                 </div>
-              )}
-              <CardHeader>
-                <div className="flex gap-2 mb-2">
-                  {post.tags.slice(0, 2).map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      {tag}
+                <div className="flex flex-col justify-center p-6 md:p-10 space-y-4">
+                  <div className="flex items-center gap-2">
+                    {featuredPost.tags.slice(0, 1).map((tag) => (
+                      <Badge key={tag} className="text-xs font-medium">
+                        {tag}
+                      </Badge>
+                    ))}
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <CalendarIcon className="h-3 w-3" />
+                      {format(new Date(featuredPost.date), "d 'de' MMM, yyyy", {
+                        locale: ptBR,
+                      })}
+                    </span>
+                  </div>
+                  <h3 className="text-2xl md:text-4xl font-bold tracking-tight group-hover:text-primary transition-colors">
+                    {featuredPost.title}
+                  </h3>
+                  <p className="text-muted-foreground md:text-lg line-clamp-3">
+                    {featuredPost.description}
+                  </p>
+                  <div className="pt-4">
+                    <span className="inline-flex items-center text-sm font-semibold text-primary group-hover:underline">
+                      Ler artigo completo{" "}
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </div>
+        )}
+
+        {/* Regular Posts Grid */}
+        <div className="space-y-8">
+          <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <span className="w-1 h-6 bg-primary rounded-full" />
+            Últimas postagens
+          </h2>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {regularPosts.map((post) => (
+              <Link
+                key={post.slug}
+                href={`/blog/${post.slug}`}
+                className="group flex flex-col h-full overflow-hidden rounded-xl border bg-card transition-all hover:shadow-md hover:border-primary/30"
+              >
+                <div className="aspect-[1.6/1] relative bg-muted overflow-hidden">
+                  {post.coverImage && (
+                    <Image
+                      src={post.coverImage}
+                      alt={post.title}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  )}
+                  <div className="absolute top-4 left-4">
+                    <Badge
+                      variant="secondary"
+                      className="shadow-sm backdrop-blur-sm bg-background/80"
+                    >
+                      {post.tags[0]}
                     </Badge>
-                  ))}
+                  </div>
                 </div>
-                <CardTitle className="line-clamp-2 group-hover:text-primary transition-colors">
-                  {post.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1">
-                <p className="text-muted-foreground line-clamp-3 text-sm">
-                  {post.description}
-                </p>
-              </CardContent>
-              <CardFooter className="text-xs text-muted-foreground flex items-center gap-4">
-                <div className="flex items-center gap-1">
-                  <CalendarIcon className="h-3 w-3" />
-                  {format(new Date(post.date), "d 'de' MMMM, yyyy", {
-                    locale: ptBR,
-                  })}
+                <div className="flex flex-col flex-1 p-5 space-y-3">
+                  <div className="text-xs text-muted-foreground flex items-center gap-3">
+                    <span className="flex items-center gap-1">
+                      <CalendarIcon className="h-3 w-3" />
+                      {format(new Date(post.date), "d MMM, yyyy", {
+                        locale: ptBR,
+                      })}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <UserIcon className="h-3 w-3" />
+                      {post.author}
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
+                    {post.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground line-clamp-3 flex-1">
+                    {post.description}
+                  </p>
                 </div>
-                <div className="flex items-center gap-1">
-                  <UserIcon className="h-3 w-3" />
-                  {post.author}
-                </div>
-              </CardFooter>
-            </Card>
-          </Link>
-        ))}
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
