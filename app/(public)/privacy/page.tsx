@@ -14,6 +14,14 @@ import {
 export const metadata: Metadata = {
   title: "Política de Privacidade | Lemon",
   description: "Política de privacidade, proteção de dados e cookies do Lemon.",
+
+  openGraph: {
+    title: "Política de Privacidade | Lemon",
+    description:
+      "Política de privacidade, proteção de dados e cookies do Lemon.",
+    type: "website",
+    url: "https://lemonfinancas.com.br/privacy",
+  },
 };
 
 export default function PrivacyPage() {

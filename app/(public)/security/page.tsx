@@ -14,6 +14,13 @@ export const metadata: Metadata = {
   title: "Segurança e Compliance | Lemon",
   description:
     "Detalhes sobre a infraestrutura de segurança, criptografia e proteção de dados do Lemon.",
+  openGraph: {
+    title: "Segurança e Compliance | Lemon",
+    description:
+      "Detalhes sobre a infraestrutura de segurança, criptografia e proteção de dados do Lemon.",
+    type: "website",
+    url: "https://lemonfinancas.com.br/security",
+  },
 };
 
 export default function SecurityPage() {

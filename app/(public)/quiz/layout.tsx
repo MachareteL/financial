@@ -23,14 +23,7 @@ export const metadata: Metadata = {
     description:
       "Faça o teste de perfil gratuito! Descubra seu arquétipo financeiro. Individual ou em dupla!",
     type: "website",
-    images: [
-      {
-        url: "/og-quiz.png", // Assuming specific image or fallback to main
-        width: 1200,
-        height: 630,
-        alt: "Teste de Personalidade Financeira Lemon",
-      },
-    ],
+    url: "https://lemonfinancas.com.br/quiz",
   },
   twitter: {
     card: "summary_large_image",
