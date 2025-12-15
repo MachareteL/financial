@@ -1,24 +1,16 @@
-"use client";
-
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/components/providers/auth-provider";
 import {
-  ArrowRight,
   Sparkles,
   TrendingUp,
-  Menu,
-  X,
   Users,
   PieChart,
   CheckCircle2,
@@ -26,34 +18,17 @@ import {
   History,
   Calculator,
 } from "lucide-react";
-import { useState } from "react";
-import { useTheme } from "next-themes";
+
 import { JsonLd } from "@/components/seo/json-ld";
 import { Logo } from "@/components/lemon/logo";
 
+// Client Components
+import { HeaderAuthButtons } from "@/components/landing/header-auth-buttons";
+import { HeroCTA } from "@/components/landing/hero-cta";
+import { PricingToggle } from "@/components/landing/pricing-toggle";
+import { MobileMenu } from "@/components/landing/mobile-menu";
+
 export default function LandingPage() {
-  const { session, loading } = useAuth();
-  const router = useRouter();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isAnnual, setIsAnnual] = useState(true);
-  useTheme();
-
-  const handleGetStarted = () => {
-    if (session) {
-      router.push("/dashboard");
-    } else {
-      router.push("/auth");
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
   const softwareSchema = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -90,7 +65,7 @@ export default function LandingPage() {
       <JsonLd schema={financialProductSchema} />
       {/* --- HEADER --- */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md transition-all">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 relative">
           <div className="flex items-center gap-2">
             <Logo className="h-8 w-8" />
             <span className="text-xl font-bold tracking-tight">Lemon</span>
@@ -131,89 +106,12 @@ export default function LandingPage() {
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
-            {session ? (
-              <Button onClick={() => router.push("/dashboard")}>
-                Ir para o App
-              </Button>
-            ) : (
-              <>
-                <Button variant="ghost" onClick={() => router.push("/auth")}>
-                  Login
-                </Button>
-                <Button onClick={() => router.push("/auth")}>
-                  Começar Agora
-                </Button>
-              </>
-            )}
+            <HeaderAuthButtons />
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <button
-            className="md:hidden p-2 text-muted-foreground"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
-          </button>
+          {/* Mobile Menu Toggle & Content */}
+          <MobileMenu />
         </div>
-
-        {/* Mobile Nav Dropdown */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-border bg-background px-4 py-4 shadow-lg">
-            <div className="flex flex-col space-y-4">
-              <Link
-                href="/#features"
-                className="text-base font-medium text-muted-foreground"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Funcionalidades
-              </Link>
-              <Link
-                href="/quiz"
-                className="text-base font-medium text-muted-foreground"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Quiz
-              </Link>
-              <Link
-                href="/#method"
-                className="text-base font-medium text-muted-foreground"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                O Método
-              </Link>
-              <Link
-                href="/#pricing"
-                className="text-base font-medium text-muted-foreground"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Planos
-              </Link>
-              <Link
-                href="/blog"
-                className="text-base font-medium text-muted-foreground"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Blog
-              </Link>
-              <div className="pt-2 flex flex-col gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => router.push("/auth")}
-                  className="w-full"
-                >
-                  Login
-                </Button>
-                <Button onClick={handleGetStarted} className="w-full">
-                  Começar Agora
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
       </header>
 
       <main>
@@ -247,25 +145,14 @@ export default function LandingPage() {
                 no futuro.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Button
-                  size="lg"
-                  className="h-14 px-8 text-lg shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all group"
-                  onClick={handleGetStarted}
-                >
-                  Começar a construir juntos
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
+                <HeroCTA />
                 <Button
                   size="lg"
                   variant="outline"
                   className="h-14 px-8 text-lg border-2"
-                  onClick={() => {
-                    document
-                      .getElementById("pain")
-                      ?.scrollIntoView({ behavior: "smooth" });
-                  }}
+                  asChild
                 >
-                  Entender o problema
+                  <Link href="#pain">Entender o problema</Link>
                 </Button>
               </div>
               <div className="mt-6 flex items-center justify-center lg:justify-start gap-4 text-sm text-muted-foreground">
@@ -465,9 +352,9 @@ export default function LandingPage() {
             <Button
               size="lg"
               className="h-14 px-10 text-lg shadow-lg shadow-primary/20 hover:scale-105 transition-transform"
-              onClick={() => router.push("/quiz")}
+              asChild
             >
-              Fazer o Teste Gratuito
+              <Link href="/quiz">Fazer o Teste Gratuito</Link>
             </Button>
 
             <p className="mt-6 text-sm text-muted-foreground">
@@ -574,196 +461,8 @@ export default function LandingPage() {
                 Menos que um jantar fora para organizar a vida financeira do ano
                 inteiro.
               </p>
-
-              {/* Toggle Mensal/Anual */}
-              <div className="mt-8 flex items-center justify-center gap-4">
-                <span
-                  className={`text-sm font-medium transition-colors ${!isAnnual ? "text-foreground" : "text-muted-foreground"}`}
-                >
-                  Mensal
-                </span>
-                <button
-                  onClick={() => setIsAnnual(!isAnnual)}
-                  className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${isAnnual ? "bg-primary" : "bg-muted"}`}
-                  role="switch"
-                  aria-checked={isAnnual}
-                >
-                  <span
-                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform ${isAnnual ? "translate-x-8" : "translate-x-1"}`}
-                  />
-                </button>
-                <span
-                  className={`text-sm font-medium transition-colors ${isAnnual ? "text-foreground" : "text-muted-foreground"}`}
-                >
-                  Anual
-                </span>
-                {isAnnual && (
-                  <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20">
-                    51% OFF
-                  </Badge>
-                )}
-              </div>
+              <PricingToggle />
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              {/* Plano Free */}
-              <Card className="border-border shadow-sm hover:shadow-md transition-all">
-                <CardHeader>
-                  <CardTitle className="text-2xl">Starter</CardTitle>
-                  <CardDescription>
-                    Para dar os primeiros passos na organização.
-                  </CardDescription>
-                  <div className="mt-4">
-                    <span className="text-4xl font-bold">Grátis</span>
-                    <span className="text-muted-foreground"> para sempre</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3 text-sm">
-                    <li className="flex items-center gap-2 text-muted-foreground">
-                      <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
-                      <span>1 equipe</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-muted-foreground">
-                      <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
-                      <span>Lançamentos manuais ilimitados</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-muted-foreground">
-                      <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
-                      <span>Dashboards e visão macro das finanças</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-muted-foreground">
-                      <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
-                      <span>Categorias e orçamentos</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-muted-foreground/50">
-                      <X className="w-4 h-4 flex-shrink-0" />
-                      <span>Leitura de recibos com IA</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-muted-foreground/50">
-                      <X className="w-4 h-4 flex-shrink-0" />
-                      <span>Equipes adicionais</span>
-                    </li>
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => router.push("/auth")}
-                  >
-                    Começar Grátis
-                  </Button>
-                </CardFooter>
-              </Card>
-
-              {/* Plano Pro */}
-              <Card className="border-primary shadow-2xl relative overflow-hidden bg-card transform md:scale-105 z-10">
-                <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg">
-                  MAIS POPULAR
-                </div>
-                <CardHeader>
-                  <CardTitle className="text-2xl flex items-center gap-2">
-                    Pro
-                    <Sparkles className="w-5 h-5 text-primary fill-current" />
-                  </CardTitle>
-                  <CardDescription>
-                    Para casais que querem automatizar tudo.
-                  </CardDescription>
-                  <div className="mt-4">
-                    {isAnnual ? (
-                      <>
-                        <span className="text-4xl font-bold">R$ 19</span>
-                        <span className="text-muted-foreground">/mês</span>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Cobrado{" "}
-                          <span className="font-semibold">R$ 228/ano</span>
-                        </p>
-                        <p className="text-xs text-primary font-medium mt-1">
-                          Economia de R$ 251,80/ano
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-4xl font-bold">R$ 39,90</span>
-                        <span className="text-muted-foreground">/mês</span>
-                      </>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3 text-sm">
-                    <li className="flex items-center gap-2 text-muted-foreground">
-                      <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
-                      <span>Tudo do Starter, mais:</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-muted-foreground">
-                      <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
-                      <span>
-                        <strong>Leitura de recibos com IA</strong> ilimitada
-                      </span>
-                    </li>
-                    <li className="flex items-center gap-2 text-muted-foreground">
-                      <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
-                      <span>Insights e analytics avançados</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-muted-foreground">
-                      <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
-                      <span>Metas compartilhadas</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-muted-foreground">
-                      <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
-                      <span>Suporte prioritário</span>
-                    </li>
-                  </ul>
-                </CardContent>
-                <CardFooter className="flex-col gap-2">
-                  <Button
-                    size="lg"
-                    className="w-full shadow-lg shadow-primary/20"
-                    onClick={() => router.push("/auth")}
-                  >
-                    Experimente 14 dias grátis
-                  </Button>
-                  <p className="text-xs text-muted-foreground text-center">
-                    Sem compromisso. Cancele quando quiser.
-                  </p>
-                </CardFooter>
-              </Card>
-            </div>
-
-            {/* Social Proof */}
-            {/* <div className="mt-16 text-center">
-              <p className="text-sm text-muted-foreground mb-4">
-                Casais de todo o Brasil já estão construindo juntos
-              </p>
-              <div className="flex items-center justify-center gap-8 flex-wrap">
-                <div className="flex flex-col items-center">
-                  <span className="text-2xl font-bold text-foreground">
-                    500+
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    Casais ativos
-                  </span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-2xl font-bold text-foreground">
-                    R$ 2M+
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    Organizados no app
-                  </span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-2xl font-bold text-foreground">
-                    4.5/5
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    Avaliação média
-                  </span>
-                </div>
-              </div>
-            </div> */}
           </div>
         </section>
 
@@ -777,13 +476,7 @@ export default function LandingPage() {
               O futuro que vocês querem depende da organização que vocês têm
               hoje.
             </p>
-            <Button
-              size="lg"
-              className="h-14 px-12 text-lg shadow-xl"
-              onClick={handleGetStarted}
-            >
-              Criar Conta Grátis
-            </Button>
+            <HeroCTA />
           </div>
         </section>
       </main>
@@ -797,23 +490,6 @@ export default function LandingPage() {
           </div>
           <div className="text-sm text-muted-foreground">
             © 2025 Lemon Financial. Todos os direitos reservados.
-          </div>
-          <div className="flex gap-6 text-sm font-medium text-muted-foreground">
-            <Link
-              href="/terms"
-              className="hover:text-primary transition-colors"
-            >
-              Termos
-            </Link>
-            <Link
-              href="/privacy"
-              className="hover:text-primary transition-colors"
-            >
-              Privacidade
-            </Link>
-            <a href="#" className="hover:text-primary transition-colors">
-              Contato
-            </a>
           </div>
         </div>
       </footer>
