@@ -1,5 +1,6 @@
 import type { IIncomeRepository } from "@/domain/interfaces/income.repository.interface";
 import type { IncomeDetailsDTO } from "@/domain/dto/income.types.d.ts";
+import { IncomeMapper } from "@/domain/mappers/income.mapper";
 
 export class GetIncomesUseCase {
   constructor(private incomeRepository: IIncomeRepository) {}
@@ -11,14 +12,6 @@ export class GetIncomesUseCase {
 
     const incomes = await this.incomeRepository.findByTeamId(teamId);
 
-    return incomes.map((income) => ({
-      id: income.id,
-      amount: income.amount,
-      description: income.description,
-      type: income.type,
-      frequency: income.frequency,
-      date: income.date.toISOString().split("T")[0], // Converte Date para string
-      userId: income.userId,
-    }));
+    return incomes.map(IncomeMapper.toDTO);
   }
 }

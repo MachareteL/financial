@@ -2,6 +2,7 @@ import type { IBudgetRepository } from "@/domain/interfaces/budget.repository.in
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 import type { SaveBudgetDTO } from "@/domain/dto/budget.types.d.ts";
 import { Budget } from "@/domain/entities/budget";
+import { BudgetMapper } from "@/domain/mappers/budget.mapper";
 
 export class SaveBudgetUseCase {
   constructor(
@@ -31,14 +32,7 @@ export class SaveBudgetUseCase {
       });
       await this.budgetRepository.update(updatedBudget);
     } else {
-      const budget = new Budget({
-        id: crypto.randomUUID(),
-        month: dto.month,
-        year: dto.year,
-        totalIncome: dto.totalIncome,
-        teamId: dto.teamId,
-        createdAt: new Date(),
-      });
+      const budget = BudgetMapper.fromCreateDTO(dto);
       await this.budgetRepository.create(budget);
     }
   }

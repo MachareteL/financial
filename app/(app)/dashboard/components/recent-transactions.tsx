@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, ShoppingBag, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { DashboardDataDTO } from "@/domain/dto/dashboard.types.d.ts";
+import { DateUtils } from "@/domain/utils/date.utils";
 
 interface RecentTransactionsProps {
   transactions: DashboardDataDTO["recentTransactions"];
@@ -54,7 +55,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                       </span>
                       <span>
                         •{" "}
-                        {new Date(tx.date + "T12:00:00").toLocaleDateString(
+                        {DateUtils.parseFromUI(tx.date).toLocaleDateString(
                           "pt-BR",
                           { day: "2-digit", month: "2-digit" }
                         )}

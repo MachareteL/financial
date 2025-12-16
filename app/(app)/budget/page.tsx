@@ -80,6 +80,7 @@ import { LoadingState } from "@/components/lemon/loading-state";
 
 // Types
 import type { IncomeDetailsDTO } from "@/domain/dto/income.types.d.ts";
+import { DateUtils } from "@/domain/utils/date.utils";
 
 // Configuração Visual das Pastas
 const FOLDER_CONFIG: Record<
@@ -209,9 +210,17 @@ export default function BudgetPage() {
   const suggestedIncome = useMemo(() => {
     return incomes
       .filter((inc) => {
-        const d = new Date(inc.date.replace(/-/g, "/"));
+        const d = DateUtils.parse(inc.date);
+        if (!d) return false;
+
         if (inc.type === "recurring" && inc.frequency === "monthly")
           return true;
+
+        // Use UTC methods to match the stored date which is UTC-based ISO
+        // But since selectedMonth/Year are local numbers (1-12, YYYY), we need to be careful.
+        // incomes are dates.
+        // If income date is "2023-12-01", d is UTC midnight.
+        // d.getMonth() is 11 (Dec).
         return (
           d.getMonth() + 1 === selectedMonth && d.getFullYear() === selectedYear
         );
@@ -783,9 +792,9 @@ export default function BudgetPage() {
                                 : "Única"}
                             </Badge>
                             <span>
-                              {new Date(
-                                income.date.replace(/-/g, "/")
-                              ).toLocaleDateString("pt-BR")}
+                              {DateUtils.parse(income.date)?.toLocaleDateString(
+                                "pt-BR"
+                              ) || "-"}
                             </span>
                           </div>
                         </div>

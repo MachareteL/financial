@@ -8,6 +8,7 @@ import type {
   DashboardTransactionDTO,
   DashboardDailyData,
 } from "@/domain/dto/dashboard.types.d.ts";
+import { DateUtils } from "@/domain/utils/date.utils";
 
 export class GetDashboardDataUseCase {
   constructor(
@@ -98,7 +99,7 @@ export class GetDashboardDataUseCase {
     // Finaliza dados Diários (Acumulado)
     let currentAccumulated = 0;
     const dailySpending: DashboardDailyData[] = [];
-    const today = new Date();
+    const today = DateUtils.now();
     const isCurrentMonth =
       today.getMonth() + 1 === month && today.getFullYear() === year;
     const currentDay = isCurrentMonth ? today.getDate() : daysInMonth;

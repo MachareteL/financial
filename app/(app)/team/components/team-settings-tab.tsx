@@ -27,13 +27,14 @@ import { notify } from "@/lib/notify-helper";
 import { updateTeamUseCase } from "@/infrastructure/dependency-injection";
 import { useAuth } from "@/components/providers/auth-provider";
 import { usePermission } from "@/hooks/use-permission";
-import type { Subscription } from "@/domain/entities/subscription";
-import type { Team } from "@/domain/entities/team";
+import type { SubscriptionDTO } from "@/domain/dto/subscription.types.d.ts";
+import type { TeamDTO } from "@/domain/dto/team.types.d.ts";
 import { Badge } from "@/components/ui/badge";
+import { DateUtils } from "@/domain/utils/date.utils";
 
 interface TeamSettingsTabProps {
-  team?: Team;
-  subscription?: Subscription | null;
+  team?: TeamDTO;
+  subscription?: SubscriptionDTO | null;
 }
 
 export function TeamSettingsTab({ team, subscription }: TeamSettingsTabProps) {
@@ -67,7 +68,11 @@ export function TeamSettingsTab({ team, subscription }: TeamSettingsTabProps) {
     }
   };
 
-  const isPro = team?.isPro(!!subscription && subscription.isActive());
+  const trialEndsAt = DateUtils.parse(team?.trialEndsAt);
+  const isTrialActive = trialEndsAt ? new Date() < trialEndsAt : false;
+  const isSubscriptionActive =
+    subscription?.status === "active" || subscription?.status === "trialing";
+  const isPro = isTrialActive || isSubscriptionActive;
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500">

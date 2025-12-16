@@ -88,7 +88,7 @@ describe("UpdateExpenseUseCase", () => {
     (teamRepository.verifyPermission as Mock).mockResolvedValue(false);
 
     await expect(useCase.execute(validDTO)).rejects.toThrow(
-      "Permissão negada: Você não pode editar despesas."
+      "Você não tem permissão para editar despesas."
     );
     expect(expenseRepository.update).not.toHaveBeenCalled();
   });
@@ -97,7 +97,7 @@ describe("UpdateExpenseUseCase", () => {
     (expenseRepository.findById as Mock).mockResolvedValue(null);
 
     await expect(useCase.execute(validDTO)).rejects.toThrow(
-      "Gasto não encontrado ou você não tem permissão"
+      "Não encontramos essa despesa ou você não tem permissão."
     );
     expect(expenseRepository.update).not.toHaveBeenCalled();
   });

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useTeam } from "@/app/(app)/team/team-provider";
 import Link from "next/link";
 import { Clock, Zap, Crown } from "lucide-react";
+import { DateUtils } from "@/domain/utils/date.utils";
 import {
   Tooltip,
   TooltipContent,
@@ -38,12 +39,12 @@ export function SubscriptionBadge() {
       const hasActiveSub = subscription ? subscription.isActive() : false;
 
       const trialEndsAt = currentTeam.team.trialEndsAt
-        ? new Date(currentTeam.team.trialEndsAt)
+        ? DateUtils.parse(currentTeam.team.trialEndsAt)
         : null;
-      const isTrialActive = trialEndsAt ? trialEndsAt > new Date() : false;
+      const isTrialActive = trialEndsAt ? trialEndsAt > DateUtils.now() : false;
       const daysRemaining = trialEndsAt
         ? Math.ceil(
-            (trialEndsAt.getTime() - new Date().getTime()) /
+            (trialEndsAt.getTime() - DateUtils.now().getTime()) /
               (1000 * 60 * 60 * 24)
           )
         : 0;

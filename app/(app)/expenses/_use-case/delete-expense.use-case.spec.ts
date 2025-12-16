@@ -45,7 +45,7 @@ describe("DeleteExpenseUseCase", () => {
     (teamRepository.verifyPermission as Mock).mockResolvedValue(false);
 
     await expect(useCase.execute(validDTO)).rejects.toThrow(
-      "Permissão negada: Você não pode excluir despesas."
+      "Você não tem permissão para apagar despesas."
     );
     expect(expenseRepository.delete).not.toHaveBeenCalled();
   });

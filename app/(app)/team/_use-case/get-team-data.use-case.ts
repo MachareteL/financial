@@ -1,12 +1,18 @@
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
-import type { TeamMemberProfileDTO } from "@/domain/dto/team.types.d.ts";
-import type { TeamRole } from "@/domain/entities/team-role";
-import type { TeamInvite } from "@/domain/entities/team-invite";
+
+import type {
+  TeamMemberProfileDTO,
+  TeamDTO,
+  TeamRoleDTO,
+  TeamInviteDTO,
+} from "@/domain/dto/team.types.d.ts";
+import { TeamMapper } from "@/domain/mappers/team.mapper";
+import { TeamRoleMapper } from "@/domain/mappers/team-role.mapper";
+import { TeamInviteMapper } from "@/domain/mappers/team-invite.mapper";
 
 import type { ISubscriptionRepository } from "@/domain/interfaces/subscription.repository.interface";
-import type { Subscription } from "@/domain/entities/subscription";
-
-import type { Team } from "@/domain/entities/team";
+import type { SubscriptionDTO } from "@/domain/dto/subscription.types.d.ts";
+import { SubscriptionMapper } from "@/domain/mappers/subscription.mapper";
 
 export class GetTeamDataUseCase {
   constructor(
@@ -15,11 +21,11 @@ export class GetTeamDataUseCase {
   ) {}
 
   async execute(teamId: string): Promise<{
-    team: Team | null;
+    team: TeamDTO | null;
     members: TeamMemberProfileDTO[];
-    roles: TeamRole[];
-    invites: TeamInvite[];
-    subscription: Subscription | null;
+    roles: TeamRoleDTO[];
+    invites: TeamInviteDTO[];
+    subscription: SubscriptionDTO | null;
   }> {
     const [team, members, roles, invites, subscription] = await Promise.all([
       this.teamRepository.getTeamById(teamId),
@@ -31,6 +37,14 @@ export class GetTeamDataUseCase {
         : Promise.resolve(null),
     ]);
 
-    return { team, members, roles, invites, subscription };
+    return {
+      team: team ? TeamMapper.toDTO(team) : null,
+      members,
+      roles: roles.map(TeamRoleMapper.toDTO),
+      invites: invites.map(TeamInviteMapper.toDTO),
+      subscription: subscription
+        ? SubscriptionMapper.toDTO(subscription)
+        : null,
+    };
   }
 }

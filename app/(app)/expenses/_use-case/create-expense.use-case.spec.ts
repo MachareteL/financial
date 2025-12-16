@@ -69,7 +69,7 @@ describe("CreateExpenseUseCase", () => {
     (teamRepository.verifyPermission as Mock).mockResolvedValue(false);
 
     await expect(useCase.execute(validDTO)).rejects.toThrow(
-      "Permissão negada: Você não pode criar despesas."
+      "Você não tem permissão para adicionar despesas."
     );
     expect(expenseRepository.createMany).not.toHaveBeenCalled();
   });

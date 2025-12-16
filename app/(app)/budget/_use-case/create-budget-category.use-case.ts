@@ -2,6 +2,7 @@ import type { IBudgetCategoryRepository } from "@/domain/interfaces/budget-categ
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 import type { CreateBudgetCategoryDTO } from "@/domain/dto/budget-category.types.d.ts";
 import { BudgetCategory } from "@/domain/entities/budget-category";
+import { BudgetCategoryMapper } from "@/domain/mappers/budget-category.mapper";
 
 export class CreateBudgetCategoryUseCase {
   constructor(
@@ -21,13 +22,7 @@ export class CreateBudgetCategoryUseCase {
         "Permissão negada: Você não pode criar categorias de orçamento."
       );
     }
-    const category = new BudgetCategory({
-      id: crypto.randomUUID(),
-      createdAt: new Date(),
-      name: dto.name,
-      percentage: dto.percentage,
-      teamId: dto.teamId,
-    });
+    const category = BudgetCategoryMapper.fromCreateDTO(dto);
     await this.budgetCategoryRepository.create(category);
   }
 }

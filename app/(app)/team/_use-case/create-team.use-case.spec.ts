@@ -87,7 +87,7 @@ describe("CreateTeamUseCase", () => {
     (subscriptionRepository.findByTeamId as Mock).mockResolvedValue(null); // No sub = FREE
 
     await expect(useCase.execute(validDTO)).rejects.toThrow(
-      "Você já possui um time gratuito. Para criar mais times, faça upgrade dos existentes para o plano PRO."
+      "Você já tem um time gratuito. Para criar mais, que tal fazer um upgrade?"
     );
   });
 
@@ -119,6 +119,7 @@ describe("CreateTeamUseCase", () => {
     );
 
     const result = await useCase.execute(validDTO);
-    expect(result).toBeInstanceOf(Team);
+    expect(result.id).toBeDefined();
+    expect(result.name).toBe(validDTO.teamName);
   });
 });

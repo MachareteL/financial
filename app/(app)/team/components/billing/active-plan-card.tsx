@@ -17,12 +17,13 @@ import {
   Calendar,
   ShieldCheck,
 } from "lucide-react";
-import type { Subscription } from "@/domain/entities/subscription";
+import type { SubscriptionDTO } from "@/domain/dto/subscription.types.d.ts";
 import { manageSubscriptionAction } from "../../_actions/subscription.actions";
 import { notify } from "@/lib/notify-helper";
+import { DateUtils } from "@/domain/utils/date.utils";
 
 interface ActivePlanCardProps {
-  subscription: Subscription;
+  subscription: SubscriptionDTO;
   teamId: string;
 }
 
@@ -45,7 +46,7 @@ export function ActivePlanCard({ subscription, teamId }: ActivePlanCardProps) {
   };
 
   const nextBillingDate = subscription.currentPeriodEnd
-    ? subscription.currentPeriodEnd.toLocaleDateString()
+    ? DateUtils.parse(subscription.currentPeriodEnd)?.toLocaleDateString()
     : "N/A";
 
   return (

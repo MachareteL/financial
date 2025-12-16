@@ -2,6 +2,7 @@ import type { IExpenseRepository } from "@/domain/interfaces/expense.repository.
 import { Expense } from "@/domain/entities/expense";
 import { Category } from "@/domain/entities/category";
 import { BudgetCategory } from "@/domain/entities/budget-category";
+import { DateUtils } from "@/domain/utils/date.utils";
 import { getSupabaseClient } from "../database/supabase.client";
 import type { Database } from "@/domain/dto/database.types.d.ts";
 
@@ -43,7 +44,9 @@ export class ExpenseRepository implements IExpenseRepository {
             teamId: row.categories.budget_categories.team_id,
             name: row.categories.budget_categories.name,
             percentage: Number(row.categories.budget_categories.percentage),
-            createdAt: new Date(row.categories.budget_categories.created_at),
+            createdAt:
+              DateUtils.parse(row.categories.budget_categories.created_at) ||
+              DateUtils.now(),
           })
         : null;
 
@@ -52,7 +55,8 @@ export class ExpenseRepository implements IExpenseRepository {
         name: row.categories.name,
         budgetCategoryId: row.categories.budget_category_id!,
         teamId: row.categories.team_id!,
-        createdAt: new Date(row.categories.created_at),
+        createdAt:
+          DateUtils.parse(row.categories.created_at) || DateUtils.now(),
         budgetCategory: budgetCategory,
       });
     }
@@ -62,7 +66,7 @@ export class ExpenseRepository implements IExpenseRepository {
       id: row.id,
       amount: row.amount,
       description: row.description,
-      date: new Date(row.date.replace(/-/g, "/")), // Converte string 'YYYY-MM-DD'
+      date: DateUtils.parse(row.date) || DateUtils.now(),
       teamId: row.team_id!,
       userId: row.user_id!,
       categoryId: row.category_id!,
@@ -77,7 +81,7 @@ export class ExpenseRepository implements IExpenseRepository {
       installmentNumber: row.installment_number,
       totalInstallments: row.total_installments,
       parentExpenseId: row.parent_expense_id,
-      createdAt: new Date(row.created_at),
+      createdAt: DateUtils.parse(row.created_at) || DateUtils.now(),
 
       category: category,
       owner: row.profiles ? { name: row.profiles.name } : null,

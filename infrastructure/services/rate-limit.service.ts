@@ -1,10 +1,11 @@
 import { getSupabaseClient } from "../database/supabase.server";
+import { DateUtils } from "@/domain/utils/date.utils";
 import { LIMITS } from "@/lib/config/limits";
 
 export class RateLimitService {
   async checkLimit(teamId: string): Promise<boolean> {
     const supabase = await getSupabaseClient();
-    const now = new Date();
+    const now = DateUtils.now();
     const windowStart = new Date(
       now.getTime() - LIMITS.RATE_LIMIT_WINDOW_SECONDS * 1000
     );
@@ -32,7 +33,8 @@ export class RateLimitService {
       return true;
     }
 
-    const recordWindowStart = new Date(record.window_start);
+    const recordWindowStart =
+      DateUtils.parse(record.window_start) || DateUtils.now();
 
     if (recordWindowStart < windowStart) {
       // Window expired, reset

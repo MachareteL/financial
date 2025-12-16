@@ -1,7 +1,9 @@
+import { DateUtils } from "@/domain/utils/date.utils";
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 import type { ICategoryRepository } from "@/domain/interfaces/category.repository.interface";
 import type { IBudgetCategoryRepository } from "@/domain/interfaces/budget-category.repository.interface";
-import type { CreateTeamDTO } from "@/domain/dto/team.types.d.ts";
+import type { CreateTeamDTO, TeamDTO } from "@/domain/dto/team.types.d.ts";
+import { TeamMapper } from "@/domain/mappers/team.mapper";
 import type { Team } from "@/domain/entities/team";
 
 import type { ISubscriptionRepository } from "@/domain/interfaces/subscription.repository.interface";
@@ -14,7 +16,7 @@ export class CreateTeamUseCase {
     private subscriptionRepository: ISubscriptionRepository
   ) {}
 
-  async execute(dto: CreateTeamDTO): Promise<Team> {
+  async execute(dto: CreateTeamDTO): Promise<TeamDTO> {
     // 1. Anti-Abuse: Check if user already owns a Free team
     const ownedTeams = await this.teamRepository.getTeamsByOwner(dto.userId);
 
@@ -47,7 +49,7 @@ export class CreateTeamUseCase {
     }
 
     // 2. Set Trial End Date (14 days from now)
-    const trialEndsAt = new Date();
+    const trialEndsAt = DateUtils.now();
     trialEndsAt.setDate(trialEndsAt.getDate() + 14);
 
     // 3. Create Team
@@ -65,6 +67,6 @@ export class CreateTeamUseCase {
       newBudgetCategories
     );
 
-    return team;
+    return TeamMapper.toDTO(team);
   }
 }

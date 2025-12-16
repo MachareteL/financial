@@ -16,6 +16,7 @@ import {
 import { simulateInvestmentGrowthUseCase } from "@/infrastructure/dependency-injection";
 
 import type { InvestmentDetailsDTO } from "@/domain/dto/investment.types.d.ts";
+import { DateUtils } from "@/domain/utils/date.utils";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -374,7 +375,8 @@ export default function InvestmentsPage() {
                   required
                   defaultValue={
                     editingInvestment?.startDate ||
-                    new Date().toISOString().split("T")[0]
+                    DateUtils.toISODateString(new Date()) ||
+                    ""
                   }
                 />
               </div>

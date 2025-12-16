@@ -3,12 +3,12 @@
 import React from "react";
 import { Sparkles } from "lucide-react";
 import { TeamBillingSection } from "./team-billing-section";
-import type { Subscription } from "@/domain/entities/subscription";
-import type { Team } from "@/domain/entities/team";
+import type { SubscriptionDTO } from "@/domain/dto/subscription.types.d.ts";
+import type { TeamDTO } from "@/domain/dto/team.types.d.ts";
 
 interface TeamSubscriptionTabProps {
-  team: Team;
-  subscription: Subscription | null;
+  team: TeamDTO;
+  subscription: SubscriptionDTO | null;
 }
 
 export function TeamSubscriptionTab({

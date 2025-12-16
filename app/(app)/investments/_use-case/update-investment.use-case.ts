@@ -1,6 +1,7 @@
 import type { IInvestmentRepository } from "@/domain/interfaces/investment.repository.interface";
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 import type { UpdateInvestmentDTO } from "@/domain/dto/investment.types.d.ts";
+import { DateUtils } from "@/domain/utils/date.utils";
 
 export class UpdateInvestmentUseCase {
   constructor(
@@ -32,7 +33,7 @@ export class UpdateInvestmentUseCase {
       monthlyContribution: dto.monthlyContribution,
       annualReturnRate: dto.annualReturnRate,
       startDate: dto.startDate
-        ? new Date(dto.startDate.replace(/-/g, "/"))
+        ? DateUtils.parse(dto.startDate) || undefined
         : undefined,
     });
 

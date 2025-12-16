@@ -1,4 +1,6 @@
 import type { User } from "@/domain/entities/user";
+import type { UserDTO } from "@/domain/dto/user.types.d.ts";
+import { UserMapper } from "@/domain/mappers/user.mapper";
 import type { IAuthRepository } from "@/domain/interfaces/auth.repository.interface";
 
 import {
@@ -14,7 +16,7 @@ export class SignUpUseCase {
     private analyticsService: AnalyticsService
   ) {}
 
-  async execute(input: SignUpInputDTO): Promise<User> {
+  async execute(input: SignUpInputDTO): Promise<UserDTO> {
     const validation = SignUpInputSchema.safeParse(input);
 
     if (!validation.success) {
@@ -32,6 +34,6 @@ export class SignUpUseCase {
       name: user.name,
     });
 
-    return user;
+    return UserMapper.toDTO(user);
   }
 }

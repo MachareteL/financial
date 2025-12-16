@@ -27,12 +27,14 @@ import { useTeam } from "@/app/(app)/team/team-provider";
 import { usePermission } from "@/hooks/use-permission";
 import { notify } from "@/lib/notify-helper";
 import { manageMembersUseCase } from "@/infrastructure/dependency-injection";
-import type { TeamMemberProfileDTO } from "@/domain/dto/team.types.d.ts";
-import type { TeamRole } from "@/domain/entities/team-role";
+import type {
+  TeamMemberProfileDTO,
+  TeamRoleDTO,
+} from "@/domain/dto/team.types.d.ts";
 
 interface TeamMembersTabProps {
   members: TeamMemberProfileDTO[];
-  roles: TeamRole[];
+  roles: TeamRoleDTO[];
   onUpdate: () => Promise<void>;
 }
 

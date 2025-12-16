@@ -47,7 +47,7 @@ describe("ManageMembersUseCase", () => {
     (teamRepository.verifyPermission as Mock).mockResolvedValue(false);
 
     await expect(useCase.inviteMember(inviteDTO)).rejects.toThrow(
-      "Permissão negada."
+      "Você não tem permissão para gerenciar membros."
     );
     expect(teamRepository.createTeamInvite).not.toHaveBeenCalled();
   });
@@ -103,7 +103,9 @@ describe("ManageMembersUseCase", () => {
         "123e4567-e89b-12d3-a456-426614174002",
         "123e4567-e89b-12d3-a456-426614174001"
       )
-    ).rejects.toThrow("Promova outro membro antes.");
+    ).rejects.toThrow(
+      "Você precisa promover outro membro a administrador antes de sair."
+    );
 
     expect(teamRepository.removeMember).not.toHaveBeenCalled();
   });

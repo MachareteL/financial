@@ -1,5 +1,6 @@
 import type { IBudgetRepository } from "@/domain/interfaces/budget.repository.interface";
 import { Budget } from "@/domain/entities/budget";
+import { DateUtils } from "@/domain/utils/date.utils";
 import { getSupabaseClient } from "../database/supabase.client";
 import type { Database } from "@/domain/dto/database.types.d.ts";
 
@@ -18,7 +19,7 @@ export class BudgetRepository implements IBudgetRepository {
       year: row.year,
       totalIncome: row.total_income,
       teamId: row.team_id!,
-      createdAt: new Date(row.created_at),
+      createdAt: DateUtils.parse(row.created_at) || DateUtils.now(),
     });
   }
 
