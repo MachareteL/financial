@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, Check, X, Sparkles, Mail } from "lucide-react";
+import { Bell, Check, X, Sparkles, Mail, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -18,10 +18,17 @@ import type { TeamInviteDetailsDTO } from "@/domain/dto/team.types";
 import { notify } from "@/lib/notify-helper";
 import { Badge } from "@/components/ui/badge";
 
+// import { useParams } from "next/navigation"; // Removed
+import { useInsights } from "@/hooks/use-insights";
+
 export function NotificationsNav() {
   const { session } = useAuth();
   const [invites, setInvites] = useState<TeamInviteDetailsDTO[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  // const params = useParams(); // Removed
+  // const teamId = typeof params?.teamId === "string" ? params.teamId : undefined; // Removed
+
+  const { insights, markAsRead } = useInsights();
 
   const fetchInvites = async () => {
     if (!session?.user?.email) return;
@@ -53,7 +60,6 @@ export function NotificationsNav() {
       await acceptInviteUseCase.execute(inviteId, session.user.id);
       notify.success("Convite aceito com sucesso!");
       setInvites((prev) => prev.filter((i) => i.id !== inviteId));
-      // Opcional: Recarregar a página ou atualizar contexto de times
       window.location.reload();
     } catch (error) {
       notify.error(error, "aceitar convite");
@@ -70,24 +76,6 @@ export function NotificationsNav() {
     }
   };
 
-  // Mocked AI Insights
-  const insights = [
-    {
-      id: "1",
-      title: "Economia em Alimentação",
-      description:
-        "Você gastou 15% a menos em restaurantes esta semana comparado à média.",
-      type: "positive",
-    },
-    {
-      id: "2",
-      title: "Meta de Viagem",
-      description:
-        "Sua meta 'Férias 2024' atingiu 50% do objetivo. Continue assim!",
-      type: "info",
-    },
-  ];
-
   const hasNotifications = invites.length > 0 || insights.length > 0;
   const notificationCount = invites.length + insights.length;
 
@@ -96,7 +84,7 @@ export function NotificationsNav() {
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
-          {invites.length > 0 && (
+          {notificationCount > 0 && (
             <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-600 ring-2 ring-background" />
           )}
         </Button>
@@ -167,16 +155,47 @@ export function NotificationsNav() {
 
             {/* Insights Section */}
             <div className="p-4 pt-2">
-              <h5 className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-2 mt-2">
-                <Sparkles className="h-3 w-3 text-yellow-500" /> Insights IA
-              </h5>
+              <div className="flex items-center justify-between mb-3 mt-2">
+                <h5 className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                  <Sparkles className="h-3 w-3 text-yellow-500" /> Insights IA
+                </h5>
+              </div>
+
               <div className="space-y-3">
+                {insights.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-6 text-center space-y-2">
+                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                      <Sparkles className="h-4 w-4 text-muted-foreground/50" />
+                    </div>
+                    <p className="text-xs text-muted-foreground max-w-[200px]">
+                      Seus insights semanais aparecerão aqui automaticamente.
+                    </p>
+                  </div>
+                )}
+
                 {insights.map((insight) => (
                   <div
                     key={insight.id}
-                    className="p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-default"
+                    className="group relative p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
                   >
-                    <div className="flex items-start gap-3">
+                    {/* Action Buttons */}
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markAsRead(insight.id);
+                        }}
+                        title="Marcar como lido"
+                      >
+                        <span className="sr-only">Ocultar</span>
+                        <EyeOff className="h-3 w-3" />
+                      </Button>
+                    </div>
+
+                    <div className="flex items-start gap-3 pr-6">
                       <div className="mt-0.5">
                         <Sparkles className="h-4 w-4 text-primary" />
                       </div>
@@ -184,8 +203,11 @@ export function NotificationsNav() {
                         <p className="text-sm font-medium leading-none">
                           {insight.title}
                         </p>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          {insight.description}
+                        <div className="text-xs text-muted-foreground leading-relaxed">
+                          {insight.content}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground pt-1">
+                          {new Date(insight.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                     </div>

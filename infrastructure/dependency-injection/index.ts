@@ -11,6 +11,7 @@ import {
   InvestmentRepository,
   BudgetCategoryRepository,
   SupabaseSubscriptionRepository,
+  SupabaseInsightRepository,
 } from "../repositories";
 
 // Auth
@@ -26,6 +27,9 @@ import { VerifyRecoveryCodeUseCase } from "@/app/auth/_use-case/verify-recovery-
 
 // Dashboard
 import { GetDashboardDataUseCase } from "@/app/(app)/dashboard/_use-case/get-dashboard-data.use-case";
+import { GetPendingInsightsUseCase } from "@/app/(app)/dashboard/_use-case/get-pending-insights.use-case";
+import { MarkInsightAsReadUseCase } from "@/app/(app)/dashboard/_use-case/mark-insight-as-read.use-case";
+import { GenerateWeeklyReportUseCase } from "@/app/(app)/dashboard/_use-case/generate-weekly-report.use-case";
 
 // Expenses
 import { CreateExpenseUseCase } from "@/app/(app)/expenses/_use-case/create-expense.use-case";
@@ -133,6 +137,10 @@ const investmentRepository = container.get(
   "investmentRepository",
   () => new InvestmentRepository(supabase)
 );
+const insightRepository = container.get(
+  "insightRepository",
+  () => new SupabaseInsightRepository(supabase)
+);
 
 // Services
 const aiService = container.get(
@@ -222,6 +230,26 @@ export const getDashboardDataUseCase = container.get(
       expenseRepository,
       budgetRepository,
       budgetCategoryRepository
+    )
+);
+
+export const getPendingInsightsUseCase = container.get(
+  "getPendingInsightsUseCase",
+  () => new GetPendingInsightsUseCase(insightRepository)
+);
+
+export const markInsightAsReadUseCase = container.get(
+  "markInsightAsReadUseCase",
+  () => new MarkInsightAsReadUseCase(insightRepository)
+);
+
+export const generateWeeklyReportUseCase = container.get(
+  "generateWeeklyReportUseCase",
+  () =>
+    new GenerateWeeklyReportUseCase(
+      expenseRepository,
+      aiService,
+      insightRepository
     )
 );
 

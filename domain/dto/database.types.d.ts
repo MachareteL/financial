@@ -206,6 +206,39 @@ export type Database = {
           },
         ];
       };
+      feedbacks: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          description: string;
+          id: string;
+          status: string;
+          title: string;
+          type: string;
+          user_id: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          description: string;
+          id?: string;
+          status?: string;
+          title: string;
+          type: string;
+          user_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          description?: string;
+          id?: string;
+          status?: string;
+          title?: string;
+          type?: string;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
       incomes: {
         Row: {
           amount: number;

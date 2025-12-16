@@ -59,4 +59,6 @@ export interface ITeamRepository {
     teamId: string,
     permission: string
   ): Promise<boolean>;
+  getAllTeams(): Promise<Team[]>;
+  getActiveTeams(): Promise<Team[]>;
 }

@@ -523,4 +523,57 @@ export class TeamRepository implements ITeamRepository {
     // 3. Verificar permissão específica
     return permissions.includes(permission);
   }
+
+  async getAllTeams(): Promise<Team[]> {
+    const { data, error } = await this.supabase.from("teams").select("*");
+
+    if (error) throw new Error(error.message);
+
+    return (data || []).map(
+      (item) =>
+        new Team({
+          id: item.id,
+          name: item.name,
+          createdAt: new Date(item.created_at),
+          createdBy: item.created_by!,
+          trialEndsAt: item.trial_ends_at
+            ? new Date(item.trial_ends_at)
+            : undefined,
+        })
+    );
+  }
+
+  async getActiveTeams(): Promise<Team[]> {
+    const { data, error } = await this.supabase
+      .from("teams")
+      .select("*, subscriptions(status)");
+
+    if (error) throw new Error(error.message);
+
+    const activeTeams = (data || []).filter((item) => {
+      const internalTrial = item.trial_ends_at
+        ? new Date(item.trial_ends_at) > new Date()
+        : false;
+
+      const subs = item.subscriptions as any;
+      const sub = Array.isArray(subs) ? subs[0] : subs;
+
+      const activeSub = sub && ["active", "trialing"].includes(sub.status);
+
+      return internalTrial || activeSub;
+    });
+
+    return activeTeams.map(
+      (item) =>
+        new Team({
+          id: item.id,
+          name: item.name,
+          createdAt: new Date(item.created_at),
+          createdBy: item.created_by!,
+          trialEndsAt: item.trial_ends_at
+            ? new Date(item.trial_ends_at)
+            : undefined,
+        })
+    );
+  }
 }
