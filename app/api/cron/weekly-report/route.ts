@@ -3,6 +3,9 @@ import { getGenerateBatchWeeklyReportsUseCase } from "@/infrastructure/dependenc
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
+  console.log(authHeader);
+  console.log(process.env.CRON_SECRET);
+
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
