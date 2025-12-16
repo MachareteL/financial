@@ -1,4 +1,5 @@
 import type { SignInInputDTO } from "@/domain/dto/sign-in.dto";
+import { UserMapper } from "@/domain/mappers/user.mapper";
 import type { UserSession } from "@/domain/dto/user.types";
 import type { IAuthRepository } from "@/domain/interfaces/auth.repository.interface";
 
@@ -27,7 +28,10 @@ export class SignInUseCase {
         });
       }
 
-      return session;
+      return {
+        ...session,
+        user: UserMapper.toDTO(session.user as any),
+      };
     } catch (error) {
       if (error instanceof AuthApiError) {
         switch (error.code) {

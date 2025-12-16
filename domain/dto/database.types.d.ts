@@ -290,6 +290,47 @@ export type Database = {
           },
         ];
       };
+      insights: {
+        Row: {
+          action_url: string | null;
+          content: string;
+          created_at: string | null;
+          id: string;
+          is_read: boolean | null;
+          team_id: string;
+          title: string;
+          type: Database["public"]["Enums"]["insight_type"];
+        };
+        Insert: {
+          action_url?: string | null;
+          content: string;
+          created_at?: string | null;
+          id?: string;
+          is_read?: boolean | null;
+          team_id: string;
+          title: string;
+          type: Database["public"]["Enums"]["insight_type"];
+        };
+        Update: {
+          action_url?: string | null;
+          content?: string;
+          created_at?: string | null;
+          id?: string;
+          is_read?: boolean | null;
+          team_id?: string;
+          title?: string;
+          type?: Database["public"]["Enums"]["insight_type"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "insights_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       investments: {
         Row: {
           annual_return_rate: number;
@@ -645,7 +686,7 @@ export type Database = {
       is_team_owner: { Args: { check_team_id: string }; Returns: boolean };
     };
     Enums: {
-      [_ in never]: never;
+      insight_type: "WEEKLY_REPORT" | "BUDGET_ALERT" | "INVESTMENT_TIP";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -775,6 +816,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      insight_type: ["WEEKLY_REPORT", "BUDGET_ALERT", "INVESTMENT_TIP"],
+    },
   },
 } as const;

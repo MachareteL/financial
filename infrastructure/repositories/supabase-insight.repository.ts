@@ -1,5 +1,6 @@
 import type { IInsightRepository } from "@/domain/interfaces/insight.repository.interface";
 import { Insight } from "@/domain/entities/insight";
+import { DateUtils } from "@/domain/utils/date.utils";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export class SupabaseInsightRepository implements IInsightRepository {
@@ -43,7 +44,7 @@ export class SupabaseInsightRepository implements IInsightRepository {
           title: row.title,
           content: row.content,
           isRead: row.is_read,
-          createdAt: new Date(row.created_at),
+          createdAt: DateUtils.parse(row.created_at) || DateUtils.now(),
           actionUrl: row.action_url,
         })
     );

@@ -1,5 +1,6 @@
 import type { IIncomeRepository } from "@/domain/interfaces/income.repository.interface";
 import { Income } from "@/domain/entities/income";
+import { DateUtils } from "@/domain/utils/date.utils";
 import { getSupabaseClient } from "../database/supabase.client";
 import type { Database } from "@/domain/dto/database.types.d.ts";
 
@@ -21,10 +22,10 @@ export class IncomeRepository implements IIncomeRepository {
       description: row.description,
       type: row.type as "recurring" | "one_time",
       frequency: row.frequency as "monthly" | "weekly" | "yearly" | null,
-      date: new Date(row.date.replace(/-/g, "/")), // Converte string 'YYYY-MM-DD'
+      date: DateUtils.parse(row.date) || DateUtils.now(),
       teamId: row.team_id!,
       userId: row.user_id!,
-      createdAt: new Date(row.created_at),
+      createdAt: DateUtils.parse(row.created_at) || DateUtils.now(),
       // owner: row.profiles?.name || null, // Removed as it's not in the Income entity interface apparently, or needs to be added
     });
   }

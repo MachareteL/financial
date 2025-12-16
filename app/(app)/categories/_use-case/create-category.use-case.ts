@@ -1,6 +1,7 @@
 import type { ICategoryRepository } from "@/domain/interfaces/category.repository.interface";
 import type { CreateCategoryDTO } from "@/domain/dto/category.types.d.ts";
 import { Category } from "@/domain/entities/category";
+import { CategoryMapper } from "@/domain/mappers/category.mapper";
 
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 
@@ -18,13 +19,7 @@ export class CreateCategoryUseCase {
     );
     if (!hasPermission) throw new Error("Permissão negada.");
 
-    const category = new Category({
-      id: crypto.randomUUID(),
-      createdAt: new Date(),
-      name: dto.name,
-      budgetCategoryId: dto.budgetCategoryId,
-      teamId: dto.teamId,
-    });
+    const category = CategoryMapper.fromCreateDTO(dto);
 
     await this.categoryRepository.create(category);
   }

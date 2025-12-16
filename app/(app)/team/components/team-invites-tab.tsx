@@ -10,10 +10,10 @@ import { useTeam } from "@/app/(app)/team/team-provider";
 import { usePermission } from "@/hooks/use-permission";
 import { notify } from "@/lib/notify-helper";
 import { manageMembersUseCase } from "@/infrastructure/dependency-injection";
-import type { TeamInvite } from "@/domain/entities/team-invite";
+import type { TeamInviteDetailsDTO } from "@/domain/dto/team.types.d.ts";
 
 interface TeamInvitesTabProps {
-  invites: TeamInvite[];
+  invites: TeamInviteDetailsDTO[];
   onUpdate: () => Promise<void>;
 }
 
@@ -83,9 +83,7 @@ export function TeamInvitesTab({ invites, onUpdate }: TeamInvitesTabProps) {
                         {new Date(invite.createdAt).toLocaleDateString()}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
-                        por{" "}
-                        {(invite as unknown as { invitedByName: string })
-                          .invitedByName || "Alguém"}
+                        por {invite.invitedByName || "Alguém"}
                       </span>
                     </div>
                   </div>

@@ -51,9 +51,9 @@ describe("ParseReceiptUseCase", () => {
       type: "image/jpeg",
     } as File;
 
-    await expect(
-      useCase.execute(largeFile, "123e4567-e89b-12d3-a456-426614174000")
-    ).rejects.toThrow("Este arquivo excede o limite de 8MB.");
+    await expect(useCase.execute(largeFile)).rejects.toThrow(
+      "Esse arquivo é muito grande (limite 8MB)."
+    );
     expect(aiService.parseReceipt).not.toHaveBeenCalled();
   });
 

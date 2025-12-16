@@ -1,5 +1,6 @@
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 import { Team } from "@/domain/entities/team";
+import { DateUtils } from "@/domain/utils/date.utils";
 import { TeamRole, type TeamRoleProps } from "@/domain/entities/team-role";
 import {
   TeamInvite,
@@ -71,10 +72,10 @@ export class TeamRepository implements ITeamRepository {
     return new Team({
       id: teamData.id,
       name: teamData.name,
-      createdAt: new Date(teamData.created_at),
+      createdAt: DateUtils.parse(teamData.created_at) || DateUtils.now(),
       createdBy: teamData.created_by!,
       trialEndsAt: teamData.trial_ends_at
-        ? new Date(teamData.trial_ends_at)
+        ? DateUtils.parse(teamData.trial_ends_at)
         : undefined,
     });
   }
@@ -111,10 +112,10 @@ export class TeamRepository implements ITeamRepository {
         new Team({
           id: item.id,
           name: item.name,
-          createdAt: new Date(item.created_at),
+          createdAt: DateUtils.parse(item.created_at) || DateUtils.now(),
           createdBy: item.created_by!,
           trialEndsAt: item.trial_ends_at
-            ? new Date(item.trial_ends_at)
+            ? DateUtils.parse(item.trial_ends_at)
             : undefined,
         })
     );
@@ -157,10 +158,10 @@ export class TeamRepository implements ITeamRepository {
     return new Team({
       id: data.id,
       name: data.name,
-      createdAt: new Date(data.created_at),
+      createdAt: DateUtils.parse(data.created_at) || DateUtils.now(),
       createdBy: data.created_by!,
       trialEndsAt: data.trial_ends_at
-        ? new Date(data.trial_ends_at)
+        ? DateUtils.parse(data.trial_ends_at)
         : undefined,
     });
   }
@@ -262,8 +263,10 @@ export class TeamRepository implements ITeamRepository {
           color: item.color,
           permissions: item.permissions as string[],
           teamId: item.team_id,
-          createdAt: new Date(item.created_at),
-          updatedAt: new Date(item.updated_at || item.created_at),
+          createdAt: DateUtils.parse(item.created_at) || DateUtils.now(),
+          updatedAt:
+            DateUtils.parse(item.updated_at || item.created_at) ||
+            DateUtils.now(),
         })
     );
   }
@@ -292,8 +295,9 @@ export class TeamRepository implements ITeamRepository {
       color: data.color,
       permissions: data.permissions as string[],
       teamId: data.team_id,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at || data.created_at),
+      createdAt: DateUtils.parse(data.created_at) || DateUtils.now(),
+      updatedAt:
+        DateUtils.parse(data.updated_at || data.created_at) || DateUtils.now(),
     });
   }
 
@@ -327,8 +331,10 @@ export class TeamRepository implements ITeamRepository {
       color: updated.color,
       permissions: updated.permissions as string[],
       teamId: updated.team_id,
-      createdAt: new Date(updated.created_at),
-      updatedAt: new Date(updated.updated_at || updated.created_at),
+      createdAt: DateUtils.parse(updated.created_at) || DateUtils.now(),
+      updatedAt:
+        DateUtils.parse(updated.updated_at || updated.created_at) ||
+        DateUtils.now(),
     });
   }
 
@@ -360,7 +366,7 @@ export class TeamRepository implements ITeamRepository {
           teamId: item.team_id!,
           roleId: item.role_id,
           invitedBy: item.invited_by!,
-          createdAt: new Date(item.created_at),
+          createdAt: DateUtils.parse(item.created_at) || DateUtils.now(),
         })
     );
   }
@@ -389,7 +395,7 @@ export class TeamRepository implements ITeamRepository {
       teamId: data.team_id!,
       roleId: data.role_id,
       invitedBy: data.invited_by!,
-      createdAt: new Date(data.created_at),
+      createdAt: DateUtils.parse(data.created_at) || DateUtils.now(),
     });
   }
 
@@ -435,7 +441,7 @@ export class TeamRepository implements ITeamRepository {
       teamId: item.team_id!,
       roleId: item.role_id,
       invitedBy: item.invited_by || "",
-      createdAt: new Date(item.created_at),
+      createdAt: DateUtils.parse(item.created_at) || DateUtils.now(),
       teamName: item.teams?.name || "",
       invitedByName: item.invited_by_profile?.name || "",
       roleName: item.team_roles?.name || "",
@@ -534,17 +540,17 @@ export class TeamRepository implements ITeamRepository {
         new Team({
           id: item.id,
           name: item.name,
-          createdAt: new Date(item.created_at),
+          createdAt: DateUtils.parse(item.created_at) || DateUtils.now(),
           createdBy: item.created_by!,
           trialEndsAt: item.trial_ends_at
-            ? new Date(item.trial_ends_at)
+            ? DateUtils.parse(item.trial_ends_at)
             : undefined,
         })
     );
   }
 
   async getActiveTeams(): Promise<Team[]> {
-    const now = new Date().toISOString();
+    const now = DateUtils.now().toISOString();
 
     // Query 1: Teams with valid internal trial
     const trialQuery = this.supabase
@@ -579,10 +585,10 @@ export class TeamRepository implements ITeamRepository {
         new Team({
           id: item.id,
           name: item.name,
-          createdAt: new Date(item.created_at),
+          createdAt: DateUtils.parse(item.created_at) || DateUtils.now(),
           createdBy: item.created_by!,
           trialEndsAt: item.trial_ends_at
-            ? new Date(item.trial_ends_at)
+            ? DateUtils.parse(item.trial_ends_at)
             : undefined,
         })
     );

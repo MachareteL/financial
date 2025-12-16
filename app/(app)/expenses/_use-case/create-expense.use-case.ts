@@ -2,6 +2,7 @@ import type { IExpenseRepository } from "@/domain/interfaces/expense.repository.
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 import type { IStorageRepository } from "@/domain/interfaces/storage.repository.interface";
 import type { CreateExpenseDTO } from "@/domain/dto/expense.types.d.ts";
+import { DateUtils } from "@/domain/utils/date.utils";
 import { Expense } from "@/domain/entities/expense";
 
 import type { AnalyticsService } from "@/domain/interfaces/analytics-service.interface";
@@ -46,7 +47,7 @@ export class CreateExpenseUseCase {
     }
 
     // 2. Lógica de Negócio (Parcelas ou Único)
-    const baseDate = new Date(dto.date.replace(/-/g, "/"));
+    const baseDate = DateUtils.parse(dto.date) || new Date();
     const expensesToCreate: Expense[] = [];
 
     if (

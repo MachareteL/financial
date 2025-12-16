@@ -2,6 +2,7 @@ import type { IInvestmentRepository } from "@/domain/interfaces/investment.repos
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 import type { CreateInvestmentDTO } from "@/domain/dto/investment.types.d.ts";
 import { Investment } from "@/domain/entities/investment";
+import { InvestmentMapper } from "@/domain/mappers/investment.mapper";
 
 export class CreateInvestmentUseCase {
   constructor(
@@ -19,20 +20,7 @@ export class CreateInvestmentUseCase {
     if (!hasPermission) {
       throw new Error("Permissão negada: Você não pode criar investimentos.");
     }
-    const investment = new Investment({
-      id: crypto.randomUUID(),
-      createdAt: new Date(),
-      teamId: dto.teamId,
-      name: dto.name,
-      type: dto.type,
-      initialAmount: dto.initialAmount,
-      currentAmount: dto.currentAmount,
-      monthlyContribution: dto.monthlyContribution,
-      annualReturnRate: dto.annualReturnRate,
-      startDate: new Date(
-        dto.startDate ? dto.startDate.replace(/-/g, "/") : new Date()
-      ), // Ajuste na data
-    });
+    const investment = InvestmentMapper.fromCreateDTO(dto);
 
     await this.investmentRepository.create(investment);
   }

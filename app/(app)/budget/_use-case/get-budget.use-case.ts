@@ -3,7 +3,7 @@ import type {
   BudgetDetailsDTO,
   GetBudgetDTO,
 } from "@/domain/dto/budget.types.d.ts";
-
+import { BudgetMapper } from "@/domain/mappers/budget.mapper";
 export class GetBudgetUseCase {
   constructor(private budgetRepository: IBudgetRepository) {}
 
@@ -18,11 +18,6 @@ export class GetBudgetUseCase {
       return null;
     }
 
-    return {
-      id: budget.id,
-      month: budget.month,
-      year: budget.year,
-      totalIncome: budget.totalIncome,
-    };
+    return BudgetMapper.toDTO(budget);
   }
 }

@@ -1,10 +1,11 @@
 "use client";
 
 import { AlertTriangle, Sparkles, Info } from "lucide-react";
-import type { Subscription } from "@/domain/entities/subscription";
+import type { SubscriptionDTO } from "@/domain/dto/subscription.types.d.ts";
+import { DateUtils } from "@/domain/utils/date.utils";
 
 interface SubscriptionAlertsProps {
-  subscription: Subscription | null;
+  subscription: SubscriptionDTO | null;
   isPro: boolean;
   isTrialActive: boolean;
   daysRemaining: number;
@@ -50,7 +51,9 @@ export function SubscriptionAlerts({
           <p className="text-muted-foreground mt-1 max-w-xl text-sm">
             Sua assinatura foi cancelada e expirará em{" "}
             <strong>
-              {subscription.currentPeriodEnd?.toLocaleDateString()}
+              {DateUtils.parse(
+                subscription.currentPeriodEnd
+              )?.toLocaleDateString()}
             </strong>
             . Você pode reativá-la a qualquer momento antes dessa data.
           </p>

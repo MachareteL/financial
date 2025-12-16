@@ -2,6 +2,7 @@ import { FeedbackDTO } from "@/domain/dto/feedback.dto";
 import { IEmailService } from "@/domain/interfaces/email-service.interface";
 import { IFeedbackRepository } from "@/domain/interfaces/feedback.repository.interface";
 import { Feedback } from "@/domain/entities/feedback";
+import { FeedbackMapper } from "@/domain/mappers/feedback.mapper";
 
 export class SendFeedbackUseCase {
   constructor(
@@ -11,10 +12,8 @@ export class SendFeedbackUseCase {
 
   async execute(dto: FeedbackDTO): Promise<void> {
     // Create Domain Entity
-    const feedback = new Feedback({
-      ...dto,
-      status: "pending",
-    });
+    // Create Domain Entity
+    const feedback = FeedbackMapper.fromCreateDTO(dto);
 
     // 1. Save to Database
     await this.feedbackRepository.create(feedback);

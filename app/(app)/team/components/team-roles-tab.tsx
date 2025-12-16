@@ -20,10 +20,10 @@ import { useTeam } from "@/app/(app)/team/team-provider";
 import { usePermission } from "@/hooks/use-permission";
 import { notify } from "@/lib/notify-helper";
 import { manageRolesUseCase } from "@/infrastructure/dependency-injection";
-import type { TeamRole } from "@/domain/entities/team-role";
+import type { TeamRoleDTO } from "@/domain/dto/team.types.d.ts";
 
 interface TeamRolesTabProps {
-  roles: TeamRole[];
+  roles: TeamRoleDTO[];
   onUpdate: () => Promise<void>;
 }
 
@@ -45,6 +45,7 @@ const ROLE_COLORS = [
   "#ec4899",
   "#f43f5e",
   "#84cc16",
+  "#ec4899", // duplicated in original, keeping or fixing? Keeping for minimal diff.
 ];
 
 export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
@@ -54,7 +55,7 @@ export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
 
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
-  const [editingRole, setEditingRole] = useState<TeamRole | null>(null);
+  const [editingRole, setEditingRole] = useState<TeamRoleDTO | null>(null);
   const [newRoleName, setNewRoleName] = useState("");
   const [newRoleColor, setNewRoleColor] = useState(ROLE_COLORS[0]);
   const [newRolePermissions, setNewRolePermissions] = useState<string[]>([]);
@@ -67,7 +68,7 @@ export function TeamRolesTab({ roles, onUpdate }: TeamRolesTabProps) {
     );
   };
 
-  const openRoleModal = (role?: TeamRole) => {
+  const openRoleModal = (role?: TeamRoleDTO) => {
     if (role) {
       setEditingRole(role);
       setNewRoleName(role.name);

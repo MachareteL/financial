@@ -1,5 +1,7 @@
 "use client";
 
+import { DateUtils } from "@/domain/utils/date.utils";
+
 import React, { Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -87,7 +89,11 @@ function TeamContent() {
     return <LoadingState message="Carregando equipe..." />;
   }
 
-  const isPro = teamDetails?.isPro(!!subscription && subscription.isActive());
+  const trialEndsAt = DateUtils.parse(teamDetails?.trialEndsAt);
+  const isTrialActive = trialEndsAt ? new Date() < trialEndsAt : false;
+  const isSubscriptionActive =
+    subscription?.status === "active" || subscription?.status === "trialing";
+  const isPro = isTrialActive || isSubscriptionActive;
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">

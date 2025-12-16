@@ -1,14 +1,15 @@
 "use client";
 
-import type { Subscription } from "@/domain/entities/subscription";
-import type { Team } from "@/domain/entities/team";
+import type { SubscriptionDTO } from "@/domain/dto/subscription.types.d.ts";
+import type { TeamDTO } from "@/domain/dto/team.types.d.ts";
+import { DateUtils } from "@/domain/utils/date.utils";
 import { SubscriptionAlerts } from "./billing/subscription-alerts";
 import { ActivePlanCard } from "./billing/active-plan-card";
 import { UpgradePricingCards } from "./billing/upgrade-pricing-cards";
 
 interface TeamBillingSectionProps {
-  team: Team;
-  subscription: Subscription | null;
+  team: TeamDTO;
+  subscription: SubscriptionDTO | null;
 }
 
 export function TeamBillingSection({
@@ -16,11 +17,11 @@ export function TeamBillingSection({
   subscription,
 }: TeamBillingSectionProps) {
   // Logic to determine states
-  const isPro = team.isPro(!!subscription && subscription.isActive());
-
-  // Trial Logic
-  const trialEndsAt = team.trialEndsAt ? new Date(team.trialEndsAt) : null;
+  const trialEndsAt = DateUtils.parse(team.trialEndsAt);
   const isTrialActive = trialEndsAt ? trialEndsAt > new Date() : false;
+  const isSubscriptionActive =
+    subscription?.status === "active" || subscription?.status === "trialing";
+  const isPro = isTrialActive || isSubscriptionActive;
 
   const daysRemaining = trialEndsAt
     ? Math.ceil(
@@ -30,13 +31,7 @@ export function TeamBillingSection({
 
   // View Logic
   // Show "Dashboard View" only if they have a REAL subscription (Active or Past Due or Trials originating from Stripe)
-  // If they are on the "Free Trial" (no card attached, just time based), they should see the Upgrade view.
-
-  // Note: team.isPro() returns true for both Trial and Subscription.
-  // We want to show the "ActivePlanCard" ONLY if they have a subscription object that is NOT just a placeholder (if we had those).
-  // But here subscription is the entity from Stripe.
-
-  const showActiveDashboard = subscription && subscription.isActive();
+  const showActiveDashboard = isSubscriptionActive;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">

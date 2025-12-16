@@ -1,6 +1,7 @@
 import type { ICategoryRepository } from "@/domain/interfaces/category.repository.interface";
 import { Category } from "@/domain/entities/category";
 import { BudgetCategory } from "@/domain/entities/budget-category";
+import { DateUtils } from "@/domain/utils/date.utils";
 import { getSupabaseClient } from "../database/supabase.client";
 import type { Database } from "@/domain/dto/database.types.d.ts";
 
@@ -30,7 +31,9 @@ export class CategoryRepository implements ICategoryRepository {
           teamId: row.budget_categories.team_id,
           name: row.budget_categories.name,
           percentage: Number(row.budget_categories.percentage),
-          createdAt: new Date(row.budget_categories.created_at),
+          createdAt:
+            DateUtils.parse(row.budget_categories.created_at) ||
+            DateUtils.now(),
         })
       : null;
 
@@ -39,7 +42,7 @@ export class CategoryRepository implements ICategoryRepository {
       name: row.name,
       budgetCategoryId: row.budget_category_id!,
       teamId: row.team_id!,
-      createdAt: new Date(row.created_at),
+      createdAt: DateUtils.parse(row.created_at) || DateUtils.now(),
       budgetCategory: budgetCategory,
     });
   }
@@ -156,7 +159,7 @@ export class CategoryRepository implements ICategoryRepository {
       ...cat,
       team_id: teamId,
       id: crypto.randomUUID(),
-      created_at: new Date().toISOString(),
+      created_at: DateUtils.now().toISOString(),
     }));
 
     const supabase = getSupabaseClient();

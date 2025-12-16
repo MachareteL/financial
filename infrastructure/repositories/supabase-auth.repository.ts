@@ -1,6 +1,7 @@
 import type { IAuthRepository } from "@/domain/interfaces/auth.repository.interface";
 import type { UserSession, TeamMembership } from "@/domain/dto/user.types.d.ts";
 import { User } from "@/domain/entities/user";
+import { DateUtils } from "@/domain/utils/date.utils";
 import { Team } from "@/domain/entities/team";
 import { Subscription } from "@/domain/entities/subscription";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -60,7 +61,7 @@ export class AuthSupabaseRepository implements IAuthRepository {
       id: profile.id,
       email: profile.email,
       name: profile.name,
-      createdAt: new Date(profile.created_at),
+      createdAt: DateUtils.parse(profile.created_at) || DateUtils.now(),
     });
 
     const teams: TeamMembership[] = profile.team_members.map((membership) => {
@@ -79,14 +80,14 @@ export class AuthSupabaseRepository implements IAuthRepository {
             planId: subData.plan_id,
             cancelAtPeriodEnd: subData.cancel_at_period_end ?? false,
             currentPeriodEnd: subData.current_period_end
-              ? new Date(subData.current_period_end)
+              ? DateUtils.parse(subData.current_period_end)
               : null,
             createdAt: subData.created_at
-              ? new Date(subData.created_at)
-              : new Date(),
+              ? DateUtils.parse(subData.created_at) || DateUtils.now()
+              : DateUtils.now(),
             updatedAt: subData.updated_at
-              ? new Date(subData.updated_at)
-              : new Date(),
+              ? DateUtils.parse(subData.updated_at) || DateUtils.now()
+              : DateUtils.now(),
           })
         : null;
 
@@ -94,10 +95,10 @@ export class AuthSupabaseRepository implements IAuthRepository {
         team: new Team({
           id: teamData.id,
           name: teamData.name,
-          createdAt: new Date(teamData.created_at),
+          createdAt: DateUtils.parse(teamData.created_at) || DateUtils.now(),
           createdBy: teamData.created_by!,
           trialEndsAt: teamData.trial_ends_at
-            ? new Date(teamData.trial_ends_at)
+            ? DateUtils.parse(teamData.trial_ends_at)
             : null,
         }),
         role: membership.team_roles?.name || "",
@@ -159,7 +160,7 @@ export class AuthSupabaseRepository implements IAuthRepository {
       id: authData.user.id,
       email: authData.user.email!,
       name: name,
-      createdAt: new Date(),
+      createdAt: DateUtils.now(),
     });
   }
 

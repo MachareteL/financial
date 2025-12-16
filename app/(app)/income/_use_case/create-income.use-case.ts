@@ -1,6 +1,7 @@
 import type { IIncomeRepository } from "@/domain/interfaces/income.repository.interface";
 import type { CreateIncomeDTO } from "@/domain/dto/income.types.d.ts";
 import { Income } from "@/domain/entities/income";
+import { IncomeMapper } from "@/domain/mappers/income.mapper";
 
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 
@@ -18,17 +19,7 @@ export class CreateIncomeUseCase {
     );
     if (!hasPermission) throw new Error("Permissão negada.");
 
-    const income = new Income({
-      id: crypto.randomUUID(),
-      amount: dto.amount,
-      description: dto.description,
-      type: dto.type,
-      frequency: dto.frequency,
-      date: new Date(dto.date.replace(/-/g, "/")),
-      teamId: dto.teamId,
-      userId: dto.userId,
-      createdAt: new Date(),
-    });
+    const income = IncomeMapper.fromCreateDTO(dto);
 
     await this.incomeRepository.create(income);
   }

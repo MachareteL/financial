@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTeam } from "@/app/(app)/team/team-provider";
 import { UpgradeModal } from "./upgrade-modal";
+import { DateUtils } from "@/domain/utils/date.utils";
 
 export function SubscriptionCheck() {
   const { currentTeam } = useTeam();
@@ -26,12 +27,13 @@ export function SubscriptionCheck() {
 
     // Check for trial status
     const trialEndsAt = currentTeam.team.trialEndsAt
-      ? new Date(currentTeam.team.trialEndsAt)
+      ? DateUtils.parse(currentTeam.team.trialEndsAt)
       : null;
-    const isTrialActive = trialEndsAt ? trialEndsAt > new Date() : false;
+    const isTrialActive = trialEndsAt ? trialEndsAt > DateUtils.now() : false;
     const daysRemaining = trialEndsAt
       ? Math.ceil(
-          (trialEndsAt.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+          (trialEndsAt.getTime() - DateUtils.now().getTime()) /
+            (1000 * 60 * 60 * 24)
         )
       : 0;
 

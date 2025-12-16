@@ -1,7 +1,13 @@
 import type { User } from "../entities/user";
 import type { Team } from "../entities/team";
-
 import type { Subscription } from "../entities/subscription";
+
+export type UserDTO = {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: Date;
+};
 
 export type TeamMembership = {
   team: Team;
@@ -11,6 +17,6 @@ export type TeamMembership = {
 };
 
 export type UserSession = {
-  user: User;
+  user: UserDTO;
   teams: TeamMembership[];
 };

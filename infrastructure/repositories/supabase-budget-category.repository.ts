@@ -1,5 +1,6 @@
 import type { IBudgetCategoryRepository } from "@/domain/interfaces/budget-category.repository.interface";
 import { BudgetCategory } from "@/domain/entities/budget-category";
+import { DateUtils } from "@/domain/utils/date.utils";
 import { getSupabaseClient } from "../database/supabase.client";
 import type { Database } from "@/domain/dto/database.types.d.ts";
 
@@ -16,7 +17,7 @@ export class BudgetCategoryRepository implements IBudgetCategoryRepository {
       teamId: row.team_id,
       name: row.name,
       percentage: Number(row.percentage),
-      createdAt: new Date(row.created_at),
+      createdAt: DateUtils.parse(row.created_at) || DateUtils.now(),
     });
   }
 
@@ -103,21 +104,21 @@ export class BudgetCategoryRepository implements IBudgetCategoryRepository {
         percentage: 0.5,
         team_id: teamId,
         id: crypto.randomUUID(),
-        created_at: new Date().toISOString(),
+        created_at: DateUtils.now().toISOString(),
       },
       {
         name: "Desejos",
         percentage: 0.3,
         team_id: teamId,
         id: crypto.randomUUID(),
-        created_at: new Date().toISOString(),
+        created_at: DateUtils.now().toISOString(),
       },
       {
         name: "Poupança",
         percentage: 0.2,
         team_id: teamId,
         id: crypto.randomUUID(),
-        created_at: new Date().toISOString(),
+        created_at: DateUtils.now().toISOString(),
       },
     ];
 

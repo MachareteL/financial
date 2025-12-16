@@ -59,3 +59,29 @@ export type TeamInviteDetailsDTO = {
   invitedByName?: string;
   roleName?: string;
 };
+
+export interface TeamDTO {
+  id: string;
+  name: string;
+  createdBy: string;
+  createdAt: Date;
+  trialEndsAt?: Date | null;
+}
+
+export interface TeamRoleDTO {
+  id: string;
+  name: string;
+  color: string;
+  permissions: string[];
+  teamId: string;
+}
+
+export interface TeamInviteDTO {
+  id: string;
+  email: string;
+  status: "pending" | "accepted" | "declined";
+  teamId: string;
+  roleId: string | null;
+  invitedBy: string;
+  createdAt: Date;
+}

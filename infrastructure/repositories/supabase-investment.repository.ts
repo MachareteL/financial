@@ -1,5 +1,6 @@
 import type { IInvestmentRepository } from "@/domain/interfaces/investment.repository.interface";
 import { Investment } from "@/domain/entities/investment";
+import { DateUtils } from "@/domain/utils/date.utils";
 import { getSupabaseClient } from "../database/supabase.client";
 import type { Database } from "@/domain/dto/database.types.d.ts";
 
@@ -19,8 +20,8 @@ export class InvestmentRepository implements IInvestmentRepository {
       currentAmount: row.current_amount,
       monthlyContribution: row.monthly_contribution || 0,
       annualReturnRate: row.annual_return_rate,
-      startDate: new Date(row.start_date),
-      createdAt: new Date(row.created_at),
+      startDate: DateUtils.parse(row.start_date) || DateUtils.now(),
+      createdAt: DateUtils.parse(row.created_at) || DateUtils.now(),
     });
   }
 

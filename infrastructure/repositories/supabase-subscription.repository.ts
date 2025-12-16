@@ -1,5 +1,6 @@
 import { ISubscriptionRepository } from "@/domain/interfaces/subscription.repository.interface";
 import { Subscription } from "@/domain/entities/subscription";
+import { DateUtils } from "@/domain/utils/date.utils";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/domain/dto/database.types.d.ts";
 import type { SubscriptionRow } from "@/domain/dto/supabase-joins.types";
@@ -96,11 +97,11 @@ export class SupabaseSubscriptionRepository implements ISubscriptionRepository {
       status: status,
       planId: data.plan_id,
       currentPeriodEnd: data.current_period_end
-        ? new Date(data.current_period_end)
+        ? DateUtils.parse(data.current_period_end)
         : null,
       cancelAtPeriodEnd: data.cancel_at_period_end ?? false,
-      createdAt: data.created_at ? new Date(data.created_at) : new Date(),
-      updatedAt: data.updated_at ? new Date(data.updated_at) : new Date(),
+      createdAt: DateUtils.parse(data.created_at) || DateUtils.now(),
+      updatedAt: DateUtils.parse(data.updated_at) || DateUtils.now(),
     });
   }
 }
