@@ -60,23 +60,50 @@ export class GeminiAiService implements IAiService {
         return "Você não teve gastos registrados nesta semana. Ótimo momento para planejar seus investimentos! 🚀";
       }
 
-      const expensesSummary = expenses
+      // 1. Calculate Total Spent
+      const totalSpent = expenses.reduce((acc, curr) => acc + curr.amount, 0);
+
+      // 2. Group by Category
+      const categoryTotals: Record<string, number> = {};
+      expenses.forEach((e) => {
+        const catName = e.category?.name || "Outros";
+        categoryTotals[catName] = (categoryTotals[catName] || 0) + e.amount;
+      });
+
+      const topCategories = Object.entries(categoryTotals)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 3)
+        .map(([name, amount]) => `- ${name}: R$ ${amount.toFixed(2)}`)
+        .join("\n");
+
+      // 3. Top Expenses
+      const topExpenses = expenses
+        .sort((a, b) => b.amount - a.amount)
+        .slice(0, 5)
         .map(
           (e) =>
-            `- ${e.description} (${e.category?.name || "Outros"}): R$ ${e.amount.toFixed(2)}`
+            `- ${e.description} (${
+              e.category?.name || "Outros"
+            }): R$ ${e.amount.toFixed(2)}`
         )
         .join("\n");
 
       const prompt = `
         Atue como um Coach Financeiro amigável e motivador.
-        Analise os gastos desta semana do usuário a seguir e gere um "Insight" curto, direto e útil (máximo 2 frases).
+        Analise o resumo financeiro desta semana do usuário e gere um "Insight" curto, direto e útil (máximo 2 frases).
         Foque em elogiar economia ou alertar gentilmente sobre gastos excessivos em uma categoria específica.
         Não use saudações genéricas como "Olá". Vá direto ao ponto. Use emojis.
 
-        Devolva uma mensagem plain text.
+        Devolva APENAS a mensagem em texto puro.
+
+        Resumo da Semana:
+        - Total Gasto: R$ ${totalSpent.toFixed(2)}
         
-        Gastos:
-        ${expensesSummary}
+        Principais Categorias:
+        ${topCategories}
+
+        Maiores Gastos Individuais:
+        ${topExpenses}
       `;
 
       const result = await this.textModel.generateContent(prompt);
@@ -84,7 +111,7 @@ export class GeminiAiService implements IAiService {
       return text || "Mantenha o foco nos seus objetivos financeiros! 💰";
     } catch (error) {
       console.error("Erro ao gerar insight:", error);
-      return "Não foi possível gerar sue insight semanal no momento. Tente novamente mais tarde.";
+      return "Não foi possível gerar seu insight semanal no momento. Tente novamente mais tarde.";
     }
   }
 }
