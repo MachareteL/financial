@@ -19,6 +19,8 @@ export class GenerateBatchWeeklyReportsUseCase {
       try {
         await this.generateWeeklyReportUseCase.execute(team.id);
         success++;
+        // Add 2s delay to avoid finding rate limits or overloading the model
+        await new Promise((resolve) => setTimeout(resolve, 2000));
       } catch (error) {
         console.error(`[BatchReport] Failed for team ${team.id}:`, error);
         failed++;
