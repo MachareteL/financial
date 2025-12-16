@@ -15,6 +15,14 @@ import { CreateTeamUseCase } from "@/app/(app)/team/_use-case/create-team.use-ca
 import { ParseReceiptUseCase } from "@/app/(app)/expenses/_use-case/parse-receipt.use-case";
 import { RateLimitService } from "@/infrastructure/services/rate-limit.service";
 import { getSupabaseClient } from "../database/supabase.server";
+import { ExpenseRepository } from "../repositories/supabase-expense.repository";
+import { ExportExpensesUseCase } from "@/app/(app)/expenses/_use-case/export-expenses.use-case";
+import { ExcelExporterService } from "@/infrastructure/services/excel-exporter.service";
+import { SupabaseInsightRepository } from "../repositories/supabase-insight.repository";
+import { GetPendingInsightsUseCase } from "@/app/(app)/dashboard/_use-case/get-pending-insights.use-case";
+import { MarkInsightAsReadUseCase } from "@/app/(app)/dashboard/_use-case/mark-insight-as-read.use-case";
+import { GenerateWeeklyReportUseCase } from "@/app/(app)/dashboard/_use-case/generate-weekly-report.use-case";
+import { GenerateBatchWeeklyReportsUseCase } from "@/app/(app)/dashboard/_use-case/generate-batch-weekly-reports.use-case";
 
 const container = Container.getInstance();
 
@@ -143,10 +151,6 @@ export const getParseReceiptUseCase = () => {
   );
 };
 
-import { ExpenseRepository } from "../repositories/supabase-expense.repository";
-import { ExportExpensesUseCase } from "@/app/(app)/expenses/_use-case/export-expenses.use-case";
-import { ExcelExporterService } from "@/infrastructure/services/excel-exporter.service";
-
 export const getRateLimitService = () => {
   return container.get("rateLimitService", () => new RateLimitService());
 };
@@ -169,5 +173,55 @@ export const getExportExpensesUseCase = async () => {
     "exportExpensesUseCase",
     () =>
       new ExportExpensesUseCase(expenseRepo, subRepo, teamRepo, excelService)
+  );
+};
+// Insights
+
+export const getInsightRepository = async () => {
+  const supabase = await getSupabaseClient();
+  return container.get(
+    "insightRepository",
+    () => new SupabaseInsightRepository(supabase)
+  );
+};
+
+export const getGetPendingInsightsUseCase = async () => {
+  const insightRepo = await getInsightRepository();
+  return container.get(
+    "getPendingInsightsUseCase",
+    () => new GetPendingInsightsUseCase(insightRepo)
+  );
+};
+
+export const getMarkInsightAsReadUseCase = async () => {
+  const insightRepo = await getInsightRepository();
+  return container.get(
+    "markInsightAsReadUseCase",
+    () => new MarkInsightAsReadUseCase(insightRepo)
+  );
+};
+
+export const getGenerateWeeklyReportUseCase = async () => {
+  const expenseRepo = await getExpenseRepository();
+  const insightRepo = await getInsightRepository();
+  const aiService = getAiService();
+
+  return container.get(
+    "generateWeeklyReportUseCase",
+    () => new GenerateWeeklyReportUseCase(expenseRepo, aiService, insightRepo)
+  );
+};
+
+export const getGenerateBatchWeeklyReportsUseCase = async () => {
+  const teamRepo = await getTeamRepository();
+  const generateWeeklyReportUseCase = await getGenerateWeeklyReportUseCase();
+
+  return container.get(
+    "generateBatchWeeklyReportsUseCase",
+    () =>
+      new GenerateBatchWeeklyReportsUseCase(
+        teamRepo,
+        generateWeeklyReportUseCase
+      )
   );
 };
