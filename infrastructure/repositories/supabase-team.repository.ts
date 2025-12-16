@@ -544,26 +544,37 @@ export class TeamRepository implements ITeamRepository {
   }
 
   async getActiveTeams(): Promise<Team[]> {
-    const { data, error } = await this.supabase
+    const now = new Date().toISOString();
+
+    // Query 1: Teams with valid internal trial
+    const trialQuery = this.supabase
       .from("teams")
-      .select("*, subscriptions(status)");
+      .select("*")
+      .gt("trial_ends_at", now);
 
-    if (error) throw new Error(error.message);
+    // Query 2: Teams with active Stripe subscription (using inner join to filter)
+    const subQuery = this.supabase
+      .from("teams")
+      .select("*, subscriptions!inner(status)")
+      .in("subscriptions.status", ["active", "trialing"]);
 
-    const activeTeams = (data || []).filter((item) => {
-      const internalTrial = item.trial_ends_at
-        ? new Date(item.trial_ends_at) > new Date()
-        : false;
+    const [trialRes, subRes] = await Promise.all([trialQuery, subQuery]);
 
-      const subs = item.subscriptions as any;
-      const sub = Array.isArray(subs) ? subs[0] : subs;
+    console.log(trialRes.data);
+    console.log(subRes.data);
 
-      const activeSub = sub && ["active", "trialing"].includes(sub.status);
+    if (trialRes.error) throw new Error(trialRes.error.message);
+    if (subRes.error) throw new Error(subRes.error.message);
 
-      return internalTrial || activeSub;
+    // Merge and deduplicate by ID
+    const allTeams = [...(trialRes.data || []), ...(subRes.data || [])];
+    const uniqueTeams = new Map<string, (typeof allTeams)[0]>();
+
+    allTeams.forEach((team) => {
+      uniqueTeams.set(team.id, team);
     });
 
-    return activeTeams.map(
+    return Array.from(uniqueTeams.values()).map(
       (item) =>
         new Team({
           id: item.id,
