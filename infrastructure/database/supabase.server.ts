@@ -24,3 +24,23 @@ export const getSupabaseClient = async () => {
     }
   );
 };
+
+export const getSupabaseAdminClient = () => {
+  const adminKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!adminKey) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is not defined");
+  }
+
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    adminKey,
+    {
+      cookies: {
+        getAll() {
+          return [];
+        },
+        setAll() {},
+      },
+    }
+  );
+};

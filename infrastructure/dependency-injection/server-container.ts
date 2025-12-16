@@ -14,7 +14,10 @@ import { VerifyTeamPermissionUseCase } from "@/app/(app)/team/_use-case/verify-t
 import { CreateTeamUseCase } from "@/app/(app)/team/_use-case/create-team.use-case";
 import { ParseReceiptUseCase } from "@/app/(app)/expenses/_use-case/parse-receipt.use-case";
 import { RateLimitService } from "@/infrastructure/services/rate-limit.service";
-import { getSupabaseClient } from "../database/supabase.server";
+import {
+  getSupabaseClient,
+  getSupabaseAdminClient,
+} from "../database/supabase.server";
 import { ExpenseRepository } from "../repositories/supabase-expense.repository";
 import { ExportExpensesUseCase } from "@/app/(app)/expenses/_use-case/export-expenses.use-case";
 import { ExcelExporterService } from "@/infrastructure/services/excel-exporter.service";
@@ -212,9 +215,43 @@ export const getGenerateWeeklyReportUseCase = async () => {
   );
 };
 
+// Admin Repositories for Cron Jobs
+export const getAdminTeamRepository = async () => {
+  const supabase = getSupabaseAdminClient();
+  return container.get(
+    "adminTeamRepository",
+    () => new TeamRepository(supabase)
+  );
+};
+
+export const getAdminExpenseRepository = async () => {
+  const supabase = getSupabaseAdminClient();
+  return container.get(
+    "adminExpenseRepository",
+    () => new ExpenseRepository(supabase)
+  );
+};
+
+export const getAdminInsightRepository = async () => {
+  const supabase = getSupabaseAdminClient();
+  return container.get(
+    "adminInsightRepository",
+    () => new SupabaseInsightRepository(supabase)
+  );
+};
+
 export const getGenerateBatchWeeklyReportsUseCase = async () => {
-  const teamRepo = await getTeamRepository();
-  const generateWeeklyReportUseCase = await getGenerateWeeklyReportUseCase();
+  const teamRepo = await getAdminTeamRepository();
+  const expenseRepo = await getAdminExpenseRepository();
+  const insightRepo = await getAdminInsightRepository();
+  const aiService = getAiService();
+
+  // Create a dedicated GenerateWeeklyReportUseCase that uses Admin Repos
+  const generateWeeklyReportUseCase = new GenerateWeeklyReportUseCase(
+    expenseRepo,
+    aiService,
+    insightRepo
+  );
 
   return container.get(
     "generateBatchWeeklyReportsUseCase",
