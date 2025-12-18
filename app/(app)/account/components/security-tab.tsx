@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { updatePasswordUseCase } from "@/infrastructure/dependency-injection";
+import { useUpdatePassword } from "@/hooks/use-account";
 import { notify } from "@/lib/notify-helper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ import {
 import { Loader2, Lock, Save, ShieldCheck } from "lucide-react";
 
 export function SecurityTab() {
-  const [isLoading, setIsLoading] = useState(false);
+  const updatePasswordMutation = useUpdatePassword();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -27,16 +27,13 @@ export function SecurityTab() {
       return;
     }
 
-    setIsLoading(true);
     try {
-      await updatePasswordUseCase.execute(password);
+      await updatePasswordMutation.mutateAsync({ newPassword: password });
       notify.success("Senha alterada com sucesso!");
       setPassword("");
       setConfirmPassword("");
     } catch (error: unknown) {
       notify.error(error, "alterar senha");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -86,8 +83,8 @@ export function SecurityTab() {
             </div>
 
             <div className="pt-2">
-              <Button disabled={isLoading} type="submit">
-                {isLoading ? (
+              <Button disabled={updatePasswordMutation.isPending} type="submit">
+                {updatePasswordMutation.isPending ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <Save className="mr-2 h-4 w-4" />

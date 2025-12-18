@@ -5,6 +5,7 @@ import {
   getCheckFeatureAccessUseCase,
   getVerifyTeamPermissionUseCase,
   getRateLimitService,
+  getCategoryRepository,
 } from "@/infrastructure/dependency-injection/server-container";
 import { getSupabaseClient } from "@/infrastructure/database/supabase.server";
 import type { ReceiptDataDTO } from "@/domain/dto/receipt.dto";
@@ -89,8 +90,17 @@ export async function parseReceiptAction(
   }
 
   try {
+    // Fetch team categories to provide context to AI
+    const categoryRepository = await getCategoryRepository();
+    const teamCategories = await categoryRepository.findByTeamId(teamId);
+    const categoryNames = teamCategories.map((cat) => cat.name);
+
     const parseReceiptUseCase = getParseReceiptUseCase();
-    const result = await parseReceiptUseCase.execute(file, user.id);
+    const result = await parseReceiptUseCase.execute(
+      file,
+      user.id,
+      categoryNames
+    );
 
     if (!result) {
       return {

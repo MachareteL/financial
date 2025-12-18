@@ -1,6 +1,5 @@
 import type { ICategoryRepository } from "@/domain/interfaces/category.repository.interface";
 import type { CreateCategoryDTO } from "@/domain/dto/category.types.d.ts";
-import { Category } from "@/domain/entities/category";
 import { CategoryMapper } from "@/domain/mappers/category.mapper";
 
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";

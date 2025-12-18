@@ -1,7 +1,6 @@
 import type { IBudgetRepository } from "@/domain/interfaces/budget.repository.interface";
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 import type { SaveBudgetDTO } from "@/domain/dto/budget.types.d.ts";
-import { Budget } from "@/domain/entities/budget";
 import { BudgetMapper } from "@/domain/mappers/budget.mapper";
 
 export class SaveBudgetUseCase {

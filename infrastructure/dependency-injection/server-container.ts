@@ -6,6 +6,8 @@ import { CategoryRepository } from "../repositories/supabase-category.repository
 import { BudgetCategoryRepository } from "../repositories/supabase-budget-category.repository";
 import { PostHogAnalyticsService } from "@/infrastructure/services/posthog-analytics.service";
 import { GeminiAiService } from "@/infrastructure/services/gemini-ai.service";
+import { FilePromptRepository } from "@/infrastructure/ai/file-prompt.repository";
+import { PromptObserverService } from "@/infrastructure/ai/prompt-observer.service";
 import { SubscribeTeamUseCase } from "@/app/(app)/team/_use-case/subscribe-team.use-case";
 import { ManageSubscriptionUseCase } from "@/app/(app)/team/_use-case/manage-subscription.use-case";
 import { GetSubscriptionStatusUseCase } from "@/app/(app)/team/_use-case/get-subscription-status.use-case";
@@ -26,6 +28,7 @@ import { GetPendingInsightsUseCase } from "@/app/(app)/dashboard/_use-case/get-p
 import { MarkInsightAsReadUseCase } from "@/app/(app)/dashboard/_use-case/mark-insight-as-read.use-case";
 import { GenerateWeeklyReportUseCase } from "@/app/(app)/dashboard/_use-case/generate-weekly-report.use-case";
 import { GenerateBatchWeeklyReportsUseCase } from "@/app/(app)/dashboard/_use-case/generate-batch-weekly-reports.use-case";
+import { env } from "@/lib/env";
 
 const container = Container.getInstance();
 
@@ -34,8 +37,8 @@ export const getAnalyticsService = () => {
     "analyticsService",
     () =>
       new PostHogAnalyticsService(
-        process.env.NEXT_PUBLIC_POSTHOG_KEY!,
-        process.env.NEXT_PUBLIC_POSTHOG_HOST
+        env.POSTHOG_API_KEY,
+        env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.posthog.com"
       )
   );
 };
@@ -136,13 +139,26 @@ export const getVerifyTeamPermissionUseCase = async () => {
   );
 };
 
+const getPromptRepository = () => {
+  return container.get("promptRepository", () => new FilePromptRepository());
+};
+
+const getPromptObserver = () => {
+  return container.get(
+    "promptObserver",
+    () => new PromptObserverService(getAnalyticsService())
+  );
+};
+
 const getAiService = () => {
   return container.get(
     "aiService",
     () =>
       new GeminiAiService(
-        process.env.GOOGLE_API_KEY!,
-        process.env.GOOGLE_GEMINI_MODEL
+        env.GOOGLE_API_KEY!,
+        getPromptRepository(),
+        getPromptObserver(),
+        process.env.GOOGLE_GEMINI_MODEL || "gemini-2.5-flash"
       )
   );
 };

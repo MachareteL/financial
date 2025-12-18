@@ -1,47 +1,201 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import type { IAiService } from "@/domain/interfaces/ai-service.interface";
+import { GoogleGenAI } from "@google/genai";
+import type {
+  IAiService,
+  PromptExecutionOptions,
+} from "@/domain/interfaces/ai-service.interface";
 import { ReceiptSchema, type ReceiptDataDTO } from "@/domain/dto/receipt.dto";
 import type { Expense } from "@/domain/entities/expense";
+import type { IPromptRepository } from "@/domain/interfaces/prompt-repository.interface";
+import type {
+  PromptContext,
+  PromptExecutionResult,
+} from "@/domain/ai/prompt-context";
+import { PromptObserverService } from "../ai/prompt-observer.service";
+
+// Type definitions for Google GenAI content parts
+interface InlineDataPart {
+  inlineData: {
+    mimeType: string;
+    data: string;
+  };
+}
+
+interface TextPart {
+  text: string;
+}
+
+type ContentPart = InlineDataPart | TextPart;
 
 export class GeminiAiService implements IAiService {
-  private model;
-  private textModel;
+  private ai: GoogleGenAI;
+  private defaultModelName: string;
 
-  constructor(apiKey: string, modelName: string = "gemini-2.5-flash") {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    this.model = genAI.getGenerativeModel({
-      model: modelName,
-      generationConfig: { responseMimeType: "application/json" },
-    });
-    this.textModel = genAI.getGenerativeModel({
-      model: modelName,
-    });
+  constructor(
+    apiKey: string,
+    private promptRepository: IPromptRepository,
+    private promptObserver: PromptObserverService,
+    modelName: string = "gemini-2.5-flash"
+  ) {
+    this.ai = new GoogleGenAI({ apiKey });
+    this.defaultModelName = modelName;
   }
 
+  /**
+   * Render a prompt template by replacing variables with context values
+   */
+  private renderPrompt(template: string, context: PromptContext): string {
+    let rendered = template;
+
+    for (const [key, value] of Object.entries(context)) {
+      const placeholder = `{{${key}}}`;
+      const replacement = typeof value === "string" ? value : String(value);
+      rendered = rendered.replace(new RegExp(placeholder, "g"), replacement);
+    }
+
+    return rendered;
+  }
+
+  /**
+   * Execute a prompt by ID with given context
+   */
+  async executePrompt<T>(
+    promptId: string,
+    context: PromptContext,
+    options?: PromptExecutionOptions
+  ): Promise<PromptExecutionResult<T>> {
+    const startTime = Date.now();
+    let success = false;
+
+    try {
+      // Get prompt from repository
+      const prompt = await this.promptRepository.getPrompt(
+        promptId,
+        options?.version
+      );
+
+      // Render template with context
+      const renderedPrompt = this.renderPrompt(prompt.template, context);
+
+      // Build configuration for the request
+      const modelName = prompt.metadata.model || this.defaultModelName;
+      const config: Record<string, unknown> = {
+        temperature: options?.temperature ?? prompt.metadata.temperature ?? 0.7,
+      };
+
+      // Add maxOutputTokens if specified
+      if (options?.maxTokens ?? prompt.metadata.maxTokens) {
+        config.maxOutputTokens =
+          options?.maxTokens ?? prompt.metadata.maxTokens;
+      }
+
+      // Add responseMimeType if specified
+      if (prompt.metadata.responseMimeType) {
+        config.responseMimeType = prompt.metadata.responseMimeType;
+      }
+
+      // Build contents array based on context
+      let contents: ContentPart[] | string;
+
+      if (context.fileBuffer && context.mimeType) {
+        // Vision task with image - use parts array
+        const base64Data = (context.fileBuffer as Buffer).toString("base64");
+        contents = [
+          {
+            inlineData: {
+              mimeType: context.mimeType as string,
+              data: base64Data,
+            },
+          },
+          { text: renderedPrompt },
+        ];
+      } else {
+        // Text-only task
+        contents = renderedPrompt;
+      }
+
+      // Execute prompt using new SDK API
+      const result = await this.ai.models.generateContent({
+        model: modelName,
+        contents,
+        config,
+      });
+
+      const responseText = result.text ?? "";
+      const executionTime = Date.now() - startTime;
+
+      // Parse output based on response type
+      let output: T;
+      if (prompt.metadata.responseMimeType === "application/json") {
+        output = JSON.parse(responseText) as T;
+      } else {
+        output = responseText as T;
+      }
+
+      success = true;
+
+      const metadata = {
+        promptId,
+        promptVersion: prompt.version,
+        executionTime,
+        model: modelName,
+        timestamp: new Date(),
+        success,
+      };
+
+      // Track execution
+      this.promptObserver.trackExecution(metadata);
+
+      return { output, metadata };
+    } catch (error) {
+      const executionTime = Date.now() - startTime;
+
+      // Track failure
+      if (error instanceof Error) {
+        const prompt = await this.promptRepository.getPrompt(
+          promptId,
+          options?.version
+        );
+        this.promptObserver.trackFailure(
+          promptId,
+          prompt.version,
+          error,
+          executionTime
+        );
+      }
+
+      throw error;
+    }
+  }
+
+  /**
+   * Parse receipt using vision AI
+   * Context will include user's categories for better suggestion
+   */
   async parseReceipt(
     fileBuffer: Buffer,
-    mimeType: string
+    mimeType: string,
+    categories?: string[]
   ): Promise<ReceiptDataDTO | null> {
     try {
-      const base64Data = fileBuffer.toString("base64");
+      // Format categories for the prompt
+      const categoriesText =
+        categories && categories.length > 0
+          ? categories.map((c) => `  - ${c}`).join("\n")
+          : "  - Alimentação\n  - Transporte\n  - Saúde\n  - Educação\n  - Lazer\n  - Outros";
 
-      const prompt = `
-        Analise esta imagem de nota fiscal e extraia os dados em JSON estrito:
-        - "amount": valor total (number).
-        - "date": data da compra (YYYY-MM-DD). Se não houver ano, assuma o ano atual.
-        - "description": nome do estabelecimento.
-        - "category": sugira uma categoria (Alimentação, Transporte, etc) ou null.
-      `;
+      const context: PromptContext = {
+        fileBuffer,
+        mimeType,
+        categories: categoriesText,
+      };
 
-      const result = await this.model.generateContent([
-        prompt,
-        { inlineData: { data: base64Data, mimeType } },
-      ]);
+      const result = await this.executePrompt<Record<string, unknown>>(
+        "receipt-parser",
+        context
+      );
 
-      const text = result.response.text();
-      if (!text) return null;
-
-      const rawData = JSON.parse(text);
+      // Validate and parse with schema
+      const rawData = result.output;
 
       if (typeof rawData.amount === "string") {
         rawData.amount = parseFloat(rawData.amount);
@@ -49,11 +203,14 @@ export class GeminiAiService implements IAiService {
 
       return ReceiptSchema.parse(rawData);
     } catch (error) {
-      console.error("Erro no GeminiAiService:", error);
+      console.error("Erro no GeminiAiService.parseReceipt:", error);
       return null;
     }
   }
 
+  /**
+   * Generate weekly financial insight
+   */
   async generateWeeklyInsight(expenses: Expense[]): Promise<string> {
     try {
       if (expenses.length === 0) {
@@ -88,27 +245,20 @@ export class GeminiAiService implements IAiService {
         )
         .join("\n");
 
-      const prompt = `
-        Atue como um Coach Financeiro amigável e motivador.
-        Analise o resumo financeiro desta semana do usuário e gere um "Insight" curto, direto e útil (máximo 2 frases).
-        Foque em elogiar economia ou alertar gentilmente sobre gastos excessivos em uma categoria específica.
-        Não use saudações genéricas como "Olá". Vá direto ao ponto. Use emojis.
+      const context: PromptContext = {
+        totalSpent: `R$ ${totalSpent.toFixed(2)}`,
+        topCategories,
+        topExpenses,
+      };
 
-        Devolva APENAS a mensagem em texto puro.
+      const result = await this.executePrompt<string>(
+        "weekly-insight",
+        context
+      );
 
-        Resumo da Semana:
-        - Total Gasto: R$ ${totalSpent.toFixed(2)}
-        
-        Principais Categorias:
-        ${topCategories}
-
-        Maiores Gastos Individuais:
-        ${topExpenses}
-      `;
-
-      const result = await this.textModel.generateContent(prompt);
-      const text = result.response.text();
-      return text || "Mantenha o foco nos seus objetivos financeiros! 💰";
+      return (
+        result.output || "Mantenha o foco nos seus objetivos financeiros! 💰"
+      );
     } catch (error) {
       console.error("Erro ao gerar insight:", error);
       return "Não foi possível gerar seu insight semanal no momento. Tente novamente mais tarde.";

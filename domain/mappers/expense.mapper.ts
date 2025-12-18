@@ -6,44 +6,56 @@ import type {
   ExpenseDetailsDTO,
   CreateExpenseDTO,
 } from "../dto/expense.types.d.ts";
+import type { Database } from "../dto/database.types.d.ts";
 import { Mapper } from "../interfaces/mapper.interface";
+
+type ExpenseRow = Database["public"]["Tables"]["expenses"]["Row"];
+type ExpenseWithRelations = ExpenseRow & {
+  category?: {
+    id: string;
+    name: string;
+    budget_category_id: string | null;
+  } | null;
+  owner?: { name: string } | null;
+};
 
 export class ExpenseMapperImplementation implements Mapper<
   Expense,
   ExpenseDetailsDTO,
   CreateExpenseDTO
 > {
-  toDomain(raw: any): Expense {
+  toDomain(raw: ExpenseWithRelations): Expense {
     return new Expense({
       id: raw.id,
       amount: raw.amount,
-      description: raw.description,
+      description: raw.description || "",
       date: DateUtils.parse(raw.date) || DateUtils.now(),
-      teamId: raw.teamId,
-      userId: raw.userId,
-      categoryId: raw.categoryId,
-      receiptUrl: raw.receiptUrl,
-      isRecurring: raw.isRecurring,
-      recurrenceType: raw.recurrenceType,
-      isInstallment: raw.isInstallment,
-      installmentNumber: raw.installmentNumber,
-      installmentValue: raw.installmentValue,
-      totalInstallments: raw.totalInstallments,
-      parentExpenseId: raw.parentExpenseId,
-      createdAt: DateUtils.parse(raw.createdAt) || DateUtils.now(),
+      teamId: raw.team_id ?? "",
+      userId: raw.user_id ?? "",
+      categoryId: raw.category_id ?? "",
+      receiptUrl: raw.receipt_url || null,
+      isRecurring: raw.is_recurring || false,
+      recurrenceType:
+        (raw.recurrence_type as "monthly" | "weekly" | "yearly" | null) || null,
+      isInstallment: raw.is_installment || false,
+      installmentNumber: raw.installment_number || null,
+      installmentValue: raw.installment_value || null,
+      totalInstallments: raw.total_installments || null,
+      parentExpenseId: raw.parent_expense_id || null,
+      createdAt: DateUtils.parse(raw.created_at) || DateUtils.now(),
       // Handle optional relations if passed in raw
       category: raw.category
         ? new Category({
             id: raw.category.id,
             name: raw.category.name,
-            budgetCategoryId: raw.category.budgetCategoryId,
-            teamId: raw.teamId, // Assuming context or added to query
+            budgetCategoryId: raw.category.budget_category_id ?? "",
+            teamId: raw.team_id ?? "", // Assuming context or added to query
             createdAt: DateUtils.now(), // Placeholder if not queried
           })
         : null,
       owner: raw.owner
         ? new User({
-            id: raw.userId,
+            id: raw.user_id ?? "",
             name: raw.owner.name,
             email: "", // Placeholder
             createdAt: DateUtils.now(), // Placeholder

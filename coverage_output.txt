@@ -1,0 +1,410 @@
+
+ RUN  v3.2.4 /Users/MLC4CA/Desktop/financial
+      Coverage enabled with v8
+
+ ✓ app/(app)/expenses/_use-case/delete-expense.use-case.spec.ts (2 tests) 4ms
+ ✓ app/(app)/team/_use-case/manage-members.use-case.spec.ts (5 tests) 10ms
+ ✓ app/(app)/team/_use-case/check-feature-access.use-case.spec.ts (4 tests) 10ms
+ ✓ app/(app)/team/_use-case/create-team.use-case.spec.ts (3 tests) 8ms
+ ✓ app/(app)/budget/_use-case/create-budget-category.use-case.spec.ts (2 tests) 11ms
+ ✓ app/(app)/expenses/_use-case/update-expense.use-case.spec.ts (4 tests) 5ms
+ ✓ app/(app)/budget/_use-case/save-budget.use-case.spec.ts (3 tests) 6ms
+ ✓ app/(app)/expenses/_use-case/create-expense.use-case.spec.ts (5 tests) 17ms
+ ✓ __tests__/smoke.test.tsx (2 tests) 22ms
+ ✓ app/(app)/expenses/_use-case/parse-receipt.use-case.spec.ts (3 tests) 4ms
+ ✓ domain/entities/subscription.spec.ts (3 tests) 4ms
+ ✓ domain/entities/budget-category.spec.ts (4 tests) 5ms
+
+ Test Files  12 passed (12)
+      Tests  40 passed (40)
+   Start at  11:39:48
+   Duration  3.81s (transform 359ms, setup 1.36s, collect 1.20s, tests 105ms, environment 12.37s, prepare 1.34s)
+
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |    3.18 |    73.61 |   63.96 |    3.18 |                   
+ financial         |       0 |       20 |      20 |       0 |                   
+  middleware.ts    |       0 |        0 |       0 |       0 | 1-72              
+  next.config.mjs  |       0 |        0 |       0 |       0 | 1-60              
+  ...ght.config.ts |       0 |        0 |       0 |       0 | 1-25              
+  ...ss.config.mjs |       0 |        0 |       0 |       0 | 1-8               
+  ...ind.config.ts |       0 |      100 |     100 |       0 | 2-127             
+ financial/app     |       0 |     62.5 |    62.5 |       0 |                   
+  error.tsx        |       0 |      100 |     100 |       0 | 3-44              
+  layout.tsx       |       0 |      100 |     100 |       0 | 3-104             
+  manifest.ts      |       0 |      100 |     100 |       0 | 3-20              
+  not-found.tsx    |       0 |        0 |       0 |       0 | 1-33              
+  ...aph-image.tsx |       0 |        0 |       0 |       0 | 1-82              
+  page.tsx         |       0 |        0 |       0 |       0 | 1-498             
+  robots.ts        |       0 |      100 |     100 |       0 | 3-12              
+  sitemap.ts       |       0 |      100 |     100 |       0 | 2-42              
+ ...cial/app/(app) |       0 |        0 |       0 |       0 |                   
+  layout.tsx       |       0 |        0 |       0 |       0 | 1-40              
+ ...p)/_components |       0 |      100 |     100 |       0 |                   
+  ...e-checker.tsx |       0 |      100 |     100 |       0 | 3-51              
+ .../(app)/account |       0 |      100 |     100 |       0 |                   
+  page.tsx         |       0 |      100 |     100 |       0 | 3-83              
+ ...unt/components |       0 |      100 |     100 |       0 |                   
+  ...ences-tab.tsx |       0 |      100 |     100 |       0 | 3-157             
+  profile-tab.tsx  |       0 |      100 |     100 |       0 | 3-95              
+  security-tab.tsx |       0 |      100 |     100 |       0 | 3-115             
+ ...pdate-password |       0 |      100 |     100 |       0 |                   
+  page.tsx         |       0 |      100 |     100 |       0 | 3-127             
+ ...p/(app)/budget |       0 |      100 |     100 |       0 |                   
+  page.tsx         |       0 |      100 |     100 |       0 | 3-1018            
+ ...dget/_use-case |    30.4 |      100 |     100 |    30.4 |                   
+  ...y.use-case.ts |     100 |      100 |     100 |     100 |                   
+  ...y.use-case.ts |       0 |      100 |     100 |       0 | 5-28              
+  ...s.use-case.ts |       0 |      100 |     100 |       0 | 3-14              
+  ...d.use-case.ts |       0 |      100 |     100 |       0 | 8-59              
+  ...t.use-case.ts |       0 |      100 |     100 |       0 | 6-23              
+  ...t.use-case.ts |     100 |      100 |     100 |     100 |                   
+  ...y.use-case.ts |       0 |      100 |     100 |       0 | 5-36              
+ ...pp)/categories |       0 |      100 |     100 |       0 |                   
+  page.tsx         |       0 |      100 |     100 |       0 | 3-596             
+ ...ries/_use-case |       0 |      100 |     100 |       0 |                   
+  ...y.use-case.ts |       0 |      100 |     100 |       0 | 4-26              
+  ...y.use-case.ts |       0 |      100 |     100 |       0 | 6-22              
+  ...s.use-case.ts |       0 |      100 |     100 |       0 | 4-17              
+  ...y.use-case.ts |       0 |      100 |     100 |       0 | 6-36              
+ ...app)/dashboard |       0 |      100 |     100 |       0 |                   
+  page.tsx         |       0 |      100 |     100 |       0 | 3-116             
+ ...board/_actions |       0 |      100 |     100 |       0 |                   
+  ...ts.actions.ts |       0 |      100 |     100 |       0 | 3-56              
+ ...oard/_use-case |       0 |      100 |     100 |       0 |                   
+  ...s.use-case.ts |       0 |      100 |     100 |       0 | 4-33              
+  ...t.use-case.ts |       0 |      100 |     100 |       0 | 4-38              
+  ...a.use-case.ts |       0 |      100 |     100 |       0 | 11-144            
+  ...s.use-case.ts |       0 |      100 |     100 |       0 | 3-12              
+  ...d.use-case.ts |       0 |      100 |     100 |       0 | 3-9               
+ ...ard/components |       0 |        0 |       0 |       0 |                   
+  ...et-health.tsx |       0 |        0 |       0 |       0 | 1-192             
+  ...low-chart.tsx |       0 |        0 |       0 |       0 | 1-124             
+  ...rd-header.tsx |       0 |        0 |       0 |       0 | 1-106             
+  ...nsactions.tsx |       0 |        0 |       0 |       0 | 1-109             
+  ...ary-cards.tsx |       0 |        0 |       0 |       0 | 1-188             
+ ...(app)/expenses |       0 |    33.33 |   33.33 |       0 |                   
+  loading.tsx      |       0 |        0 |       0 |       0 | 1-3               
+  page.tsx         |       0 |      100 |     100 |       0 | 3-485             
+  utils.ts         |       0 |        0 |       0 |       0 | 1-60              
+ ...nses/[id]/edit |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-440             
+ ...enses/_actions |       0 |      100 |     100 |       0 |                   
+  ...se.actions.ts |       0 |      100 |     100 |       0 | 3-47              
+  parse-receipt.ts |       0 |      100 |     100 |       0 | 3-122             
+ ...nses/_use-case |   56.34 |    84.61 |     100 |   56.34 |                   
+  ...e.use-case.ts |     100 |       80 |     100 |     100 | 34,50,69,100-101  
+  ...e.use-case.ts |     100 |      100 |     100 |     100 |                   
+  ...s.use-case.ts |       0 |      100 |     100 |       0 | 6-57              
+  ...d.use-case.ts |       0 |      100 |     100 |       0 | 8-57              
+  ...d.use-case.ts |       0 |      100 |     100 |       0 | 8-59              
+  ...y.use-case.ts |       0 |      100 |     100 |       0 | 7-18              
+  ...s.use-case.ts |       0 |      100 |     100 |       0 | 7-35              
+  ...t.use-case.ts |     100 |      100 |     100 |     100 |                   
+  ...e.use-case.ts |   91.66 |    78.57 |     100 |   91.66 | 51-53,65-66       
+ ...ses/components |       0 |    33.33 |   33.33 |       0 |                   
+  ...se-dialog.tsx |       0 |      100 |     100 |       0 | 3-67              
+  ...-analysis.tsx |       0 |        0 |       0 |       0 | 1-319             
+  ...rt-dialog.tsx |       0 |      100 |     100 |       0 | 3-183             
+  ...nses-list.tsx |       0 |        0 |       0 |       0 | 1-182             
+  ...ses-table.tsx |       0 |        0 |       0 |       0 | 1-202             
+  ...pt-viewer.tsx |       0 |        0 |       0 |       0 | 1-76              
+ ...)/expenses/new |       0 |      100 |     100 |       0 |                   
+  page.tsx         |       0 |      100 |     100 |       0 | 4-609             
+ ...(app)/feedback |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-50              
+ ...dback/_actions |       0 |      100 |     100 |       0 |                   
+  send-feedback.ts |       0 |      100 |     100 |       0 | 3-54              
+ ...ck/_components |       0 |      100 |     100 |       0 |                   
+  ...back-form.tsx |       0 |      100 |     100 |       0 | 3-244             
+ ...back/_use-case |       0 |      100 |     100 |       0 |                   
+  ...k.use-case.ts |       0 |      100 |     100 |       0 | 5-62              
+ ...come/_use_case |       0 |      100 |     100 |       0 |                   
+  ...e.use-case.ts |       0 |      100 |     100 |       0 | 4-26              
+  ...e.use-case.ts |       0 |      100 |     100 |       0 | 6-22              
+  ...e.use-case.ts |       0 |      100 |     100 |       0 | 3-17              
+  ...e.use-case.ts |       0 |      100 |     100 |       0 | 6-42              
+ ...p)/investments |       0 |      100 |     100 |       0 |                   
+  page.tsx         |       0 |      100 |     100 |       0 | 4-681             
+ ...ents/_use-case |       0 |      100 |     100 |       0 |                   
+  ...t.use-case.ts |       0 |      100 |     100 |       0 | 5-27              
+  ...t.use-case.ts |       0 |      100 |     100 |       0 | 5-23              
+  ...s.use-case.ts |       0 |      100 |     100 |       0 | 3-13              
+  ...h.use-case.ts |       0 |      100 |     100 |       0 | 6-58              
+  ...t.use-case.ts |       0 |      100 |     100 |       0 | 4-42              
+ .../(app)/invites |       0 |      100 |     100 |       0 |                   
+  page.tsx         |       0 |      100 |     100 |       0 | 3-149             
+ ...vites/_actions |       0 |      100 |     100 |       0 |                   
+  ...ng-invites.ts |       0 |      100 |     100 |       0 | 3-13              
+ ...app/(app)/team |       0 |      100 |     100 |       0 |                   
+  page.tsx         |       0 |      100 |     100 |       0 | 3-209             
+  ...-provider.tsx |       0 |      100 |     100 |       0 | 4-75              
+ .../team/_actions |       0 |      100 |     100 |       0 |                   
+  ...on.actions.ts |       0 |      100 |     100 |       0 | 3-101             
+ ...team/_use-case |   40.55 |    91.17 |   94.73 |   40.55 |                   
+  ...e.use-case.ts |       0 |      100 |     100 |       0 | 3-12              
+  ...s.use-case.ts |   82.14 |       90 |     100 |   82.14 | 35-39             
+  ...m.use-case.ts |     100 |      100 |     100 |     100 |                   
+  ...e.use-case.ts |       0 |      100 |     100 |       0 | 3-11              
+  ...s.use-case.ts |       0 |      100 |     100 |       0 | 4-11              
+  ...s.use-case.ts |       0 |      100 |     100 |       0 | 4-10              
+  ...a.use-case.ts |       0 |      100 |     100 |       0 | 9-50              
+  ...s.use-case.ts |   83.11 |       75 |      80 |   83.11 | 81-94             
+  ...s.use-case.ts |       0 |      100 |     100 |       0 | 8-56              
+  ...n.use-case.ts |       0 |      100 |     100 |       0 | 4-24              
+  ...m.use-case.ts |       0 |      100 |     100 |       0 | 5-35              
+  ...m.use-case.ts |       0 |      100 |     100 |       0 | 3-22              
+  ...n.use-case.ts |       0 |      100 |     100 |       0 | 3-13              
+ ...eam/components |       0 |      100 |     100 |       0 |                   
+  ...g-section.tsx |       0 |      100 |     100 |       0 | 5-56              
+  ...vites-tab.tsx |       0 |      100 |     100 |       0 | 3-123             
+  ...mbers-tab.tsx |       0 |      100 |     100 |       0 | 3-302             
+  ...roles-tab.tsx |       0 |      100 |     100 |       0 | 3-337             
+  ...tings-tab.tsx |       0 |      100 |     100 |       0 | 3-249             
+  ...ption-tab.tsx |       0 |      100 |     100 |       0 | 4-37              
+ ...onents/billing |       0 |      100 |     100 |       0 |                   
+  ...plan-card.tsx |       0 |      100 |     100 |       0 | 3-129             
+  ...on-alerts.tsx |       0 |      100 |     100 |       0 | 3-110             
+  ...ing-cards.tsx |       0 |      100 |     100 |       0 | 3-238             
+ ...l/app/(public) |       0 |      100 |     100 |       0 |                   
+  layout.tsx       |       0 |      100 |     100 |       0 | 3-120             
+ .../(public)/blog |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-171             
+ ...c)/blog/[slug] |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-196             
+ ...ublic)/privacy |       0 |      100 |     100 |       0 |                   
+  page.tsx         |       0 |      100 |     100 |       0 | 2-262             
+ .../(public)/quiz |       0 |    66.66 |   66.66 |       0 |                   
+  layout.tsx       |       0 |      100 |     100 |       0 | 3-44              
+  ...aph-image.tsx |       0 |        0 |       0 |       0 | 1-201             
+  page.tsx         |       0 |      100 |     100 |       0 | 3-246             
+ ...quiz/_use-case |       0 |      100 |     100 |       0 |                   
+  ...e.use-case.ts |       0 |      100 |     100 |       0 | 13-58             
+  ...t.use-case.ts |       0 |      100 |     100 |       0 | 3-173             
+ ...uiz/components |       0 |       20 |      20 |       0 |                   
+  ...r-manager.tsx |       0 |        0 |       0 |       0 | 1-303             
+  ...tion-card.tsx |       0 |      100 |     100 |       0 | 5-80              
+  ...t-section.tsx |       0 |        0 |       0 |       0 | 1-573             
+  ...sult-card.tsx |       0 |        0 |       0 |       0 | 1-192             
+  ...me-screen.tsx |       0 |        0 |       0 |       0 | 1-292             
+ ...ic)/quiz/utils |       0 |        0 |       0 |       0 |                   
+  share-utils.ts   |       0 |        0 |       0 |       0 | 1-9               
+ ...blic)/security |       0 |      100 |     100 |       0 |                   
+  page.tsx         |       0 |      100 |     100 |       0 | 2-173             
+ ...(public)/terms |       0 |      100 |     100 |       0 |                   
+  page.tsx         |       0 |      100 |     100 |       0 | 2-227             
+ .../weekly-report |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 1-29              
+ ...ebhooks/stripe |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 1-155             
+ ...ncial/app/auth |       0 |      100 |     100 |       0 |                   
+  layout.tsx       |       0 |      100 |     100 |       0 | 3-22              
+  page.tsx         |       0 |      100 |     100 |       0 | 4-362             
+ ...th/_components |       0 |        0 |       0 |       0 |                   
+  ...isclaimer.tsx |       0 |        0 |       0 |       0 | 1-25              
+ ...auth/_use-case |       0 |      100 |     100 |       0 |                   
+  ...r.use-case.ts |       0 |      100 |     100 |       0 | 4-16              
+  ...d.use-case.ts |       0 |      100 |     100 |       0 | 3-16              
+  ...n.use-case.ts |       0 |      100 |     100 |       0 | 2-47              
+  ...t.use-case.ts |       0 |      100 |     100 |       0 | 3-9               
+  ...p.use-case.ts |       0 |      100 |     100 |       0 | 3-39              
+  ...d.use-case.ts |       0 |      100 |     100 |       0 | 3-14              
+  ...e.use-case.ts |       0 |      100 |     100 |       0 | 4-20              
+  ...e.use-case.ts |       0 |      100 |     100 |       0 | 4-15              
+ ...uth-code-error |       0 |      100 |     100 |       0 |                   
+  page.tsx         |       0 |      100 |     100 |       0 | 3-70              
+ .../auth/callback |       0 |      100 |     100 |       0 |                   
+  route.ts         |       0 |      100 |     100 |       0 | 2-80              
+ ...th/verify-code |       0 |      100 |     100 |       0 |                   
+  page.tsx         |       0 |      100 |     100 |       0 | 3-199             
+ ...app/onboarding |       0 |      100 |     100 |       0 |                   
+  page.tsx         |       0 |      100 |     100 |       0 | 4-405             
+ ...omponents/blog |       0 |      100 |     100 |       0 |                   
+  ...etter-cta.tsx |       0 |      100 |     100 |       0 | 3-50              
+ ...onents/landing |       0 |      100 |     100 |       0 |                   
+  ...h-buttons.tsx |       0 |      100 |     100 |       0 | 3-25              
+  hero-cta.tsx     |       0 |      100 |     100 |       0 | 3-30              
+  mobile-menu.tsx  |       0 |      100 |     100 |       0 | 3-92              
+  ...ng-toggle.tsx |       0 |      100 |     100 |       0 | 3-178             
+ ...ponents/layout |       0 |    81.81 |   81.81 |       0 |                   
+  header.tsx       |       0 |        0 |       0 |       0 | 1-25              
+  index.ts         |       0 |        0 |       0 |       0 | 1-3               
+  mobile-nav.tsx   |       0 |      100 |     100 |       0 | 3-76              
+  ...tions-nav.tsx |       0 |      100 |     100 |       0 | 3-229             
+  ...container.tsx |       0 |      100 |     100 |       0 | 2-38              
+  page-header.tsx  |       0 |      100 |     100 |       0 | 2-54              
+  section.tsx      |       0 |      100 |     100 |       0 | 2-57              
+  sidebar.tsx      |       0 |      100 |     100 |       0 | 3-80              
+  ...ion-badge.tsx |       0 |      100 |     100 |       0 | 3-130             
+  ...-switcher.tsx |       0 |      100 |     100 |       0 | 3-280             
+  user-nav.tsx     |       0 |      100 |     100 |       0 | 3-106             
+ ...mponents/lemon |       0 |       50 |      50 |       0 |                   
+  empty-state.tsx  |       0 |      100 |     100 |       0 | 2-55              
+  index.ts         |       0 |        0 |       0 |       0 | 1-2               
+  ...ing-state.tsx |       0 |      100 |     100 |       0 | 2-38              
+  logo.tsx         |       0 |        0 |       0 |       0 | 1-29              
+ ...ents/providers |       0 |      100 |     100 |       0 |                   
+  ...-provider.tsx |       0 |      100 |     100 |       0 | 3-27              
+  ...-provider.tsx |       0 |      100 |     100 |       0 | 2-35              
+  ...-provider.tsx |       0 |      100 |     100 |       0 | 3-29              
+  ...-provider.tsx |       0 |      100 |     100 |       0 | 4-11              
+ ...components/seo |       0 |      100 |     100 |       0 |                   
+  json-ld.tsx      |       0 |      100 |     100 |       0 | 7-14              
+ ...s/subscription |       0 |    66.66 |   66.66 |       0 |                   
+  ...ion-modal.tsx |       0 |      100 |     100 |       0 | 3-219             
+  ...ion-check.tsx |       0 |      100 |     100 |       0 | 3-75              
+  ...ade-modal.tsx |       0 |        0 |       0 |       0 | 1-195             
+ .../components/ui |       0 |       80 |      80 |       0 |                   
+  accordion.tsx    |       0 |      100 |     100 |       0 | 3-56              
+  alert-dialog.tsx |       0 |      100 |     100 |       0 | 3-127             
+  avatar.tsx       |       0 |      100 |     100 |       0 | 3-48              
+  badge.tsx        |       0 |      100 |     100 |       0 | 2-34              
+  button.tsx       |       0 |        0 |       0 |       0 | 1-56              
+  card.tsx         |       0 |        0 |       0 |       0 | 1-97              
+  checkbox.tsx     |       0 |      100 |     100 |       0 | 3-26              
+  command.tsx      |       0 |      100 |     100 |       0 | 3-143             
+  dialog.tsx       |       0 |      100 |     100 |       0 | 3-109             
+  ...down-menu.tsx |       0 |      100 |     100 |       0 | 3-182             
+  form.tsx         |       0 |      100 |     100 |       0 | 3-168             
+  input.tsx        |       0 |        0 |       0 |       0 | 1-48              
+  label.tsx        |       0 |      100 |     100 |       0 | 3-24              
+  popover.tsx      |       0 |      100 |     100 |       0 | 3-29              
+  progress.tsx     |       0 |      100 |     100 |       0 | 3-31              
+  select.tsx       |       0 |      100 |     100 |       0 | 3-157             
+  slider.tsx       |       0 |      100 |     100 |       0 | 3-26              
+  sonner.tsx       |       0 |      100 |     100 |       0 | 3-30              
+  switch.tsx       |       0 |      100 |     100 |       0 | 3-27              
+  table.tsx        |       0 |        0 |       0 |       0 | 1-109             
+  tabs.tsx         |       0 |      100 |     100 |       0 | 3-53              
+  textarea.tsx     |       0 |        0 |       0 |       0 | 1-21              
+  toast.tsx        |       0 |      100 |     100 |       0 | 3-113             
+  toaster.tsx      |       0 |      100 |     100 |       0 | 3-35              
+  tooltip.tsx      |       0 |      100 |     100 |       0 | 3-27              
+ ...cial/domain/ai |       0 |        0 |       0 |       0 |                   
+  ...pt-context.ts |       0 |        0 |       0 |       0 |                   
+  ...t-template.ts |       0 |        0 |       0 |       0 |                   
+ ...ial/domain/dto |       0 |       50 |      50 |       0 |                   
+  feedback.dto.ts  |       0 |        0 |       0 |       0 |                   
+  receipt.dto.ts   |       0 |        0 |       0 |       0 | 1-10              
+  sign-up.dto.ts   |       0 |        0 |       0 |       0 | 1-13              
+  ...oins.types.ts |       0 |        0 |       0 |       0 |                   
+ ...omain/entities |   38.36 |    76.47 |   36.61 |   38.36 |                   
+  ...t-category.ts |     100 |      100 |   71.42 |     100 |                   
+  budget.ts        |     100 |      100 |    37.5 |     100 |                   
+  category.ts      |      80 |      100 |       0 |      80 | 21-22,33-35       
+  expense.ts       |   73.03 |      100 |      40 |   73.03 | ...00-101,103-104 
+  feedback.ts      |       0 |        0 |       0 |       0 | 1-49              
+  income.ts        |       0 |        0 |       0 |       0 | 1-75              
+  insight.ts       |       0 |        0 |       0 |       0 | 1-62              
+  investment.ts    |       0 |        0 |       0 |       0 | 1-44              
+  subscription.ts  |   69.23 |      100 |   23.07 |   69.23 | ...62,64-65,67-68 
+  team-invite.ts   |       0 |        0 |       0 |       0 | 1-67              
+  team-role.ts     |       0 |        0 |       0 |       0 | 1-32              
+  team.ts          |   89.74 |     87.5 |    87.5 |   89.74 | 38-40,44          
+  user.ts          |       0 |        0 |       0 |       0 | 1-32              
+ .../entities/quiz |       0 |      100 |     100 |       0 |                   
+  ...-questions.ts |       0 |      100 |     100 |       0 | 15-319            
+ ...ain/interfaces |       0 |        0 |       0 |       0 |                   
+  ....interface.ts |       0 |        0 |       0 |       0 |                   
+  ....interface.ts |       0 |        0 |       0 |       0 |                   
+  ....interface.ts |       0 |        0 |       0 |       0 |                   
+  ....interface.ts |       0 |        0 |       0 |       0 |                   
+  ....interface.ts |       0 |        0 |       0 |       0 |                   
+  ...repository.ts |       0 |        0 |       0 |       0 |                   
+  ....interface.ts |       0 |        0 |       0 |       0 |                   
+  ....interface.ts |       0 |        0 |       0 |       0 |                   
+  ....interface.ts |       0 |        0 |       0 |       0 |                   
+  ....interface.ts |       0 |        0 |       0 |       0 |                   
+  ....interface.ts |       0 |        0 |       0 |       0 |                   
+  ....interface.ts |       0 |        0 |       0 |       0 |                   
+  ....interface.ts |       0 |        0 |       0 |       0 |                   
+  ....interface.ts |       0 |        0 |       0 |       0 |                   
+  ....interface.ts |       0 |        0 |       0 |       0 |                   
+  ....interface.ts |       0 |        0 |       0 |       0 |                   
+  ....interface.ts |       0 |        0 |       0 |       0 |                   
+  ....interface.ts |       0 |        0 |       0 |       0 |                   
+  ....interface.ts |       0 |        0 |       0 |       0 |                   
+  ....interface.ts |       0 |        0 |       0 |       0 |                   
+ ...domain/mappers |   10.37 |    23.07 |   16.66 |   10.37 |                   
+  ...ory.mapper.ts |   54.83 |      100 |   33.33 |   54.83 | 15-22,25-30       
+  budget.mapper.ts |   52.94 |      100 |   33.33 |   52.94 | 15-23,26-32       
+  ...ory.mapper.ts |       0 |        0 |       0 |       0 | 1-51              
+  ...nse.mapper.ts |       0 |        0 |       0 |       0 | 1-118             
+  ...ack.mapper.ts |       0 |        0 |       0 |       0 | 1-50              
+  income.mapper.ts |       0 |        0 |       0 |       0 | 1-55              
+  ...ght.mapper.ts |       0 |        0 |       0 |       0 | 1-37              
+  ...ent.mapper.ts |       0 |        0 |       0 |       0 | 1-59              
+  ...ion.mapper.ts |       0 |        0 |       0 |       0 | 1-43              
+  ...ite.mapper.ts |       0 |        0 |       0 |       0 | 1-38              
+  ...ole.mapper.ts |       0 |        0 |       0 |       0 | 1-37              
+  team.mapper.ts   |   65.21 |      100 |      50 |   65.21 | 11-18             
+  user.mapper.ts   |       0 |        0 |       0 |       0 | 1-30              
+ ...l/domain/types |       0 |        0 |       0 |       0 |                   
+  permission.ts    |       0 |        0 |       0 |       0 |                   
+ ...l/domain/utils |   41.46 |       40 |   33.33 |   41.46 |                   
+  date.utils.ts    |   41.46 |       40 |   33.33 |   41.46 | ...56,62-71,79-83 
+ financial/hooks   |       0 |    17.64 |   17.64 |       0 |                   
+  use-account.ts   |       0 |        0 |       0 |       0 | 1-55              
+  ...auth-guard.ts |       0 |        0 |       0 |       0 | 1-129             
+  use-budget.ts    |       0 |        0 |       0 |       0 | 1-115             
+  ...categories.ts |       0 |        0 |       0 |       0 | 1-79              
+  use-dashboard.ts |       0 |        0 |       0 |       0 | 1-17              
+  use-expenses.ts  |       0 |        0 |       0 |       0 | 1-157             
+  ...ure-access.ts |       0 |        0 |       0 |       0 | 1-33              
+  use-incomes.ts   |       0 |        0 |       0 |       0 | 1-76              
+  use-insights.ts  |       0 |      100 |     100 |       0 | 3-60              
+  ...nvestments.ts |       0 |        0 |       0 |       0 | 1-76              
+  use-invites.ts   |       0 |        0 |       0 |       0 | 1-49              
+  ...permission.ts |       0 |      100 |     100 |       0 | 3-32              
+  use-session.ts   |       0 |        0 |       0 |       0 | 1-12              
+  use-sign-out.ts  |       0 |        0 |       0 |       0 | 1-21              
+  use-team-data.ts |       0 |        0 |       0 |       0 | 1-13              
+  ...-mutations.ts |       0 |        0 |       0 |       0 | 1-67              
+  use-toast.ts     |       0 |      100 |     100 |       0 | 3-191             
+ ...rastructure/ai |       0 |      100 |     100 |       0 |                   
+  ...repository.ts |       0 |      100 |     100 |       0 | 3-111             
+  ...er.service.ts |       0 |      100 |     100 |       0 | 8-44              
+ ...ure/ai/prompts |       0 |      100 |     100 |       0 |                   
+  index.ts         |       0 |      100 |     100 |       0 | 4-5               
+  ...ser.prompt.ts |       0 |      100 |     100 |       0 | 11-36             
+  ...ght.prompt.ts |       0 |      100 |     100 |       0 | 13-44             
+ ...cture/database |       0 |        0 |       0 |       0 |                   
+  ...ase.client.ts |       0 |        0 |       0 |       0 | 1-16              
+  ...ase.server.ts |       0 |        0 |       0 |       0 | 1-51              
+ ...ency-injection |       0 |    33.33 |   33.33 |       0 |                   
+  container.ts     |       0 |      100 |     100 |       0 | 9-67              
+  index.ts         |       0 |        0 |       0 |       0 | 1-480             
+  ...-container.ts |       0 |        0 |       0 |       0 | 1-280             
+ ...e/repositories |       0 |     92.3 |    92.3 |       0 |                   
+  index.ts         |       0 |        0 |       0 |       0 | 1-11              
+  ...repository.ts |       0 |      100 |     100 |       0 | 3-237             
+  ...repository.ts |       0 |      100 |     100 |       0 | 2-134             
+  ...repository.ts |       0 |      100 |     100 |       0 | 2-93              
+  ...repository.ts |       0 |      100 |     100 |       0 | 2-176             
+  ...repository.ts |       0 |      100 |     100 |       0 | 2-282             
+  ...repository.ts |       0 |      100 |     100 |       0 | 5-27              
+  ...repository.ts |       0 |      100 |     100 |       0 | 2-112             
+  ...repository.ts |       0 |      100 |     100 |       0 | 2-63              
+  ...repository.ts |       0 |      100 |     100 |       0 | 2-105             
+  ...repository.ts |       0 |      100 |     100 |       0 | 4-28              
+  ...repository.ts |       0 |      100 |     100 |       0 | 2-107             
+  ...repository.ts |       0 |      100 |     100 |       0 | 2-596             
+ ...cture/services |       0 |    42.85 |   42.85 |       0 |                   
+  ...cs.service.ts |       0 |      100 |     100 |       0 | 2-32              
+  ...er.service.ts |       0 |        0 |       0 |       0 | 1-32              
+  ...ai.service.ts |       0 |        0 |       0 |       0 | 1-264             
+  ...cs.service.ts |       0 |      100 |     100 |       0 | 2-65              
+  ...it.service.ts |       0 |        0 |       0 |       0 | 1-66              
+  ...il.service.ts |       0 |      100 |     100 |       0 | 2-51              
+  ...nt.gateway.ts |       0 |        0 |       0 |       0 | 1-78              
+ financial/lib     |       0 |        0 |       0 |       0 |                   
+  blog.ts          |       0 |        0 |       0 |       0 | 1-50              
+  compression.ts   |       0 |        0 |       0 |       0 | 1-19              
+  env.ts           |       0 |        0 |       0 |       0 | 1-106             
+  notify-helper.ts |       0 |        0 |       0 |       0 | 1-47              
+  utils.ts         |       0 |        0 |       0 |       0 | 1-6               
+ ...ial/lib/config |       0 |        0 |       0 |       0 |                   
+  limits.ts        |       0 |        0 |       0 |       0 | 1-6               
+-------------------|---------|----------|---------|---------|-------------------

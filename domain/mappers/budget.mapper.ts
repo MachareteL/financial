@@ -1,21 +1,24 @@
 import { Budget } from "../entities/budget";
 import { DateUtils } from "@/domain/utils/date.utils";
 import type { BudgetDetailsDTO, SaveBudgetDTO } from "../dto/budget.types.d.ts";
+import type { Database } from "../dto/database.types.d.ts";
 import { Mapper } from "../interfaces/mapper.interface";
+
+type BudgetRow = Database["public"]["Tables"]["budgets"]["Row"];
 
 export class BudgetMapperImplementation implements Mapper<
   Budget,
   BudgetDetailsDTO,
   SaveBudgetDTO
 > {
-  toDomain(raw: any): Budget {
+  toDomain(raw: BudgetRow): Budget {
     return new Budget({
       id: raw.id,
       month: raw.month,
       year: raw.year,
-      totalIncome: raw.totalIncome,
-      teamId: raw.teamId,
-      createdAt: DateUtils.parse(raw.createdAt) || DateUtils.now(),
+      totalIncome: raw.total_income,
+      teamId: raw.team_id || "",
+      createdAt: DateUtils.parse(raw.created_at) || DateUtils.now(),
     });
   }
 

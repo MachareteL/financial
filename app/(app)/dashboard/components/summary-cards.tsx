@@ -14,6 +14,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useMemo, useCallback } from "react";
 import type { DashboardDataDTO } from "@/domain/dto/dashboard.types.d.ts";
 
 interface SummaryCardsProps {
@@ -24,13 +25,21 @@ interface SummaryCardsProps {
 export function SummaryCards({ data, isLoading }: SummaryCardsProps) {
   const router = useRouter();
 
-  const formatCurrency = (val: number) =>
-    val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const formatCurrency = useCallback(
+    (val: number) =>
+      val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+    []
+  );
 
-  const getPercentage = (spent: number, total: number) => {
+  const getPercentage = useCallback((spent: number, total: number) => {
     if (total === 0) return spent > 0 ? 100 : 0;
     return Math.min((spent / total) * 100, 100);
-  };
+  }, []);
+
+  const expensePercentage = useMemo(
+    () => (data ? getPercentage(data.totalSpent, data.totalIncome) : 0),
+    [data, getPercentage]
+  );
 
   if (isLoading || !data) {
     return (
@@ -161,11 +170,11 @@ export function SummaryCards({ data, isLoading }: SummaryCardsProps) {
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>Comprometido</span>
               <span className="font-bold text-foreground">
-                {getPercentage(data.totalSpent, data.totalIncome).toFixed(0)}%
+                {expensePercentage.toFixed(0)}%
               </span>
             </div>
             <Progress
-              value={getPercentage(data.totalSpent, data.totalIncome)}
+              value={expensePercentage}
               className="h-1.5 bg-muted"
               indicatorClassName={
                 data.totalSpent > data.totalIncome

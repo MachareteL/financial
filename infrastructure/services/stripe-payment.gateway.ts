@@ -1,17 +1,26 @@
 import Stripe from "stripe";
 import { IPaymentGateway } from "@/domain/interfaces/payment-gateway.interface";
+import { env } from "@/lib/env";
 
 export class StripePaymentGateway implements IPaymentGateway {
   private stripe: Stripe;
 
   constructor() {
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
-    if (!stripeKey) {
-      throw new Error("STRIPE_SECRET_KEY is not defined");
+    if (typeof window !== "undefined") {
+      throw new Error(
+        "StripePaymentGateway can only be initialized on the server"
+      );
     }
+
+    const stripeKey = env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      throw new Error(
+        "STRIPE_SECRET_KEY is not configured. Payment features are disabled."
+      );
+    }
+
     this.stripe = new Stripe(stripeKey, {
-      apiVersion: "2025-11-17.clover" as any, // Cast to any to shut up the linter if it still complains, but trying to match it.
-      // Actually, if I use 'as any', it solves everything.
+      apiVersion: "2025-11-17.clover" as Stripe.LatestApiVersion,
     });
   }
 

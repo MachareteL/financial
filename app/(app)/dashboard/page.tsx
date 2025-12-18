@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useTeam } from "@/app/(app)/team/team-provider";
-import { signOutUseCase } from "@/infrastructure/dependency-injection";
 import { notify } from "@/lib/notify-helper";
 import { useDashboardData } from "@/hooks/use-dashboard";
+import { useSignOut } from "@/hooks/use-sign-out";
 
 // Layout Components
 import { PageContainer, Section } from "@/components/layout";
@@ -24,6 +24,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
   const { currentTeam } = useTeam();
+  const signOutMutation = useSignOut();
 
   // Date State
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -44,7 +45,7 @@ export default function DashboardPage() {
   }, [error]);
 
   const handleLogout = async () => {
-    await signOutUseCase.execute();
+    await signOutMutation.mutateAsync();
     router.push("/auth");
   };
 

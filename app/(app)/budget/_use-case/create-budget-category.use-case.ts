@@ -1,7 +1,6 @@
 import type { IBudgetCategoryRepository } from "@/domain/interfaces/budget-category.repository.interface";
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 import type { CreateBudgetCategoryDTO } from "@/domain/dto/budget-category.types.d.ts";
-import { BudgetCategory } from "@/domain/entities/budget-category";
 import { BudgetCategoryMapper } from "@/domain/mappers/budget-category.mapper";
 
 export class CreateBudgetCategoryUseCase {

@@ -4,7 +4,6 @@ import type { ICategoryRepository } from "@/domain/interfaces/category.repositor
 import type { IBudgetCategoryRepository } from "@/domain/interfaces/budget-category.repository.interface";
 import type { CreateTeamDTO, TeamDTO } from "@/domain/dto/team.types.d.ts";
 import { TeamMapper } from "@/domain/mappers/team.mapper";
-import type { Team } from "@/domain/entities/team";
 
 import type { ISubscriptionRepository } from "@/domain/interfaces/subscription.repository.interface";
 

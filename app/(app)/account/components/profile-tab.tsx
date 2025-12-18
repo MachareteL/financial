@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
-import { updateProfileUseCase } from "@/infrastructure/dependency-injection";
+import { useUpdateProfile } from "@/hooks/use-account";
 import { notify } from "@/lib/notify-helper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,27 +18,22 @@ import { Loader2, User, Save, Mail } from "lucide-react";
 
 export function ProfileTab() {
   const { session, setSession } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const updateProfileMutation = useUpdateProfile();
   const [name, setName] = useState(session?.user?.name || "");
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!session?.user) return;
 
-    setIsLoading(true);
     try {
-      const updatedSession = await updateProfileUseCase.execute(
-        session.user.id,
-        {
-          name,
-        }
-      );
+      const updatedSession = await updateProfileMutation.mutateAsync({
+        userId: session.user.id,
+        name,
+      });
       setSession(updatedSession);
       notify.success("Perfil atualizado!");
     } catch (error: unknown) {
       notify.error(error, "atualizar perfil");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -84,8 +79,8 @@ export function ProfileTab() {
           </div>
 
           <div className="pt-2">
-            <Button disabled={isLoading} type="submit">
-              {isLoading ? (
+            <Button disabled={updateProfileMutation.isPending} type="submit">
+              {updateProfileMutation.isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <Save className="mr-2 h-4 w-4" />

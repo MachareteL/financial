@@ -1,5 +1,8 @@
 import { Container } from "./container";
+import { env } from "@/lib/env";
 import { ClientAnalyticsService } from "@/infrastructure/services/client-analytics.service";
+import { FilePromptRepository } from "@/infrastructure/ai/file-prompt.repository";
+import { PromptObserverService } from "@/infrastructure/ai/prompt-observer.service";
 import {
   AuthSupabaseRepository,
   CategoryRepository,
@@ -97,8 +100,8 @@ import { createBrowserClient } from "@supabase/ssr";
 const container = Container.getInstance();
 
 const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  env.NEXT_PUBLIC_SUPABASE_URL,
+  env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
 const authRepository = container.get(
@@ -143,20 +146,52 @@ const insightRepository = container.get(
 );
 
 // Services
-const aiService = container.get(
-  "aiService",
-  () =>
-    new GeminiAiService(
-      process.env.GOOGLE_API_KEY!,
-      process.env.GOOGLE_GEMINI_MODEL
-    )
-);
+const getAnalyticsService = () => {
+  return container.get(
+    "clientAnalyticsService",
+    () => new ClientAnalyticsService()
+  );
+};
+
+const getPromptRepository = () => {
+  return container.get("promptRepository", () => new FilePromptRepository());
+};
+
+const getPromptObserver = () => {
+  return container.get(
+    "promptObserver",
+    () => new PromptObserverService(getAnalyticsService())
+  );
+};
+
+const getAiService = () => {
+  // GeminiAiService requires server-side API key
+  if (typeof window !== "undefined") {
+    throw new Error("AI Service can only be initialized on the server");
+  }
+
+  const apiKey = env.GOOGLE_API_KEY;
+  if (!apiKey) {
+    throw new Error("GOOGLE_API_KEY is required for AI features");
+  }
+
+  return container.get(
+    "aiService",
+    () =>
+      new GeminiAiService(
+        apiKey,
+        getPromptRepository(),
+        getPromptObserver(),
+        process.env.GOOGLE_GEMINI_MODEL || "gemini-2.5-flash"
+      )
+  );
+};
 
 import { SupabaseFeedbackRepository } from "@/infrastructure/repositories/supabase-feedback.repository";
 
 // ...
 
-const emailService = new ResendEmailService(process.env.RESEND_API_KEY || "");
+const emailService = new ResendEmailService(env.RESEND_API_KEY);
 const feedbackRepository = new SupabaseFeedbackRepository(supabase);
 
 export const sendFeedbackUseCase = new SendFeedbackUseCase(
@@ -243,15 +278,18 @@ export const markInsightAsReadUseCase = container.get(
   () => new MarkInsightAsReadUseCase(insightRepository)
 );
 
-export const generateWeeklyReportUseCase = container.get(
-  "generateWeeklyReportUseCase",
-  () =>
-    new GenerateWeeklyReportUseCase(
-      expenseRepository,
-      aiService,
-      insightRepository
-    )
-);
+// Weekly Report - Only available on server-side
+export const getGenerateWeeklyReportUseCaseClient = () => {
+  return container.get(
+    "generateWeeklyReportUseCase",
+    () =>
+      new GenerateWeeklyReportUseCase(
+        expenseRepository,
+        getAiService(),
+        insightRepository
+      )
+  );
+};
 
 // Expenses
 export const getExpenseByIdUseCase = container.get(
@@ -404,11 +442,14 @@ export const manageMembersUseCase = container.get(
   () => new ManageMembersUseCase(teamRepository)
 );
 
-// AI
-export const parseReceiptUseCase = container.get(
-  "parseReceiptUseCase",
-  () => new ParseReceiptUseCase(aiService, new ClientAnalyticsService())
-);
+// AI - Only available on server-side
+// This getter will throw if called on client-side
+export const getParseReceiptUseCaseClient = () => {
+  return container.get(
+    "parseReceiptUseCase",
+    () => new ParseReceiptUseCase(getAiService(), new ClientAnalyticsService())
+  );
+};
 
 // Team Invites (Onboarding)
 

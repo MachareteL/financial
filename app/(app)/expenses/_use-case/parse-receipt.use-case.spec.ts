@@ -51,7 +51,7 @@ describe("ParseReceiptUseCase", () => {
       type: "image/jpeg",
     } as File;
 
-    await expect(useCase.execute(largeFile)).rejects.toThrow(
+    await expect(useCase.execute(largeFile, "user-123")).rejects.toThrow(
       "Esse arquivo é muito grande (limite 8MB)."
     );
     expect(aiService.parseReceipt).not.toHaveBeenCalled();

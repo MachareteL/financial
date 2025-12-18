@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/components/providers/auth-provider";
-import { createTeamUseCase } from "@/infrastructure/dependency-injection";
+import { useCreateTeam } from "@/hooks/use-team-mutations";
 import { notify } from "@/lib/notify-helper";
 import {
   usePendingInvites,
@@ -64,6 +64,8 @@ export default function OnboardingPage() {
     }
   }, [session, loading, router]);
 
+  const createTeamMutation = useCreateTeam();
+
   const handleCreateTeam = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -75,9 +77,9 @@ export default function OnboardingPage() {
     const teamName = formData.get("teamName") as string;
 
     try {
-      await createTeamUseCase.execute({
-        teamName,
-        userId: session.user.id,
+      await createTeamMutation.mutateAsync({
+        name: teamName,
+        ownerId: session.user.id,
       });
 
       notify.success("Equipe criada com sucesso!", {

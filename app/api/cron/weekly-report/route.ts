@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getGenerateBatchWeeklyReportsUseCase } from "@/infrastructure/dependency-injection/server-container";
+import { env } from "@/lib/env";
 
 export async function GET(req: NextRequest) {
+  // Ensure CRON_SECRET is configured in production
+  if (!env.CRON_SECRET) {
+    return new NextResponse("Service not configured", { status: 503 });
+  }
+
   const authHeader = req.headers.get("authorization");
-  console.log(authHeader);
-  console.log(process.env.CRON_SECRET);
-  console.log(req.headers);
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+
+  if (authHeader !== `Bearer ${env.CRON_SECRET}`) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 

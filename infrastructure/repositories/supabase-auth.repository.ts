@@ -5,6 +5,7 @@ import { DateUtils } from "@/domain/utils/date.utils";
 import { Team } from "@/domain/entities/team";
 import { Subscription } from "@/domain/entities/subscription";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { env } from "@/lib/env";
 
 export class AuthSupabaseRepository implements IAuthRepository {
   constructor(private readonly supabase: SupabaseClient) {}
@@ -76,7 +77,12 @@ export class AuthSupabaseRepository implements IAuthRepository {
             externalId: subData.external_id,
             externalCustomerId: subData.external_customer_id,
             gatewayId: subData.gateway_id,
-            status: subData.status as any, // Status enum cast
+            status: subData.status as
+              | "active"
+              | "canceled"
+              | "past_due"
+              | "trialing"
+              | "incomplete",
             planId: subData.plan_id,
             cancelAtPeriodEnd: subData.cancel_at_period_end ?? false,
             currentPeriodEnd: subData.current_period_end
@@ -172,7 +178,7 @@ export class AuthSupabaseRepository implements IAuthRepository {
     const baseUrl =
       typeof window !== "undefined"
         ? window.location.origin
-        : process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+        : env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
     const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${baseUrl}/auth/callback?next=/account/update-password`,

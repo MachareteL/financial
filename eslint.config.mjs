@@ -13,10 +13,10 @@ const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript", "prettier"),
   {
     rules: {
-      "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unused-vars": "error",
       "react/no-unescaped-entities": "off",
-      "prefer-const": "warn",
+      "prefer-const": "error",
       "@typescript-eslint/no-empty-object-type": "off",
     },
   },

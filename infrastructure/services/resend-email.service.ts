@@ -3,15 +3,25 @@ import { Resend } from "resend";
 
 export class ResendEmailService implements IEmailService {
   private resend: Resend | null = null;
+  private isConfigured: boolean = false;
 
-  constructor(apiKey: string) {
+  constructor(apiKey?: string) {
+    if (typeof window !== "undefined") {
+      throw new Error(
+        "ResendEmailService can only be initialized on the server"
+      );
+    }
+
     if (!apiKey) {
       console.warn(
-        "Resend API Key is missing. Email sending will likely fail."
+        "Resend API Key is missing. Email features will be disabled."
       );
+      this.isConfigured = false;
       return;
     }
+
     this.resend = new Resend(apiKey);
+    this.isConfigured = true;
   }
 
   async sendEmail(
@@ -21,10 +31,9 @@ export class ResendEmailService implements IEmailService {
     from?: string,
     replyTo?: string
   ): Promise<void> {
-    if (!this.resend) {
-      console.error("Resend API Key is missing. Cannot send email.");
+    if (!this.isConfigured || !this.resend) {
       throw new Error(
-        "Failed to send email: Resend service is not properly initialized (missing API Key)."
+        "Email service is not configured. Please set RESEND_API_KEY environment variable."
       );
     }
 

@@ -31,7 +31,6 @@ import {
 import { Loader2, TrendingUp, CheckCircle2, Sparkles } from "lucide-react";
 import { LegalDisclaimer } from "@/app/auth/_components/legal-disclaimer";
 import { Logo } from "@/components/lemon/logo";
-import { AuthApiError } from "@supabase/supabase-js";
 
 export default function AuthPage() {
   const router = useRouter();

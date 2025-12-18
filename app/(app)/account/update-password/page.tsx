@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { updatePasswordUseCase } from "@/infrastructure/dependency-injection";
+import { useUpdatePassword } from "@/hooks/use-account";
 import { notify } from "@/lib/notify-helper";
 
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ import { Loader2, Lock, ShieldCheck, ArrowLeft } from "lucide-react";
 export default function UpdatePasswordPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const updatePasswordMutation = useUpdatePassword();
   const router = useRouter();
 
   const handleUpdate = async (e: React.FormEvent) => {
@@ -31,9 +31,8 @@ export default function UpdatePasswordPage() {
       return;
     }
 
-    setIsLoading(true);
     try {
-      await updatePasswordUseCase.execute(password);
+      await updatePasswordMutation.mutateAsync({ newPassword: password });
 
       notify.success("Senha atualizada!", {
         description: "Você já pode usar sua nova senha.",
@@ -43,8 +42,6 @@ export default function UpdatePasswordPage() {
       router.push("/dashboard");
     } catch (error: unknown) {
       notify.error(error, "atualizar senha");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -102,9 +99,9 @@ export default function UpdatePasswordPage() {
               <Button
                 type="submit"
                 className="w-full bg-primary hover:bg-primary/90"
-                disabled={isLoading}
+                disabled={updatePasswordMutation.isPending}
               >
-                {isLoading ? (
+                {updatePasswordMutation.isPending ? (
                   <Loader2 className="animate-spin mr-2 h-4 w-4" />
                 ) : (
                   "Alterar Senha e Entrar"

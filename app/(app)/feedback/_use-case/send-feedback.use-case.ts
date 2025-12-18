@@ -1,7 +1,6 @@
 import { FeedbackDTO } from "@/domain/dto/feedback.dto";
 import { IEmailService } from "@/domain/interfaces/email-service.interface";
 import { IFeedbackRepository } from "@/domain/interfaces/feedback.repository.interface";
-import { Feedback } from "@/domain/entities/feedback";
 import { FeedbackMapper } from "@/domain/mappers/feedback.mapper";
 
 export class SendFeedbackUseCase {

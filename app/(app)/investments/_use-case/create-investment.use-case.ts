@@ -1,7 +1,6 @@
 import type { IInvestmentRepository } from "@/domain/interfaces/investment.repository.interface";
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
 import type { CreateInvestmentDTO } from "@/domain/dto/investment.types.d.ts";
-import { Investment } from "@/domain/entities/investment";
 import { InvestmentMapper } from "@/domain/mappers/investment.mapper";
 
 export class CreateInvestmentUseCase {

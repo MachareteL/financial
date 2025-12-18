@@ -1,6 +1,5 @@
 import type { IIncomeRepository } from "@/domain/interfaces/income.repository.interface";
 import type { CreateIncomeDTO } from "@/domain/dto/income.types.d.ts";
-import { Income } from "@/domain/entities/income";
 import { IncomeMapper } from "@/domain/mappers/income.mapper";
 
 import type { ITeamRepository } from "@/domain/interfaces/team.repository.interface";
